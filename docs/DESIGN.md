@@ -4,14 +4,13 @@
 
 ### 한 줄 소개
 
-**Markdown으로 카드를 작성하고, Reigns 스타일의 스와이프 UI로 복습하는 플래시카드 앱.**
+Markdown으로 카드를 작성하고, Reigns 스타일의 스와이프 UI로 복습하는 플래시카드 앱.
 
 ### 동기
 
-기존 플래시카드 앱은 **카드를 만드는 과정이 번거롭다.**
-공부를 하면서 빠르게 기록하고 싶지만, 카드 생성과 덱 관리에 시간이 많이 들어 결국 사용하지 않게 된다.
+기존 플래시카드 앱은 카드를 만드는 과정이 번거롭다. 공부를 하면서 빠르게 기록하고 싶지만, 카드 생성과 덱 관리에 시간이 많이 들어 결국 사용하지 않게 된다.
 
-내가 만들고 싶은 앱은 **Markdown 문서 하나만 편집하면 바로 복습할 수 있는 플래시카드 앱**이다.
+내가 만들고 싶은 앱은 Markdown 문서 하나만 편집하면 바로 복습할 수 있는 플래시카드 앱이다.
 
 예시
 - PC에서 Markdown으로 작성
@@ -21,16 +20,13 @@
 
 - 나
 - Markdown 기반으로 공부하는 사람
-- 개발자 및 IT 종사자
-
----
 
 ## 목표
 
 ### 핵심 목표
 
-1. **카드와 덱을 빠르게 편집할 수 있어야 한다.**
-2. **복습은 게임처럼 직관적이고 재미있어야 한다.**
+1. 카드와 덱을 빠르게 편집할 수 있어야 한다.
+2. 복습은 게임처럼 직관적이고 재미있어야 한다.
 
 ### 핵심 원칙
 
@@ -39,9 +35,8 @@
 - 앱에서 수정한 내용은 Markdown에도 반영된다.
 - 공부를 방해하지 않는 UX를 지향한다.
 
----
 
-## 비목표 (Non Goals)
+### 비목표 (Non Goals)
 
 초기 버전에서는 다음 기능을 구현하지 않는다.
 
@@ -50,11 +45,9 @@
 - AI 기능
 - 학습 통계
 - 이미지 및 미디어 첨부
-- 복잡한 SRS(Spaced Repetition) 알고리즘
+- SRS(Spaced Repetition) 알고리즘
 
-MVP에서는 **빠른 카드 작성과 복습 경험**에 집중한다.
-
----
+MVP에서는 빠른 카드 작성과 복습 경험에 집중한다.
 
 ## 기술 스택
 
@@ -65,8 +58,6 @@ MVP에서는 **빠른 카드 작성과 복습 경험**에 집중한다.
 | Data | Markdown (.md) |
 | Progress | JSON |
 | Version Control | Git |
-
----
 
 ## UX
 
@@ -100,9 +91,10 @@ Markdown 저장
 ```markdown
 ← Decks
 ┌────────────────────┐
-덱 이름    :
+덱 이름
 123 Cards
-▶ Study
+
+▶ Study [Order: Shuffle / Sequential ▼]
 ✏ Card List
 └────────────────────┘
 카드 수
@@ -121,7 +113,7 @@ Markdown 저장
 ```
 
 - 덱 클릭 → Deck
-- 각 덱 : → Card List
+- 각 덱 : → Deck Menu
 - 드래그 하여 순서 변경
 - 새 덱 생성
 - Markdown 덱 가져오기
@@ -141,8 +133,8 @@ Delete
 ← Decks    덱이름    :
 검색
 ────────────────
-□ Apple
-□ Red
+□ Apple (WrongCount) :
+□ Red (WrongCount) :
 ────────────────
 ＋ 카드 추가
 ＋ Add Card
@@ -153,7 +145,7 @@ Delete
 - ← 뒤로가기
 - 상단 : → Deck Menu
 - 검색
-- 드래그하여 카드 순서 변경
+- 드래그하여 카드 순서 변경 
 - 각 카드 : → Card Menu
 
 ### Card Editor - 카드 편집
@@ -161,8 +153,8 @@ Delete
 ```markdown
 ←    덱이름    :
 ┌────────────────────────┐
-WrongCount 12
-[NEW / LEARNING / MASTERED]
+WrongCount 12 ✏ 
+[tag: NEW / LEARNING / MASTERED ▼]
 질문 ✏
 ────────────────────────
 답 ✏
@@ -214,6 +206,11 @@ Delete
 - Question을 카드 식별자로 사용한다.
 - Question이 변경되면 진행도는 초기화된다.
 
+### 카드 상태와 WrongCount
+
+- 카드 상태(NEW / LEARNING / MASTERED)는 사용자가 Card Editor에서 수동으로 설정하는 표시용 라벨이다. 학습 동작에는 영향을 주지 않는다.
+- WrongCount는 Again 시 자동으로 증가하며, Card Editor에서 수동으로 수정할 수도 있다.
+
 ### 학습 규칙
 
 Again
@@ -256,6 +253,7 @@ Export를 통해 Markdown 파일로 다시 내보낼 수 있다.
 초기 버전 완성 이후 검토한다.
 
 - SRS 알고리즘
+- 카드 상태 자동 전이, MASTERED 카드 Study 제외
 - 코드 하이라이팅
 - Markdown 렌더링
 - 태그
