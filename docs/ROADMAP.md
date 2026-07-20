@@ -1,0 +1,44 @@
+# ROADMAP
+
+## Phase 0 — 최소 루프 (이것만 되면 "쓸 수 있는 앱")
+
+목표: **하드코딩된 md 파일 하나를 읽어서, 데스크톱에서 복습이 한 바퀴 도는 것.**
+덱 목록도, 편집도, 스와이프도, Android도 전부 없음.
+
+- [ ] Godot 4 (.NET) 프로젝트 생성, 데스크톱 실행 확인
+- [ ] Markdown 파서: `# 질문` + 다음 줄들 = 답 → `List<Card>` (파일 경로는 하드코딩)
+- [ ] Study 화면: 질문 표시 → 탭하면 답 공개
+- [ ] `Again` / `Good` 버튼 2개 (스와이프 아님, 그냥 버튼)
+  - Again: WrongCount +1, 세션 큐 맨 뒤로
+  - Good: 세션에서 완료
+- [ ] 모든 카드 완료 시 "끝" 화면
+- [ ] 진행도 JSON 저장/로드 (키: Question, 값: WrongCount)
+
+여기까지 되면 실제로 공부에 써보고, 재미없거나 불편한 지점을 찾은 뒤 다음 단계로.
+
+## Phase 1 — 여러 덱
+
+- [ ] 덱 목록 화면 (내부 저장소의 md 파일 나열)
+- [ ] Import: 파일 선택 → 내부 저장소로 복사
+- [ ] 마지막 사용 덱 기억 (시작 화면)
+
+## Phase 2 — 편집
+
+- [ ] Card List 화면 (목록 보기만)
+- [ ] Card Editor (질문/답 수정 → md 재저장, 진행도 초기화 동작 확인)
+- [ ] 카드 추가/삭제
+- [ ] Export
+
+## Phase 3 — 게임 느낌 + Android
+
+- [ ] 스와이프 제스처 (← Again / → Good부터, Pass/Previous는 그 다음)
+- [ ] 카드 전환 애니메이션
+- [ ] Android 내보내기, 실기기 테스트
+  - ⚠ C# Android export는 리스크이므로 Phase 0 직후에 빈 프로젝트로 한 번 미리 검증해 볼 것
+
+## 보류 (기획서에 있지만 급하지 않음)
+
+- Pass / Previous / Long Press 편집
+- NEW / LEARNING / MASTERED 상태 (전이 규칙 미정)
+- 덱/카드 드래그 순서 변경, 검색, Rename / Duplicate / Delete 메뉴
+- 새 덱 생성 (앱 내에서)
