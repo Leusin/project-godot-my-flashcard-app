@@ -1,0 +1,11 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <rect width="128" height="128" rx="24" fill="#232839"/>
+  <!-- 뒷카드 -->
+  <g transform="translate(60,66) rotate(-8)">
+    <rect x="-28" y="-38" width="56" height="76" rx="8" fill="#6d7cf0"/>
+  </g>
+  <!-- 앞카드 -->
+  <g transform="translate(66,63) rotate(5)">
+    <rect x="-28" y="-38" width="56" height="76" rx="8" fill="#f4f6fb"/>
+  </g>
+</svg>

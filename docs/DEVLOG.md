@@ -2,6 +2,14 @@
 
 결정과 교훈을 그날 기록한다. 세션이 끊겨도 이 문서만 읽으면 이어서 작업할 수 있게 쓴다.
 
+## 2026-07-21 v0.1 최소 루프 구현
+
+- Godot 4.7.1 .NET 에디션을 `../tools/`에 설치 (Steam 버전은 C# 미지원 — 이 프로젝트는 반드시 .NET 에디터로 열 것. 표준 빌드로 열면 씬이 안 열리고 project.godot의 "C#" feature가 지워진다).
+- 순수 로직(src/core: Card, DeckParser, StudySession, Progress)을 Node 없이 분리 → 테스트 29개가 헤드리스로 통과. 씬 배선도 tests의 스모크 테스트가 검증 (버튼 시그널로 세션 한 바퀴 + 재실행 시 WrongCount 로드).
+- 뷰/세션 분리: StudyView는 표시 + 시그널만, Main이 구독해 해석 (CONVENTIONS 의존 방향).
+- 아이콘을 플래시카드 테마(카드 2장 겹침)로 교체. `#` 기호는 시안 검토에서 제거 — 카드만 남기는 게 깔끔.
+- 남은 것: 실사용 검증(8단계) 후 v0.1 태그.
+
 ## 2026-07-21 기획 다듬기
 
 - 기획서 직접 수정: Deck List의 `:` 연결을 Deck Menu로 통일(모순 해소), Card List에 WrongCount 표시, Study 순서 옵션(Shuffle/Sequential) 추가, 비목표를 "SRS 전체"로 명확화.
