@@ -8,22 +8,32 @@ public partial class StudyView : Control
 {
 	[Signal] public delegate void AgainPressedEventHandler();
 	[Signal] public delegate void GoodPressedEventHandler();
+	[Signal] public delegate void BackPressedEventHandler();
 
 	private Label _remainingLabel = null!;
+	private Label _deckLabel = null!;
 	private CardView _card = null!;
 
 	public override void _Ready()
 	{
 		this._remainingLabel = this.GetNode<Label>("%RemainingLabel");
+		this._deckLabel = this.GetNode<Label>("%DeckLabel");
 		this._card = this.GetNode<CardView>("%Card");
 
 		// 비율의 출처는 CardView 상수 하나. 씬에는 값을 두지 않는다.
 		this.GetNode<AspectRatioContainer>("%CardAspect").Ratio = CardView.AspectRatio;
 
+		this.GetNode<Button>("%BackButton").Pressed +=
+			() => this.EmitSignal(SignalName.BackPressed);
 		this.GetNode<Button>("%AgainButton").Pressed +=
 			() => this.EmitSignal(SignalName.AgainPressed);
 		this.GetNode<Button>("%GoodButton").Pressed +=
 			() => this.EmitSignal(SignalName.GoodPressed);
+	}
+
+	public void ShowDeckName(string deckName)
+	{
+		this._deckLabel.Text = deckName;
 	}
 
 	public void ShowCard(string question, string answer, int wrongCount, int remaining)

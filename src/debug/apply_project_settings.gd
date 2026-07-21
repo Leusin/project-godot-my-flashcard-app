@@ -9,8 +9,9 @@ extends SceneTree
 # ── 애플리케이션 / 윈도우 ────────────────────────────────────────────
 const PROJECT_SETTINGS: Dictionary = {
 	"application/config/name": "MyFlashCard",
-	"application/config/version": "0.1.0",
-	"application/run/main_scene": "res://src/study.tscn",
+	"application/config/version": "0.2.0",
+	# 진입점은 화면 전환을 맡는 App. study.tscn은 App이 띄우는 화면 중 하나다.
+	"application/run/main_scene": "res://src/app.tscn",
 
 	# 최종 타깃이 Android라 모바일 세로 해상도를 기준으로 잡는다
 	"display/window/size/viewport_width": 720,

@@ -11,8 +11,8 @@ config_version=5
 [application]
 
 config/name="MyFlashCard"
-config/version="0.1.0"
-run/main_scene="res://src/study.tscn"
+config/version="0.2.0"
+run/main_scene="res://src/app.tscn"
 config/features=PackedStringArray("4.7", "C#", "Mobile")
 config/icon="res://icon.svg"
 

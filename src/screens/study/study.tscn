@@ -1,8 +1,8 @@
-[gd_scene load_steps=4 format=3]
+﻿[gd_scene load_steps=4 format=3]
 
-[ext_resource type="Script" path="res://src/Study.cs" id="1_study"]
-[ext_resource type="Script" path="res://src/StudyView.cs" id="2_study"]
-[ext_resource type="PackedScene" path="res://src/card.tscn" id="3_card"]
+[ext_resource type="Script" path="res://src/screens/study/Study.cs" id="1_study"]
+[ext_resource type="Script" path="res://src/screens/study/StudyView.cs" id="2_study"]
+[ext_resource type="PackedScene" path="res://src/screens/study/card.tscn" id="3_card"]
 
 [node name="Study" type="Control"]
 layout_mode = 3
@@ -41,11 +41,23 @@ theme_override_constants/separation = 16
 
 [node name="TopBar" type="HBoxContainer" parent="StudyView/Margin/VBox"]
 layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="BackButton" type="Button" parent="StudyView/Margin/VBox/TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "← Decks"
+
+[node name="DeckLabel" type="Label" parent="StudyView/Margin/VBox/TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text_overrun_behavior = 3
+horizontal_alignment = 1
 
 [node name="RemainingLabel" type="Label" parent="StudyView/Margin/VBox/TopBar"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
 
 [node name="CardAspect" type="AspectRatioContainer" parent="StudyView/Margin/VBox"]
 unique_name_in_owner = true
@@ -109,3 +121,9 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "다시 학습"
+
+[node name="DoneDecksButton" type="Button" parent="DoneView/Center/DoneVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "← Decks"

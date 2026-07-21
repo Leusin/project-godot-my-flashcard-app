@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Godot;
 using MyFlashCard.Core;
 
@@ -17,9 +17,13 @@ public partial class TestRunner : Node
 		this.ParserEdgeCases();
 		this.SessionQueue();
 		this.ProgressRoundTrip();
+		this.DeckNamingRules();
+		this.SettingsRoundTrip();
+		this.DeckStorageRoundTrip();
 		this.TallyWidth();
 		this.CardFlip();
 		this.SceneSmokeTest();
+		this.AppSmokeTest();
 
 		GD.Print($"tests: {this._passed} passed, {this._failed} failed");
 		this.GetTree().Quit(this._failed);
@@ -109,6 +113,69 @@ public partial class TestRunner : Node
 		this.Check(Progress.FromJson("{깨진 json").GetWrongCount("x") == 0, "진행도: 깨진 JSON은 빈 진행도");
 	}
 
+	private void DeckNamingRules()
+	{
+		this.Check(DeckNaming.DisplayName("영어단어.md") == "영어단어", "덱 이름: 확장자를 뗀다");
+		this.Check(DeckNaming.DisplayName("Deck.MD") == "Deck", "덱 이름: 확장자 대소문자 무시");
+		this.Check(DeckNaming.IsDeckFile("a.md") && !DeckNaming.IsDeckFile("a.txt"),
+			"덱 이름: md만 덱으로 본다");
+		this.Check(!DeckNaming.IsDeckFile(".md"), "덱 이름: 이름이 빈 파일은 덱이 아니다");
+
+		var existing = new[] { "a.md", "a (2).md" };
+		this.Check(DeckNaming.UniqueFileName("b.md", existing) == "b.md",
+			"덱 이름: 겹치지 않으면 그대로");
+		this.Check(DeckNaming.UniqueFileName("a.md", existing) == "a (3).md",
+			"덱 이름: 겹치면 비어 있는 번호를 찾는다");
+		this.Check(DeckNaming.UniqueFileName("A.MD", existing) == "A (3).md",
+			"덱 이름: 충돌 판단은 대소문자를 구분하지 않는다");
+
+		this.Check(DeckNaming.ProgressFileName("영어단어.md") == "영어단어.json",
+			"덱 이름: 진행도 파일은 덱 이름을 따른다");
+	}
+
+	private void SettingsRoundTrip()
+	{
+		var settings = new AppSettings { LastDeckFile = "영어단어.md" };
+		this.Check(AppSettings.FromJson(settings.ToJson()).LastDeckFile == "영어단어.md",
+			"설정: 마지막 덱 직렬화 왕복");
+		this.Check(AppSettings.FromJson("").LastDeckFile == "", "설정: 빈 JSON은 기본값");
+		this.Check(AppSettings.FromJson("{깨진 json").LastDeckFile == "", "설정: 깨진 JSON은 기본값");
+	}
+
+	// 앱 저장소를 실제로 건드리므로 전용 덱 파일만 쓰고 끝나면 지운다.
+	private void DeckStorageRoundTrip()
+	{
+		WriteTestDeck();
+		this.Check(DeckStorage.DeckExists(TestDeckFile), "저장소: 쓴 덱이 존재");
+		this.Check(DeckStorage.ListDeckFiles().Contains(TestDeckFile), "저장소: 목록에 나온다");
+		this.Check(DeckStorage.ReadDeck(TestDeckFile) == TestDeckText, "저장소: 내용 그대로 읽힌다");
+		this.Check(!DeckStorage.DeckExists("__없는덱.md"), "저장소: 없는 덱은 존재하지 않음");
+
+		var progress = new Progress();
+		progress.AddWrong("A");
+		DeckStorage.SaveProgress(TestDeckFile, progress);
+		this.Check(DeckStorage.ProgressPath(TestDeckFile) == "user://progress/__test_deck.json",
+			"저장소: 진행도는 덱마다 다른 파일");
+		this.Check(DeckStorage.LoadProgress(TestDeckFile).GetWrongCount("A") == 1,
+			"저장소: 진행도 왕복");
+		this.Check(DeckStorage.LoadProgress("__없는덱.md").GetWrongCount("A") == 0,
+			"저장소: 기록 없는 덱은 빈 진행도");
+
+		// 같은 이름을 가져오면 덮어쓰지 않고 새 이름으로 들어온다.
+		var imported = DeckStorage.Import(DeckStorage.DeckPath(TestDeckFile));
+		this.Check(imported == "__test_deck (2).md", "저장소: 이름이 겹치면 번호를 붙여 가져온다");
+		this.Check(DeckStorage.ReadDeck(imported ?? "") == TestDeckText, "저장소: 가져온 내용 동일");
+		this.Check(DeckStorage.Import("user://__없는파일.md") == null,
+			"저장소: 읽지 못한 파일은 가져오기 실패");
+
+		if (imported != null)
+		{
+			DirAccess.RemoveAbsolute(DeckStorage.DeckPath(imported));
+		}
+		RemoveTestDeck();
+		this.Check(!DeckStorage.DeckExists(TestDeckFile), "저장소: 정리 후 덱 없음");
+	}
+
 	// 작대기 표시. 그림 자체는 눈으로 봐야 하고, 여기서는 개수→크기 규칙만 확인한다.
 	private void TallyWidth()
 	{
@@ -137,7 +204,7 @@ public partial class TestRunner : Node
 	// 카드 앞뒤 전환. 탭 라우팅은 헤드리스에서 동작하지 않아 핸들러를 직접 부른다.
 	private void CardFlip()
 	{
-		var card = GD.Load<PackedScene>("res://src/card.tscn").Instantiate<CardView>();
+		var card = GD.Load<PackedScene>("res://src/screens/study/card.tscn").Instantiate<CardView>();
 		this.AddChild(card);
 
 		var answerArea = card.GetNode<Control>("%AnswerArea");
@@ -188,28 +255,49 @@ public partial class TestRunner : Node
 		return new InputEventMouseButton { ButtonIndex = MouseButton.Left, Pressed = true };
 	}
 
-	// study.tscn 배선 검증: 씬 로드 → 버튼 시그널로 세션 한 바퀴 → Done 화면.
-	// Study가 진행도 파일을 쓰므로 백업 후 복원한다.
+	// 앱 저장소를 건드리는 테스트 전용 덱. 사용자의 덱과 섞이지 않게 이름을 따로 쓰고 끝나면 지운다.
+	private const string TestDeckFile = "__test_deck.md";
+	private const string TestDeckText = "# A\n1\n# B\n2\n# C\n3\n";
+
+	private static void WriteTestDeck()
+	{
+		DeckStorage.WriteDeck(TestDeckFile, TestDeckText);
+	}
+
+	private static void RemoveTestDeck()
+	{
+		if (DeckStorage.DeckExists(TestDeckFile))
+		{
+			DirAccess.RemoveAbsolute(DeckStorage.DeckPath(TestDeckFile));
+		}
+
+		if (FileAccess.FileExists(DeckStorage.ProgressPath(TestDeckFile)))
+		{
+			DirAccess.RemoveAbsolute(DeckStorage.ProgressPath(TestDeckFile));
+		}
+	}
+
+	// study.tscn 배선 검증: 씬 로드 → 덱 지정 → 버튼 시그널로 세션 한 바퀴 → Done 화면.
 	private void SceneSmokeTest()
 	{
-		const string progressPath = "user://progress.json";
-		string? backup = FileAccess.FileExists(progressPath)
-			? FileAccess.GetFileAsString(progressPath)
-			: null;
+		WriteTestDeck();
 
-		var packed = GD.Load<PackedScene>("res://src/study.tscn");
+		var packed = GD.Load<PackedScene>("res://src/screens/study/study.tscn");
 		this.Check(packed != null, "씬: study.tscn 로드");
 		if (packed == null)
 		{
 			return;
 		}
 
-		var study = packed.Instantiate<Control>();
+		var study = packed.Instantiate<Study>();
 		this.AddChild(study);
 
 		var studyView = study.GetNode<StudyView>("%StudyView");
 		var done = study.GetNode<Control>("%DoneView");
-		this.Check(studyView.Visible && !done.Visible, "씬: 시작 시 Study 화면 표시");
+		study.StartDeck(TestDeckFile);
+		this.Check(studyView.Visible && !done.Visible, "씬: 덱을 받으면 Study 화면 표시");
+		this.Check(study.GetNode<Label>("%DeckLabel").Text == DeckNaming.DisplayName(TestDeckFile),
+			"씬: 상단바에 덱 이름 표시");
 
 		// 판정 버튼은 답을 보기 전에도 누를 수 있어야 한다.
 		var card = study.GetNode<CardView>("%Card");
@@ -226,19 +314,11 @@ public partial class TestRunner : Node
 		this.Check(questionMin > 0.0f && Mathf.IsEqualApprox(questionMin, answerMin),
 			"씬: 질문·답 라벨에 최소 너비가 동일하게 설정됨");
 
-		// 샘플 덱은 사용자가 바꿀 수 있다. 카드 수·질문을 파일에서 읽어 테스트가 덱에 의존하지 않게 한다.
-		var deck = DeckParser.Parse(FileAccess.GetFileAsString("res://sample_deck.md"));
-		this.Check(deck.Count > 0, "씬: 샘플 덱에 카드가 있음");
-		if (deck.Count == 0)
-		{
-			study.QueueFree();
-			return;
-		}
+		var deck = DeckParser.Parse(TestDeckText);
 
 		// 판정 종류와 무관하게 카드는 한 번씩만 나온다. 첫 장만 Again으로 넘겨 본다.
 		studyView.EmitSignal(StudyView.SignalName.AgainPressed);
-		this.Check(deck.Count == 1 || (studyView.Visible && !done.Visible),
-			"씬: 카드가 남아 있으면 세션 계속");
+		this.Check(studyView.Visible && !done.Visible, "씬: 카드가 남아 있으면 세션 계속");
 
 		for (var i = 1; i < deck.Count; i++)
 		{
@@ -246,7 +326,14 @@ public partial class TestRunner : Node
 		}
 		this.Check(!studyView.Visible && done.Visible, "씬: 덱 장수만큼 넘기면 Done 화면 표시");
 
-		this.Check(FileAccess.FileExists(progressPath), "씬: Again 시 진행도 파일 저장됨");
+		var progressPath = DeckStorage.ProgressPath(TestDeckFile);
+		this.Check(FileAccess.FileExists(progressPath), "씬: Again 시 그 덱의 진행도 파일 저장됨");
+
+		// 뒤로 가기는 Study가 해석하지 않고 사실만 위로 알린다.
+		var exitRequested = false;
+		study.ExitRequested += () => exitRequested = true;
+		studyView.EmitSignal(StudyView.SignalName.BackPressed);
+		this.Check(exitRequested, "씬: ← Decks는 ExitRequested로 전달");
 
 		study.QueueFree();
 
@@ -256,20 +343,67 @@ public partial class TestRunner : Node
 			var firstQuestion = JsonSerializer.Serialize(deck[0].Question);
 			file?.StoreString($"{{{firstQuestion}: 5}}");
 		}
-		var second = packed.Instantiate<Control>();
+		var second = packed.Instantiate<Study>();
 		this.AddChild(second);
+		second.StartDeck(TestDeckFile);
 		var savedTally = second.GetNode<CardView>("%Card").GetNode<TallyMarks>("%Tally");
 		this.Check(savedTally.Count == 5, "씬: 재실행 시 저장된 WrongCount가 작대기 수로 표시");
 		second.QueueFree();
 
-		if (backup != null)
+		RemoveTestDeck();
+	}
+
+	// app.tscn 배선 검증: 덱 목록 → 덱 선택 → Study → 뒤로. 마지막 덱은 설정에 남는다.
+	// 실제 설정 파일을 쓰므로 백업 후 복원한다.
+	private void AppSmokeTest()
+	{
+		var settingsBackup = FileAccess.FileExists(DeckStorage.SettingsPath)
+			? FileAccess.GetFileAsString(DeckStorage.SettingsPath)
+			: null;
+
+		WriteTestDeck();
+		// 마지막 덱이 없는 첫 실행 상태로 시작한다.
+		DeckStorage.SaveSettings(new AppSettings());
+
+		var app = GD.Load<PackedScene>("res://src/app.tscn").Instantiate<Control>();
+		this.AddChild(app);
+
+		var deckList = app.GetNode<DeckListView>("%DeckListView");
+		var study = app.GetNode<Study>("%Study");
+		this.Check(deckList.Visible && !study.Visible, "앱: 마지막 덱이 없으면 덱 목록부터");
+
+		var deckBox = deckList.GetNode<VBoxContainer>("%DeckBox");
+		this.Check(deckBox.GetChildCount() == DeckStorage.ListDeckFiles().Count,
+			"앱: 저장소의 덱 수만큼 목록에 나온다");
+		this.Check(!deckList.GetNode<Label>("%EmptyLabel").Visible,
+			"앱: 덱이 있으면 빈 목록 안내는 숨긴다");
+
+		deckList.EmitSignal(DeckListView.SignalName.DeckChosen, TestDeckFile);
+		this.Check(study.Visible && !deckList.Visible, "앱: 덱을 고르면 Study로 전환");
+		this.Check(DeckStorage.LoadSettings().LastDeckFile == TestDeckFile,
+			"앱: 고른 덱이 마지막 덱으로 저장됨");
+
+		study.EmitSignal(Study.SignalName.ExitRequested);
+		this.Check(deckList.Visible && !study.Visible, "앱: 뒤로 가면 덱 목록으로 전환");
+
+		app.QueueFree();
+
+		// 재실행 시뮬레이션: 마지막 덱이 있으면 목록을 건너뛴다.
+		var second = GD.Load<PackedScene>("res://src/app.tscn").Instantiate<Control>();
+		this.AddChild(second);
+		this.Check(second.GetNode<Study>("%Study").Visible, "앱: 재실행 시 마지막 덱으로 바로 시작");
+		second.QueueFree();
+
+		RemoveTestDeck();
+
+		if (settingsBackup != null)
 		{
-			using var file = FileAccess.Open(progressPath, FileAccess.ModeFlags.Write);
-			file?.StoreString(backup);
+			using var file = FileAccess.Open(DeckStorage.SettingsPath, FileAccess.ModeFlags.Write);
+			file?.StoreString(settingsBackup);
 		}
-		else if (FileAccess.FileExists(progressPath))
+		else if (FileAccess.FileExists(DeckStorage.SettingsPath))
 		{
-			DirAccess.RemoveAbsolute(progressPath);
+			DirAccess.RemoveAbsolute(DeckStorage.SettingsPath);
 		}
 	}
 }

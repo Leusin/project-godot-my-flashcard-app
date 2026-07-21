@@ -1,7 +1,7 @@
-[gd_scene format=3 uid="uid://7vrp0b0yr40u"]
+﻿[gd_scene format=3 uid="uid://7vrp0b0yr40u"]
 
-[ext_resource type="Script" uid="uid://b8mp7l1s644cy" path="res://src/CardView.cs" id="1_card"]
-[ext_resource type="Script" uid="uid://jkr6g407gmb" path="res://src/TallyMarks.cs" id="2_tally"]
+[ext_resource type="Script" uid="uid://b8mp7l1s644cy" path="res://src/screens/study/CardView.cs" id="1_card"]
+[ext_resource type="Script" uid="uid://jkr6g407gmb" path="res://src/screens/study/TallyMarks.cs" id="2_tally"]
 
 [node name="Card" type="PanelContainer" unique_id=806157588]
 offset_right = 420.0
