@@ -1,0 +1,68 @@
+[gd_scene format=3 uid="uid://7vrp0b0yr40u"]
+
+[ext_resource type="Script" uid="uid://b8mp7l1s644cy" path="res://src/CardView.cs" id="1_card"]
+[ext_resource type="Script" uid="uid://jkr6g407gmb" path="res://src/TallyMarks.cs" id="2_tally"]
+
+[node name="Card" type="PanelContainer" unique_id=806157588]
+offset_right = 420.0
+offset_bottom = 620.0
+script = ExtResource("1_card")
+
+[node name="CardMargin" type="MarginContainer" parent="." unique_id=1300775247]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="CardVBox" type="VBoxContainer" parent="CardMargin" unique_id=277592229]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Tally" type="Control" parent="CardMargin/CardVBox" unique_id=1678731204]
+unique_name_in_owner = true
+modulate = Color(1, 1, 1, 0.55)
+layout_mode = 2
+script = ExtResource("2_tally")
+
+[node name="QuestionScroll" type="ScrollContainer" parent="CardMargin/CardVBox" unique_id=1667661999]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="QuestionLabel" type="Label" parent="CardMargin/CardVBox/QuestionScroll" unique_id=809952882]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 36
+text = "Question"
+autowrap_mode = 3
+
+[node name="AnswerArea" type="VBoxContainer" parent="CardMargin/CardVBox" unique_id=445253906]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="HSeparator" type="HSeparator" parent="CardMargin/CardVBox/AnswerArea" unique_id=423843359]
+layout_mode = 2
+
+[node name="AnswerScroll" type="ScrollContainer" parent="CardMargin/CardVBox/AnswerArea" unique_id=1571270447]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="AnswerLabel" type="Label" parent="CardMargin/CardVBox/AnswerArea/AnswerScroll" unique_id=1696994728]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 28
+text = "Answer"
+autowrap_mode = 3
+
+[connection signal="gui_input" from="." to="." method="OnCardGuiInput"]

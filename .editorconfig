@@ -1,0 +1,29 @@
+root = true
+
+# 들여쓰기는 탭. Godot 내장 에디터가 탭으로 저장하므로 거기에 맞춘다
+# (스페이스로 두면 파일을 열 때마다 되돌아가 diff가 지저분해진다).
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.cs]
+indent_style = tab
+indent_size = 4
+
+# docs/CONVENTIONS.md 8번: 중괄호는 생략하지 않는다
+csharp_prefer_braces = true:warning
+csharp_new_line_before_open_brace = all
+
+[*.gd]
+indent_style = tab
+indent_size = 4
+
+[*.{tscn,godot,import,cfg}]
+indent_style = tab
+trim_trailing_whitespace = false
+
+[*.md]
+trim_trailing_whitespace = false
