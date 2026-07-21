@@ -2,6 +2,14 @@
 
 Markdown으로 카드를 작성하고 Reigns 스타일 스와이프로 복습하는 플래시카드 앱 (Godot 4 .NET, C#). 기획은 [docs/DESIGN.md](docs/DESIGN.md), 이정표는 [docs/ROADMAP.md](docs/ROADMAP.md) 참고.
 
+## 개발 환경
+
+- **반드시 .NET 에디터로 열 것**: `../tools/Godot_v4.7.1-stable_mono_win64/` (바탕화면 바로가기 "Godot 4.7.1 (.NET)"). Steam의 표준 빌드는 C#을 지원하지 않아 씬이 열리지 않고, 여는 것만으로 `project.godot`의 `config/features`에서 `"C#"`이 지워진다.
+- **프로젝트 설정의 출처는 [src/debug/apply_project_settings.gd](src/debug/apply_project_settings.gd)**. `project.godot`을 손으로 고치지 말고 이 스크립트를 고친 뒤 `& $godot --headless --path . --script res://src/debug/apply_project_settings.gd`로 반영한다. 선언에서 뺀 설정은 지워지지 않으니, 뺄 때는 `project.godot`도 함께 확인한다.
+- 들여쓰기는 탭 ([.editorconfig](.editorconfig)). 내장 에디터가 어차피 탭으로 되돌려놓기 때문.
+- **에디터를 열어둔 채 파일을 편집하면 실행(F5/F6) 시 에디터가 오래된 버퍼로 덮어쓴다.** 에디터 설정 `run/auto_save/save_before_running`이 기본 `true`라, 실행할 때마다 열린 씬이 전부 저장되기 때문. 실제로 리팩터한 `StudyView.cs`가 되돌아가 앱이 깨진 적이 있다. AI가 파일을 고치는 동안에는 에디터를 닫아두고, 작업 후 아래 테스트 명령으로 확인한다.
+- **에디터에서 실행한 화면과 에디터 밖에서 직접 실행한 화면이 다를 수 있다.** Godot 4.4+는 게임을 에디터 안의 Game 탭에 끼워 실행하는 게 기본(`run/window_placement/game_embed_mode`)이라 창 크기가 `window_*_override` 대신 패널 크기를 따른다. 창 크기·비율을 확인할 때는 에디터 밖에서 실행할 것.
+
 ## 설계 규칙
 
 [docs/CONVENTIONS.md](docs/CONVENTIONS.md)가 규칙의 기준이다. 특히:
@@ -24,8 +32,17 @@ Markdown으로 카드를 작성하고 Reigns 스타일 스와이프로 복습하
 - [docs/ROADMAP.md](docs/ROADMAP.md) — 버전별 목표와 완료/예정 항목.
 - [docs/DEVLOG.md](docs/DEVLOG.md) — 결정·교훈을 그날 기록. 세션 시작 시 최근 엔트리를 읽으면 맥락이 잡힌다.
 - [docs/MEMORY.md](docs/MEMORY.md) — 프로젝트 목표·가설·회고.
-- ARCHITECTURE / TESTING 문서는 코드가 생기면 작성한다.
+- [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md) — 코드 읽는 순서와 데이터 흐름. 코드를 처음 볼 때 여기부터.
+- ARCHITECTURE / TESTING 문서는 구조가 커지면 분리한다. 지금은 CODE_GUIDE로 충분.
 
 ## 테스트
 
-테스트 하네스는 코드가 생기면 구성한다. 순수 로직(Markdown 파서, 세션 큐, 진행도 저장)이 단위 테스트 1순위 대상. Godot 씬 없이 돌 수 있게 일반 C# 클래스로 분리해 둘 것.
+```powershell
+$godot = "..\tools\Godot_v4.7.1-stable_mono_win64\Godot_v4.7.1-stable_mono_win64_console.exe"
+dotnet build
+& $godot --headless --path . res://tests/tests.tscn   # 실패 개수 = 종료 코드
+```
+
+`_console.exe` 쪽을 써야 출력이 콘솔에 보인다. C# 코드를 고쳤으면 `dotnet build`를 먼저 해야 반영된다.
+
+새 테스트는 `tests/TestRunner.cs`의 `_Ready()`에 함수로 등록한다. 순수 로직(`src/core/`의 파서·세션 큐·진행도)이 단위 테스트 1순위 대상이고, 이들은 `Node`를 상속하지 않아 씬 없이 검증된다. 씬 배선은 `SceneSmokeTest()`가 시그널을 직접 발신해 확인한다.
