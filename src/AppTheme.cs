@@ -40,11 +40,8 @@ public static class AppTheme
 	public static readonly Color CanvasText = Ink;
 	public static readonly Color CanvasTextMuted = InkMuted;
 
-	// 카드: 앞면(질문)은 종이, 뒷면(답)은 인디고 — 뒤집힌 것이 색으로 바로 읽힌다.
+	// 카드 표면. 앞/뒤 모두 이 색 하나 — 뒷면을 따로 칠하지 않는다 (B안).
 	public static readonly Color CardFront = Surface;
-	public static readonly Color CardFrontText = Ink;
-	public static readonly Color CardBack = Accent;
-	public static readonly Color CardBackText = Colors.White;
 
 	// ── 타이포그래피 (Pretendard Variable) ──────────────────────────
 	// 4단계면 충분하다. 단계가 많으면 위계가 오히려 흐려진다.
