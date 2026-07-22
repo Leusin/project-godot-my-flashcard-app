@@ -46,3 +46,11 @@ dotnet build
 `_console.exe` 쪽을 써야 출력이 콘솔에 보인다. C# 코드를 고쳤으면 `dotnet build`를 먼저 해야 반영된다.
 
 새 테스트는 `tests/TestRunner.cs`의 `_Ready()`에 함수로 등록한다. 순수 로직(`src/core/`의 파서·세션 큐·진행도)이 단위 테스트 1순위 대상이고, 이들은 `Node`를 상속하지 않아 씬 없이 검증된다. 씬 배선은 `SceneSmokeTest()`가 시그널을 직접 발신해 확인한다.
+
+**헤드리스 실행이 멈추면(hang)** — 출력이 안 나오고 타임아웃되는 증상은 원인이 둘이다. 재시도 전에 먼저 출력에 `ERROR: ... Exception`이 있는지 본다.
+
+1. **씬을 옮기거나 크게 고친 직후 첫 실행** — Godot이 재스캔하며 멈출 수 있다. 프로세스를 정리하고 한 번 더 실행하면 보통 풀린다.
+   ```powershell
+   Get-Process | Where-Object { $_.ProcessName -like "*Godot*" } | Stop-Process -Force
+   ```
+2. **테스트가 옛 노드 타입으로 캐스트** — 씬의 노드 타입을 바꿨는데(`GridContainer`→`HFlowContainer` 등) 테스트의 `GetNode<옛타입>`이 안 바뀌면, `_Ready()`에서 캐스트 예외가 나고 잡히지 않아 `Quit()`에 못 도달해 영원히 대기한다. **재시도로 안 풀린다** — 출력에 `InvalidCastException`이 보이면 씬을 바꾼 뒤 안 고친 테스트의 `GetNode<T>` 타입부터 찾는다.
