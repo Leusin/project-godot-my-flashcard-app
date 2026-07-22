@@ -17,9 +17,13 @@ public partial class TestRunner : Node
 		this.ParserEdgeCases();
 		this.SessionQueue();
 		this.ProgressRoundTrip();
+		this.ProgressRename();
+		this.ProgressRemove();
+		this.DeckWriterRoundTrip();
 		this.DeckNamingRules();
 		this.SettingsRoundTrip();
 		this.DeckStorageRoundTrip();
+		this.DeckStorageCustomDir();
 		this.TallyWidth();
 		this.CardFlip();
 		this.SceneSmokeTest();
@@ -113,6 +117,83 @@ public partial class TestRunner : Node
 		this.Check(Progress.FromJson("{깨진 json").GetWrongCount("x") == 0, "진행도: 깨진 JSON은 빈 진행도");
 	}
 
+	// 진행도 삭제: 카드를 지우면 그 질문의 기록도 사라진다.
+	private void ProgressRemove()
+	{
+		var p = new Progress();
+		p.AddWrong("A");
+		p.AddWrong("B");
+		p.Remove("A");
+		this.Check(p.GetWrongCount("A") == 0, "삭제: 지운 질문의 기록은 0");
+		this.Check(p.GetWrongCount("B") == 1, "삭제: 다른 질문의 기록은 그대로");
+		p.Remove("없는질문");
+		this.Check(p.GetWrongCount("B") == 1, "삭제: 없는 질문 삭제는 아무 일도 하지 않음");
+	}
+
+	// 덱 저장. 기준은 왕복 안정성: 카드 → 텍스트 → 카드가 원래와 같아야 한다.
+	private void DeckWriterRoundTrip()
+	{
+		var cards = DeckParser.Parse("# Apple\n사과\n# Red\n빨간색\n");
+		var round = DeckParser.Parse(DeckWriter.ToMarkdown(cards));
+		this.Check(round.Count == 2, "저장: 왕복 후 카드 수 유지");
+		this.Check(round[0].Question == "Apple" && round[0].Answer == "사과",
+			"저장: 왕복 후 첫 카드 유지");
+		this.Check(round[1].Question == "Red" && round[1].Answer == "빨간색",
+			"저장: 왕복 후 둘째 카드 유지");
+
+		var multiline = DeckParser.Parse("# Q\n첫 줄\n둘째 줄\n");
+		var multiRound = DeckParser.Parse(DeckWriter.ToMarkdown(multiline));
+		this.Check(multiRound[0].Answer == "첫 줄\n둘째 줄", "저장: 여러 줄 답 왕복 유지");
+
+		var empty = DeckParser.Parse("# Q1\n# Q2\n답");
+		var emptyRound = DeckParser.Parse(DeckWriter.ToMarkdown(empty));
+		this.Check(emptyRound.Count == 2 && emptyRound[0].Answer == "",
+			"저장: 답 없는 카드 왕복 유지");
+
+		this.Check(DeckWriter.ToMarkdown(new Card[0]).Length == 0, "저장: 빈 덱은 빈 텍스트");
+		this.Check(DeckWriter.ToMarkdown(new[] { new Card("Q", "A") }) == "# Q\nA\n",
+			"저장: 형식은 '# 질문' + 줄바꿈 + 답");
+	}
+
+	// 진행도 이사: 질문을 고쳐도 그 카드의 틀린 횟수가 따라온다.
+	private void ProgressRename()
+	{
+		var moved = new Progress();
+		moved.AddWrong("A");
+		moved.AddWrong("A");
+		moved.Rename("A", "B");
+		this.Check(moved.GetWrongCount("B") == 2, "이사: 기록이 새 질문으로 옮겨진다");
+		this.Check(moved.GetWrongCount("A") == 0, "이사: 옛 질문에는 기록이 남지 않는다");
+
+		// 새 질문에 이미 기록이 있으면 합친다 (같은 질문 = 같은 카드).
+		var merge = new Progress();
+		merge.AddWrong("A");
+		merge.AddWrong("A");
+		merge.AddWrong("B");
+		merge.Rename("A", "B");
+		this.Check(merge.GetWrongCount("B") == 3, "이사: 겹치면 틀린 횟수를 합친다");
+
+		var same = new Progress();
+		same.AddWrong("A");
+		same.Rename("A", "A");
+		this.Check(same.GetWrongCount("A") == 1, "이사: 같은 질문으로의 이사는 아무 일도 하지 않는다");
+
+		// 옮길 기록이 없으면 목적지를 건드리지 않는다.
+		var absent = new Progress();
+		absent.AddWrong("B");
+		absent.Rename("A", "B");
+		this.Check(absent.GetWrongCount("B") == 1, "이사: 기록 없는 카드는 목적지에 영향을 주지 않는다");
+
+		// 빈 질문으로는 옮기지 않는다 (유효한 카드가 아니라 기록을 잃지 않게).
+		var blank = new Progress();
+		blank.AddWrong("A");
+		blank.Rename("A", "");
+		this.Check(blank.GetWrongCount("A") == 1, "이사: 빈 질문으로의 이사는 기록을 지우지 않는다");
+
+		var restored = Progress.FromJson(moved.ToJson());
+		this.Check(restored.GetWrongCount("B") == 2, "이사: 이사 후에도 직렬화 왕복 유지");
+	}
+
 	private void DeckNamingRules()
 	{
 		this.Check(DeckNaming.DisplayName("영어단어.md") == "영어단어", "덱 이름: 확장자를 뗀다");
@@ -135,11 +216,37 @@ public partial class TestRunner : Node
 
 	private void SettingsRoundTrip()
 	{
-		var settings = new AppSettings { LastDeckFile = "영어단어.md" };
-		this.Check(AppSettings.FromJson(settings.ToJson()).LastDeckFile == "영어단어.md",
-			"설정: 마지막 덱 직렬화 왕복");
+		var settings = new AppSettings { LastDeckFile = "영어단어.md", DeckDir = "D:/Flashcards" };
+		var restored = AppSettings.FromJson(settings.ToJson());
+		this.Check(restored.LastDeckFile == "영어단어.md", "설정: 마지막 덱 직렬화 왕복");
+		this.Check(restored.DeckDir == "D:/Flashcards", "설정: 덱 폴더 직렬화 왕복");
 		this.Check(AppSettings.FromJson("").LastDeckFile == "", "설정: 빈 JSON은 기본값");
+		this.Check(AppSettings.FromJson("").DeckDir == "", "설정: 덱 폴더 기본값은 빈 값");
 		this.Check(AppSettings.FromJson("{깨진 json").LastDeckFile == "", "설정: 깨진 JSON은 기본값");
+	}
+
+	// 덱 폴더 바꾸기: 지정한 폴더(절대 경로 포함)로 덱 읽기/쓰기가 옮겨간다. 진행도는 user:// 고정.
+	private void DeckStorageCustomDir()
+	{
+		var customDir = $"{OS.GetUserDataDir()}/__custom_deck_dir";
+		DeckStorage.SetDecksDir(customDir);
+		this.Check(DeckStorage.DecksDir == customDir, "덱 폴더: 절대 경로로 설정됨");
+
+		DeckStorage.WriteDeck("custom.md", "# X\n1\n");
+		this.Check(DeckStorage.DeckExists("custom.md"), "덱 폴더: 지정 폴더에 덱이 써진다");
+		this.Check(DeckStorage.ListDeckFiles().Contains("custom.md"), "덱 폴더: 지정 폴더에서 목록을 읽는다");
+
+		// 진행도는 폴더를 옮겨도 user://에 남는다.
+		this.Check(DeckStorage.ProgressPath("custom.md") == "user://progress/custom.json",
+			"덱 폴더: 진행도는 user://에 고정");
+
+		DirAccess.RemoveAbsolute(DeckStorage.DeckPath("custom.md"));
+		DirAccess.RemoveAbsolute(customDir);
+
+		// 빈 값이면 기본으로 되돌아온다. 뒤 테스트가 기본 폴더를 쓰므로 반드시 복원한다.
+		DeckStorage.SetDecksDir("");
+		this.Check(DeckStorage.DecksDir == DeckStorage.DefaultDecksDir,
+			"덱 폴더: 빈 값이면 기본 폴더로 복원");
 	}
 
 	// 앱 저장소를 실제로 건드리므로 전용 덱 파일만 쓰고 끝나면 지운다.
@@ -353,7 +460,7 @@ public partial class TestRunner : Node
 		RemoveTestDeck();
 	}
 
-	// app.tscn 배선 검증: 덱 목록 → 덱 선택 → Study → 뒤로. 마지막 덱은 설정에 남는다.
+	// app.tscn 배선 검증: 덱 목록 → 덱 선택 → Study → ✏ 카드 목록 → 뒤로. 마지막 덱은 설정에 남는다.
 	// 실제 설정 파일을 쓰므로 백업 후 복원한다.
 	private void AppSmokeTest()
 	{
@@ -382,6 +489,66 @@ public partial class TestRunner : Node
 		this.Check(study.Visible && !deckList.Visible, "앱: 덱을 고르면 Study로 전환");
 		this.Check(DeckStorage.LoadSettings().LastDeckFile == TestDeckFile,
 			"앱: 고른 덱이 마지막 덱으로 저장됨");
+
+		// ✏ → 카드 목록: 지금 덱의 카드가 저장된 틀린 횟수와 함께 나온다.
+		var savedProgress = new Progress();
+		savedProgress.AddWrong("A");
+		savedProgress.AddWrong("A");
+		savedProgress.AddWrong("A");
+		DeckStorage.SaveProgress(TestDeckFile, savedProgress);
+
+		var cardList = app.GetNode<CardListView>("%CardListView");
+		study.EmitSignal(Study.SignalName.EditRequested);
+		this.Check(cardList.Visible && !study.Visible, "앱: ✏ 누르면 카드 목록으로 전환");
+
+		var cardBox = cardList.GetNode<VBoxContainer>("%CardBox");
+		this.Check(cardBox.GetChildCount() == 3, "앱: 덱의 카드 수만큼 목록에 나온다");
+		// 행은 Button(탭 대상) 위에 HBox[질문 라벨, 횟수 라벨]을 얹은 구조다.
+		var firstLine = cardBox.GetChild(0).GetChild(0);
+		this.Check(firstLine.GetChild<Label>(0).Text == "A",
+			"앱: 카드 행에 질문이 덱 순서대로 표시");
+		this.Check(firstLine.GetChild<Label>(1).Text.Contains("3"),
+			"앱: 카드 행에 저장된 틀린 횟수 표시");
+
+		// 카드 탭 → 편집기: 그 카드의 질문·답이 채워져 열린다.
+		var cardEditor = app.GetNode<CardEditorView>("%CardEditorView");
+		cardList.EmitSignal(CardListView.SignalName.CardChosen, 0);
+		this.Check(cardEditor.Visible && !cardList.Visible, "앱: 카드를 고르면 편집기로 전환");
+		this.Check(cardEditor.GetNode<LineEdit>("%QuestionEdit").Text == "A",
+			"앱: 편집기에 질문이 채워진다");
+		this.Check(cardEditor.GetNode<TextEdit>("%AnswerEdit").Text == "1",
+			"앱: 편집기에 답이 채워진다");
+
+		// 질문을 A→A2로 고쳐 저장(←): md가 바뀌고 진행도가 카드를 따라온다.
+		cardEditor.EmitSignal(CardEditorView.SignalName.EditingDone, "A2", "1");
+		this.Check(cardList.Visible && !cardEditor.Visible, "앱: 편집기에서 ← 누르면 카드 목록으로 복귀");
+		var edited = DeckParser.Parse(DeckStorage.ReadDeck(TestDeckFile));
+		this.Check(edited[0].Question == "A2", "앱: 편집한 질문이 md에 반영됨");
+		var afterEdit = DeckStorage.LoadProgress(TestDeckFile);
+		this.Check(afterEdit.GetWrongCount("A2") == 3 && afterEdit.GetWrongCount("A") == 0,
+			"앱: 질문을 고쳐도 진행도가 카드를 따라온다 (모델 A)");
+
+		// ＋ 카드 추가: 빈 편집기 → 저장 시 덱 끝에 붙는다. (덱은 지금 A2·B·C)
+		cardList.EmitSignal(CardListView.SignalName.AddCardRequested);
+		this.Check(cardEditor.Visible && cardEditor.GetNode<LineEdit>("%QuestionEdit").Text == "",
+			"앱: 카드 추가는 빈 편집기로 연다");
+		cardEditor.EmitSignal(CardEditorView.SignalName.EditingDone, "D", "4");
+		var added = DeckParser.Parse(DeckStorage.ReadDeck(TestDeckFile));
+		this.Check(added.Count == 4 && added[3].Question == "D",
+			"앱: 새 카드가 덱 끝에 추가됨");
+
+		// 삭제: 진행도가 있는 카드(A2)를 지우면 그 기록도 정리된다.
+		cardList.EmitSignal(CardListView.SignalName.CardChosen, 0);
+		cardEditor.EmitSignal(CardEditorView.SignalName.DeleteRequested);
+		this.Check(cardList.Visible && !cardEditor.Visible, "앱: 삭제 후 카드 목록으로 복귀");
+		var afterDelete = DeckParser.Parse(DeckStorage.ReadDeck(TestDeckFile));
+		this.Check(afterDelete.Count == 3 && afterDelete[0].Question == "B",
+			"앱: 삭제한 카드가 덱에서 빠짐");
+		this.Check(DeckStorage.LoadProgress(TestDeckFile).GetWrongCount("A2") == 0,
+			"앱: 삭제한 카드의 진행도도 정리됨");
+
+		cardList.EmitSignal(CardListView.SignalName.BackPressed);
+		this.Check(study.Visible && !cardList.Visible, "앱: 카드 목록에서 ← 누르면 Study로 복귀");
 
 		study.EmitSignal(Study.SignalName.ExitRequested);
 		this.Check(deckList.Visible && !study.Visible, "앱: 뒤로 가면 덱 목록으로 전환");

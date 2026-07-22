@@ -4,16 +4,24 @@ using MyFlashCard.Core;
 
 namespace MyFlashCard;
 
-// 앱 저장소(user://)에 있는 덱·진행도·설정 파일의 위치와 읽고 쓰기만 담당한다.
-// 파싱·학습 규칙·화면은 모른다.
+// 덱·진행도·설정 파일의 위치와 읽고 쓰기만 담당한다.
 public static class DeckStorage
 {
-	public const string DecksDir = "user://decks";
+	public const string DefaultDecksDir = "user://decks";
 	public const string ProgressDir = "user://progress";
 	public const string SettingsPath = "user://settings.json";
 
 	// 첫 실행에 목록이 비어 보이지 않도록 넣어주는 예시 덱.
 	private const string SampleDeckPath = "res://sample_deck.md";
+
+	private static string _decksDir = DefaultDecksDir;
+
+	public static string DecksDir => _decksDir;
+
+	public static void SetDecksDir(string dir)
+	{
+		_decksDir = string.IsNullOrEmpty(dir) ? DefaultDecksDir : dir;
+	}
 
 	public static string DeckPath(string deckFile)
 	{
@@ -79,10 +87,11 @@ public static class DeckStorage
 		return true;
 	}
 
-	// 덱이 하나도 없을 때만 예시 덱을 넣는다. 사용자가 지운 덱을 되살리지 않기 위해서다.
+	// 기본 폴더가 비었을 때만 예시 덱을 넣는다. 사용자가 지운 덱을 되살리지 않고,
+	// 사용자가 지정한 폴더(Drive 동기화 등)에는 앱이 파일을 끼워넣지 않기 위해서다.
 	public static void SeedSampleIfEmpty()
 	{
-		if (ListDeckFiles().Count > 0)
+		if (_decksDir != DefaultDecksDir || ListDeckFiles().Count > 0)
 		{
 			return;
 		}

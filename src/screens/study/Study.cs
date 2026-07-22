@@ -10,6 +10,7 @@ namespace MyFlashCard;
 public partial class Study : Control
 {
 	[Signal] public delegate void ExitRequestedEventHandler();
+	[Signal] public delegate void EditRequestedEventHandler();
 
 	private StudyView _studyView = null!;
 	private Control _doneView = null!;
@@ -28,6 +29,7 @@ public partial class Study : Control
 		this._studyView.AgainPressed += this.OnAgain;
 		this._studyView.GoodPressed += this.OnGood;
 		this._studyView.BackPressed += () => this.EmitSignal(SignalName.ExitRequested);
+		this._studyView.EditPressed += () => this.EmitSignal(SignalName.EditRequested);
 
 		// 덱을 받기 전까지는 빈 세션. StartDeck 전에 눌려도 큐가 없어 아무 일도 하지 않는다.
 		this._session = new StudySession(Array.Empty<Card>());

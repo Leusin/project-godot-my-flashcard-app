@@ -8,6 +8,9 @@ public sealed class AppSettings
 	// 덱 파일 이름. 그 덱이 아직 있는지는 확인하지 않는다.
 	public string LastDeckFile { get; set; } = "";
 
+	// 덱(원본 md)을 둘 폴더. 빈 값이면 기본(user://decks)을 쓴다.
+	public string DeckDir { get; set; } = "";
+
 	public string ToJson()
 	{
 		return JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });

@@ -1,8 +1,10 @@
-﻿[gd_scene load_steps=4 format=3]
+﻿[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://src/App.cs" id="1_app"]
 [ext_resource type="PackedScene" path="res://src/screens/deck_list/deck_list.tscn" id="2_decklist"]
 [ext_resource type="PackedScene" path="res://src/screens/study/study.tscn" id="3_study"]
+[ext_resource type="PackedScene" path="res://src/screens/card_list/card_list.tscn" id="4_cardlist"]
+[ext_resource type="PackedScene" path="res://src/screens/card_editor/card_editor.tscn" id="5_cardeditor"]
 
 [node name="App" type="Control"]
 layout_mode = 3
@@ -18,6 +20,16 @@ unique_name_in_owner = true
 layout_mode = 1
 
 [node name="Study" parent="." instance=ExtResource("3_study")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+
+[node name="CardListView" parent="." instance=ExtResource("4_cardlist")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+
+[node name="CardEditorView" parent="." instance=ExtResource("5_cardeditor")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1

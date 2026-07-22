@@ -59,6 +59,11 @@ horizontal_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 
+[node name="EditButton" type="Button" parent="StudyView/Margin/VBox/TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "✏"
+
 [node name="CardAspect" type="AspectRatioContainer" parent="StudyView/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2

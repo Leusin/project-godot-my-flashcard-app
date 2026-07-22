@@ -9,6 +9,7 @@ public partial class StudyView : Control
 	[Signal] public delegate void AgainPressedEventHandler();
 	[Signal] public delegate void GoodPressedEventHandler();
 	[Signal] public delegate void BackPressedEventHandler();
+	[Signal] public delegate void EditPressedEventHandler();
 
 	private Label _remainingLabel = null!;
 	private Label _deckLabel = null!;
@@ -25,6 +26,8 @@ public partial class StudyView : Control
 
 		this.GetNode<Button>("%BackButton").Pressed +=
 			() => this.EmitSignal(SignalName.BackPressed);
+		this.GetNode<Button>("%EditButton").Pressed +=
+			() => this.EmitSignal(SignalName.EditPressed);
 		this.GetNode<Button>("%AgainButton").Pressed +=
 			() => this.EmitSignal(SignalName.AgainPressed);
 		this.GetNode<Button>("%GoodButton").Pressed +=

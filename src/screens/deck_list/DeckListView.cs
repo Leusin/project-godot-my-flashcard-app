@@ -10,6 +10,7 @@ public partial class DeckListView : Control
 {
 	[Signal] public delegate void DeckChosenEventHandler(string deckFile);
 	[Signal] public delegate void ImportRequestedEventHandler(string sourcePath);
+	[Signal] public delegate void DeckFolderChosenEventHandler(string dir);
 
 	private const int DeckFontSize = 26;
 	private const int DeckButtonHeight = 72;
@@ -19,13 +20,17 @@ public partial class DeckListView : Control
 
 	private VBoxContainer _deckBox = null!;
 	private Label _emptyLabel = null!;
+	private Label _folderLabel = null!;
 	private FileDialog _importDialog = null!;
+	private FileDialog _folderDialog = null!;
 
 	public override void _Ready()
 	{
 		this._deckBox = this.GetNode<VBoxContainer>("%DeckBox");
 		this._emptyLabel = this.GetNode<Label>("%EmptyLabel");
+		this._folderLabel = this.GetNode<Label>("%FolderLabel");
 		this._importDialog = this.GetNode<FileDialog>("%ImportDialog");
+		this._folderDialog = this.GetNode<FileDialog>("%FolderDialog");
 
 		this._emptyLabel.Text = EmptyText;
 
@@ -37,8 +42,22 @@ public partial class DeckListView : Control
 		this._importDialog.FileSelected +=
 			path => this.EmitSignal(SignalName.ImportRequested, path);
 
+		this._folderDialog.Access = FileDialog.AccessEnum.Filesystem;
+		this._folderDialog.FileMode = FileDialog.FileModeEnum.OpenDir;
+		this._folderDialog.UseNativeDialog = true;
+		this._folderDialog.DirSelected +=
+			dir => this.EmitSignal(SignalName.DeckFolderChosen, dir);
+
 		this.GetNode<Button>("%ImportButton").Pressed +=
 			() => this._importDialog.PopupCentered();
+		this.GetNode<Button>("%FolderButton").Pressed +=
+			() => this._folderDialog.PopupCentered();
+	}
+
+	// 덱이 실제로 저장되는 폴더 (사용자가 보게 OS 절대 경로로).
+	public void ShowFolder(string path)
+	{
+		this._folderLabel.Text = $"덱 폴더: {path}";
 	}
 
 	public void ShowDecks(IReadOnlyList<DeckInfo> decks)
