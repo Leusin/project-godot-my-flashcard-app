@@ -46,6 +46,7 @@ theme_override_constants/separation = 12
 [node name="BackButton" type="Button" parent="StudyView/Margin/VBox/TopBar"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = &"GhostButton"
 text = "← Decks"
 
 [node name="DeckLabel" type="Label" parent="StudyView/Margin/VBox/TopBar"]
@@ -62,6 +63,7 @@ layout_mode = 2
 [node name="EditButton" type="Button" parent="StudyView/Margin/VBox/TopBar"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = &"GhostButton"
 text = "✏"
 
 [node name="CardAspect" type="AspectRatioContainer" parent="StudyView/Margin/VBox"]
@@ -117,18 +119,20 @@ theme_override_constants/separation = 24
 
 [node name="DoneLabel" type="Label" parent="DoneView/Center/DoneVBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 36
 text = "학습 완료!"
 horizontal_alignment = 1
 
 [node name="RestartButton" type="Button" parent="DoneView/Center/DoneVBox"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = &"AccentButton"
 theme_override_font_sizes/font_size = 24
 text = "다시 학습"
 
 [node name="DoneDecksButton" type="Button" parent="DoneView/Center/DoneVBox"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = &"GhostButton"
 theme_override_font_sizes/font_size = 24
 text = "← Decks"

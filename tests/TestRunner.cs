@@ -531,15 +531,16 @@ public partial class TestRunner : Node
 		var app = GD.Load<PackedScene>("res://src/app.tscn").Instantiate<Control>();
 		this.AddChild(app);
 
+		this.Check(app.Theme != null, "앱: 테마가 루트에 적용됨 (자식 화면에 상속)");
+
 		var deckList = app.GetNode<DeckListView>("%DeckListView");
 		var study = app.GetNode<Study>("%Study");
 		this.Check(deckList.Visible && !study.Visible, "앱: 마지막 덱이 없으면 덱 목록부터");
 
-		var deckBox = deckList.GetNode<VBoxContainer>("%DeckBox");
-		this.Check(deckBox.GetChildCount() == DeckStorage.ListDeckFiles().Count,
-			"앱: 저장소의 덱 수만큼 목록에 나온다");
-		this.Check(!deckList.GetNode<Label>("%EmptyLabel").Visible,
-			"앱: 덱이 있으면 빈 목록 안내는 숨긴다");
+		var deckBox = deckList.GetNode<HFlowContainer>("%DeckBox");
+		// 덱 타일 + 마지막 "새 덱" 타일 하나.
+		this.Check(deckBox.GetChildCount() == DeckStorage.ListDeckFiles().Count + 1,
+			"앱: 저장소의 덱 수 + 새 덱 타일만큼 나온다");
 
 		deckList.EmitSignal(DeckListView.SignalName.DeckChosen, TestDeckFile);
 		this.Check(study.Visible && !deckList.Visible, "앱: 덱을 고르면 Study로 전환");
@@ -614,6 +615,19 @@ public partial class TestRunner : Node
 
 		study.EmitSignal(Study.SignalName.ExitRequested);
 		this.Check(deckList.Visible && !study.Visible, "앱: 뒤로 가면 덱 목록으로 전환");
+
+		// 새 덱: 빈 덱을 만들고 곧바로 카드 목록으로 간다.
+		const string newDeckFile = "__smoke_new.md";
+		deckList.EmitSignal(DeckListView.SignalName.NewDeckRequested, "__smoke_new");
+		this.Check(DeckStorage.DeckExists(newDeckFile), "앱: 새 덱을 만들면 빈 덱 파일이 생긴다");
+		this.Check(cardList.Visible, "앱: 새 덱은 카드 목록으로 바로 연다");
+		if (DeckStorage.DeckExists(newDeckFile))
+		{
+			DirAccess.RemoveAbsolute(DeckStorage.DeckPath(newDeckFile));
+		}
+
+		// 새 덱이 마지막 덱으로 저장됐으니, 재실행 검증을 위해 되돌린다.
+		DeckStorage.SaveSettings(new AppSettings { LastDeckFile = TestDeckFile });
 
 		app.QueueFree();
 

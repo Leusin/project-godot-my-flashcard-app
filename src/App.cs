@@ -29,6 +29,9 @@ public partial class App : Control
 
 	public override void _Ready()
 	{
+		// 룩의 출처는 코드. 루트에 걸면 자식 화면 전체가 상속받는다.
+		this.Theme = AppTheme.Build();
+
 		this._deckList = this.GetNode<DeckListView>("%DeckListView");
 		this._study = this.GetNode<Study>("%Study");
 		this._cardList = this.GetNode<CardListView>("%CardListView");
@@ -37,6 +40,7 @@ public partial class App : Control
 		this._deckList.DeckChosen += this.OpenDeck;
 		this._deckList.ImportRequested += this.OnImportRequested;
 		this._deckList.DeckFolderChosen += this.ChangeDeckFolder;
+		this._deckList.NewDeckRequested += this.CreateDeck;
 		this._study.ExitRequested += this.ShowDeckList;
 		this._study.EditRequested += this.ShowCardList;
 		this._cardList.BackPressed += this.ShowStudy;
@@ -67,6 +71,16 @@ public partial class App : Control
 		DeckStorage.SaveSettings(this._settings);
 		this._study.StartDeck(deckFile);
 		this.ShowStudy();
+	}
+
+	// 빈 덱을 만들고 곧바로 카드 목록으로 보낸다 (거기서 카드를 추가한다). 이름이 겹치면 번호를 붙인다.
+	private void CreateDeck(string name)
+	{
+		var fileName = DeckNaming.UniqueFileName(
+			$"{name}{DeckNaming.Extension}", DeckStorage.ListDeckFiles());
+		DeckStorage.WriteDeck(fileName, "");
+		this.OpenDeck(fileName);
+		this.ShowCardList();
 	}
 
 	// 덱 폴더를 바꾼다. 그 폴더의 md를 그대로 읽는다 — 기존 덱을 옮기지 않는다 (폴더가 곧 원본).

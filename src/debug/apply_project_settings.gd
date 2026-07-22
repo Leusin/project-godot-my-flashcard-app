@@ -22,12 +22,17 @@ const PROJECT_SETTINGS: Dictionary = {
 	"display/window/stretch/aspect": "expand",
 	"display/window/handheld/orientation": 1,
 
-	# 실제 창 크기(window_*_override)는 여기서 관리하지 않는다.
-	# 테스트하며 자주 바꾸는 값이라, 스크립트가 되돌려놓으면 방해가 된다.
-	# 필요하면 에디터 Project Settings > Display > Window > Size에서 직접 조정한다.
+	# 디자인 해상도는 720×1280(모바일 세로)이지만, 데스크톱 창은 그대로 띄우면 화면보다 크다.
+	# 창만 작게(9:16 유지) 띄우고 내용은 stretch로 축소한다. 화면이 더 작으면 이 값을 줄인다.
+	"display/window/size/window_width_override": 375,
+	"display/window/size/window_height_override": 667,
 
 	# 카드 내용이 대부분 한글이라 기본 폰트로는 렌더링이 아쉽다
 	"gui/theme/custom_font": "res://assets/fonts/PretendardVariable.ttf",
+
+	# 창 배경. 나머지 색은 AppTheme(코드)가 정하고, 이 배경만 프로젝트 설정에 둔다
+	# (컨트롤이 안 덮는 뒤 배경이라 Theme로는 못 칠한다). AppTheme.Canvas(#F7F6F2)와 같은 값.
+	"rendering/environment/defaults/default_clear_color": Color(0.969, 0.965, 0.949, 1.0),
 }
 
 # ── 입력맵 ───────────────────────────────────────────────────────────

@@ -14,6 +14,17 @@ public partial class TallyMarks : Control
 	private const float SlashOverhang = 2.0f;
 
 	private int _count;
+	private Color _color = Colors.White;
+
+	// 그릴 색. 카드 앞/뒷면 색이 달라서 밖(CardView)이 정해준다.
+	public Color MarkColor
+	{
+		set
+		{
+			this._color = value;
+			this.QueueRedraw();
+		}
+	}
 
 	public int Count
 	{
@@ -34,7 +45,7 @@ public partial class TallyMarks : Control
 			return;
 		}
 
-		var color = this.GetThemeColor("font_color", "Label");
+		var color = this._color;
 		var height = this.Size.Y > 0.0f ? this.Size.Y : BarHeight;
 		var x = 0.0f;
 		var remaining = this._count;

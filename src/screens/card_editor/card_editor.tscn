@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3]
+﻿[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://src/screens/card_editor/CardEditorView.cs" id="1_cardeditor"]
 
@@ -34,6 +34,7 @@ theme_override_constants/separation = 12
 [node name="BackButton" type="Button" parent="Margin/VBox/TopBar"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = &"GhostButton"
 text = "← 저장"
 
 [node name="DeckLabel" type="Label" parent="Margin/VBox/TopBar"]
@@ -46,6 +47,7 @@ horizontal_alignment = 1
 [node name="DeleteButton" type="Button" parent="Margin/VBox/TopBar"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = &"DangerButton"
 text = "삭제"
 
 [node name="MetaRow" type="HBoxContainer" parent="Margin/VBox"]
@@ -54,7 +56,7 @@ theme_override_constants/separation = 16
 
 [node name="WrongCountCaption" type="Label" parent="Margin/VBox/MetaRow"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_type_variation = &"CaptionLabel"
 text = "틀림"
 
 [node name="WrongCountSpin" type="SpinBox" parent="Margin/VBox/MetaRow"]
@@ -63,7 +65,7 @@ layout_mode = 2
 
 [node name="StatusCaption" type="Label" parent="Margin/VBox/MetaRow"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_type_variation = &"CaptionLabel"
 text = "상태"
 
 [node name="StatusOption" type="OptionButton" parent="Margin/VBox/MetaRow"]
@@ -72,7 +74,7 @@ layout_mode = 2
 
 [node name="QuestionCaption" type="Label" parent="Margin/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_type_variation = &"CaptionLabel"
 text = "질문"
 
 [node name="QuestionEdit" type="LineEdit" parent="Margin/VBox"]
@@ -82,7 +84,7 @@ theme_override_font_sizes/font_size = 24
 
 [node name="AnswerCaption" type="Label" parent="Margin/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_type_variation = &"CaptionLabel"
 text = "답"
 
 [node name="AnswerEdit" type="TextEdit" parent="Margin/VBox"]

@@ -13,8 +13,7 @@ public partial class CardListView : Control
 	[Signal] public delegate void AddCardRequestedEventHandler();
 	[Signal] public delegate void ExportRequestedEventHandler(string targetPath);
 
-	private const int QuestionFontSize = 22;
-	private const int RowHeight = 56;
+	private const int RowHeight = 64;
 	private const string EmptyText = "카드가 없습니다.";
 
 	private Label _deckLabel = null!;
@@ -79,16 +78,19 @@ public partial class CardListView : Control
 	// 얹은 라벨은 클릭을 삼키지 않도록 마우스를 통과시켜 버튼이 눌리게 한다.
 	private Button MakeRow(CardRow row, int index)
 	{
+		// Flat이 아니라야 테마의 테두리 박스가 그려진다 (각 항목이 카드처럼 보이게).
 		var button = new Button
 		{
 			CustomMinimumSize = new Vector2(0.0f, RowHeight),
 			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-			Flat = true,
 		};
 		button.Pressed += () => this.EmitSignal(SignalName.CardChosen, index);
 
 		var line = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
 		line.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+		// 테두리에 글자가 붙지 않게 좌우로 살짝 들여쓴다.
+		line.OffsetLeft = AppTheme.SpaceMd;
+		line.OffsetRight = -AppTheme.SpaceMd;
 
 		var question = new Label
 		{
@@ -99,7 +101,8 @@ public partial class CardListView : Control
 			// 긴 질문이 틀린 횟수를 밀어내지 않도록 한 줄로 자른다.
 			TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
 		};
-		question.AddThemeFontSizeOverride("font_size", QuestionFontSize);
+		question.AddThemeFontSizeOverride("font_size", AppTheme.FontBody);
+		question.AddThemeColorOverride("font_color", AppTheme.SurfaceText);
 
 		var count = new Label
 		{
@@ -107,7 +110,8 @@ public partial class CardListView : Control
 			VerticalAlignment = VerticalAlignment.Center,
 			MouseFilter = Control.MouseFilterEnum.Ignore,
 		};
-		count.AddThemeFontSizeOverride("font_size", QuestionFontSize);
+		count.AddThemeFontSizeOverride("font_size", AppTheme.FontCaption);
+		count.AddThemeColorOverride("font_color", AppTheme.SurfaceTextMuted);
 
 		line.AddChild(question);
 		line.AddChild(count);
