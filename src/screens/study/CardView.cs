@@ -1,4 +1,5 @@
 using Godot;
+using MyFlashCard.Core;
 
 namespace MyFlashCard;
 
@@ -36,10 +37,12 @@ public partial class CardView : PanelContainer
 	private ScrollContainer _questionScroll = null!;
 	private ScrollContainer _answerScroll = null!;
 	private TallyMarks _tally = null!;
+	private Label _statusLabel = null!;
 
 	public override void _Ready()
 	{
 		this._tally = this.GetNode<TallyMarks>("%Tally");
+		this._statusLabel = this.GetNode<Label>("%StatusLabel");
 		this._questionLabel = this.GetNode<Label>("%QuestionLabel");
 		this._answerLabel = this.GetNode<Label>("%AnswerLabel");
 		this._answerArea = this.GetNode<Control>("%AnswerArea");
@@ -59,16 +62,27 @@ public partial class CardView : PanelContainer
 		this._answerLabel.VerticalAlignment = AnswerVAlign;
 	}
 
-	public void ShowCard(string question, string answer, int wrongCount)
+	public void ShowCard(string question, string answer, int wrongCount, CardStatus status)
 	{
 		this._questionLabel.Text = question;
 		this._answerLabel.Text = answer;
 		this._tally.Count = wrongCount;
+		this._statusLabel.Text = StatusText(status);
 		this.SetAnswerVisible(false);
 
 		// 앞 카드에서 내려둔 스크롤이 남아 새 카드의 첫 줄을 가리지 않게 한다.
 		this._questionScroll.ScrollVertical = 0;
 		this._answerScroll.ScrollVertical = 0;
+	}
+
+	private static string StatusText(CardStatus status)
+	{
+		return status switch
+		{
+			CardStatus.Learning => "LEARNING",
+			CardStatus.Mastered => "MASTERED",
+			_ => "NEW",
+		};
 	}
 
 	// 카드 영역 탭/클릭 → 앞뒤 전환 (씬 루트의 gui_input 연결)

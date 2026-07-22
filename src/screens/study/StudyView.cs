@@ -1,4 +1,5 @@
 using Godot;
+using MyFlashCard.Core;
 
 namespace MyFlashCard;
 
@@ -39,9 +40,10 @@ public partial class StudyView : Control
 		this._deckLabel.Text = deckName;
 	}
 
-	public void ShowCard(string question, string answer, int wrongCount, int remaining)
+	public void ShowCard(
+		string question, string answer, int wrongCount, CardStatus status, int remaining)
 	{
-		this._card.ShowCard(question, answer, wrongCount);
+		this._card.ShowCard(question, answer, wrongCount, status);
 		this._remainingLabel.Text = $"남은 카드 {remaining}";
 	}
 }

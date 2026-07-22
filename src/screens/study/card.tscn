@@ -19,7 +19,19 @@ theme_override_constants/margin_bottom = 20
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Tally" type="Control" parent="CardMargin/CardVBox" unique_id=1678731204]
+[node name="TopRow" type="HBoxContainer" parent="CardMargin/CardVBox" unique_id=1678731205]
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="CardMargin/CardVBox/TopRow" unique_id=1678731206]
+unique_name_in_owner = true
+modulate = Color(1, 1, 1, 0.55)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+theme_override_font_sizes/font_size = 16
+text = "NEW"
+
+[node name="Tally" type="Control" parent="CardMargin/CardVBox/TopRow" unique_id=1678731204]
 unique_name_in_owner = true
 modulate = Color(1, 1, 1, 0.55)
 layout_mode = 2

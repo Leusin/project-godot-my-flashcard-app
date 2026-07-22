@@ -74,6 +74,23 @@ public static class DeckStorage
 		return WriteDeck(fileName, text) ? fileName : null;
 	}
 
+	public static bool ExportDeck(string deckFile, string targetPath)
+	{
+		if (!DeckExists(deckFile))
+		{
+			return false;
+		}
+
+		using var file = FileAccess.Open(targetPath, FileAccess.ModeFlags.Write);
+		if (file == null)
+		{
+			return false;
+		}
+
+		file.StoreString(ReadDeck(deckFile));
+		return true;
+	}
+
 	public static bool WriteDeck(string deckFile, string text)
 	{
 		EnsureDir(DecksDir);

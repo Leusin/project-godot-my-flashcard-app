@@ -24,6 +24,8 @@ public partial class App : Control
 	private int _editingIndex = -1;
 	private string _editingOldQuestion = "";
 	private string _editingOldAnswer = "";
+	private int _editingOldWrongCount;
+	private CardStatus _editingOldStatus = CardStatus.New;
 
 	public override void _Ready()
 	{
@@ -40,6 +42,7 @@ public partial class App : Control
 		this._cardList.BackPressed += this.ShowStudy;
 		this._cardList.CardChosen += this.EditCard;
 		this._cardList.AddCardRequested += this.AddCard;
+		this._cardList.ExportRequested += this.OnExportRequested;
 		this._cardEditor.EditingDone += this.OnEditingDone;
 		this._cardEditor.DeleteRequested += this.OnDeleteRequested;
 
@@ -113,12 +116,16 @@ public partial class App : Control
 		}
 
 		var card = cards[index];
+		var progress = DeckStorage.LoadProgress(this._currentDeck);
 		this._editingIndex = index;
 		this._editingOldQuestion = card.Question;
 		this._editingOldAnswer = card.Answer;
+		this._editingOldWrongCount = progress.GetWrongCount(card.Question);
+		this._editingOldStatus = progress.GetStatus(card.Question);
 
 		this._cardEditor.ShowDeckName(DeckNaming.DisplayName(this._currentDeck));
-		this._cardEditor.ShowCard(card.Question, card.Answer);
+		this._cardEditor.ShowCard(card.Question, card.Answer,
+			this._editingOldWrongCount, this._editingOldStatus);
 		this.ShowOnly(this._cardEditor);
 	}
 
@@ -128,43 +135,58 @@ public partial class App : Control
 		this._editingIndex = -1;
 		this._editingOldQuestion = "";
 		this._editingOldAnswer = "";
+		this._editingOldWrongCount = 0;
+		this._editingOldStatus = CardStatus.New;
 
 		this._cardEditor.ShowDeckName(DeckNaming.DisplayName(this._currentDeck));
-		this._cardEditor.ShowCard("", "");
+		this._cardEditor.ShowCard("", "", 0, CardStatus.New);
 		this.ShowOnly(this._cardEditor);
 	}
 
-	private void OnEditingDone(string question, string answer)
+	private void OnEditingDone(string question, string answer, int wrongCount, int status)
 	{
 		var newQuestion = question.Trim();
-		var changed = newQuestion.Length > 0 &&
-			(newQuestion != this._editingOldQuestion || answer != this._editingOldAnswer);
-		if (changed)
+		if (newQuestion.Length > 0)
 		{
-			this.SaveCardEdit(newQuestion, answer);
+			this.SaveCardEdit(newQuestion, answer, wrongCount, (CardStatus)status);
 		}
 
 		this.ShowCardList();
 	}
 
-	private void SaveCardEdit(string newQuestion, string newAnswer)
+	// 실제로 바뀐 것만 저장한다. 내용(질문·답)이 바뀌었을 때만 md를 다시 쓴다 — 안 바뀌면 파일을 안 건드린다.
+	private void SaveCardEdit(string newQuestion, string newAnswer, int wrongCount, CardStatus status)
 	{
-		var cards = DeckParser.Parse(DeckStorage.ReadDeck(this._currentDeck));
-		var card = new Card(newQuestion, newAnswer);
-		if (this._editingIndex >= 0 && this._editingIndex < cards.Count)
+		var contentChanged =
+			newQuestion != this._editingOldQuestion || newAnswer != this._editingOldAnswer;
+		var metaChanged =
+			wrongCount != this._editingOldWrongCount || status != this._editingOldStatus;
+		if (!contentChanged && !metaChanged)
 		{
-			cards[this._editingIndex] = card;
-		}
-		else
-		{
-			cards.Add(card);
+			return;
 		}
 
-		DeckStorage.WriteDeck(this._currentDeck, DeckWriter.ToMarkdown(cards));
+		if (contentChanged)
+		{
+			var cards = DeckParser.Parse(DeckStorage.ReadDeck(this._currentDeck));
+			var card = new Card(newQuestion, newAnswer);
+			if (this._editingIndex >= 0 && this._editingIndex < cards.Count)
+			{
+				cards[this._editingIndex] = card;
+			}
+			else
+			{
+				cards.Add(card);
+			}
+
+			DeckStorage.WriteDeck(this._currentDeck, DeckWriter.ToMarkdown(cards));
+		}
 
 		var progress = DeckStorage.LoadProgress(this._currentDeck);
-		// 새 카드면 옛 질문이 ""이라 Rename은 아무 일도 하지 않는다.
+		// 새 카드면 옛 질문이 ""이라 Rename은 아무 일도 하지 않는다. 그 뒤 편집기 값으로 확정한다.
 		progress.Rename(this._editingOldQuestion, newQuestion);
+		progress.SetWrongCount(newQuestion, wrongCount);
+		progress.SetStatus(newQuestion, status);
 		DeckStorage.SaveProgress(this._currentDeck, progress);
 	}
 
@@ -201,6 +223,14 @@ public partial class App : Control
 		}
 
 		return false;
+	}
+
+	private void OnExportRequested(string targetPath)
+	{
+		if (!DeckStorage.ExportDeck(this._currentDeck, targetPath))
+		{
+			GD.PushWarning($"덱을 내보내지 못했습니다: {targetPath}");
+		}
 	}
 
 	// 가져온 덱은 곧바로 열지 않는다. 목록에 들어온 것을 확인하고 고르는 편이 덜 놀랍다.

@@ -78,7 +78,8 @@ public partial class Study : Control
 		if (card != null)
 		{
 			this._studyView.ShowCard(card.Question, card.Answer,
-				this._progress.GetWrongCount(card.Question), this._session.Remaining);
+				this._progress.GetWrongCount(card.Question),
+				this._progress.GetStatus(card.Question), this._session.Remaining);
 		}
 	}
 }

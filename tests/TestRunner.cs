@@ -19,11 +19,13 @@ public partial class TestRunner : Node
 		this.ProgressRoundTrip();
 		this.ProgressRename();
 		this.ProgressRemove();
+		this.ProgressStatus();
 		this.DeckWriterRoundTrip();
 		this.DeckNamingRules();
 		this.SettingsRoundTrip();
 		this.DeckStorageRoundTrip();
 		this.DeckStorageCustomDir();
+		this.DeckExport();
 		this.TallyWidth();
 		this.CardFlip();
 		this.SceneSmokeTest();
@@ -115,6 +117,59 @@ public partial class TestRunner : Node
 
 		this.Check(Progress.FromJson("").GetWrongCount("x") == 0, "진행도: 빈 JSON은 빈 진행도");
 		this.Check(Progress.FromJson("{깨진 json").GetWrongCount("x") == 0, "진행도: 깨진 JSON은 빈 진행도");
+	}
+
+	// 카드 상태 라벨 + 수동 WrongCount. 상태는 진행도에 함께 살고, 옛 형식도 읽힌다.
+	private void ProgressStatus()
+	{
+		var p = new Progress();
+		this.Check(p.GetStatus("A") == CardStatus.New, "상태: 기록 없으면 New");
+
+		p.SetStatus("A", CardStatus.Learning);
+		this.Check(p.GetStatus("A") == CardStatus.Learning, "상태: 설정한 값 유지");
+
+		p.SetWrongCount("A", 7);
+		this.Check(p.GetWrongCount("A") == 7, "상태: WrongCount 수동 설정");
+		p.SetWrongCount("A", 0);
+		this.Check(p.GetWrongCount("A") == 0, "상태: WrongCount 0으로 설정");
+
+		p.SetWrongCount("A", 3);
+		p.SetStatus("A", CardStatus.Mastered);
+		var round = Progress.FromJson(p.ToJson());
+		this.Check(round.GetWrongCount("A") == 3 && round.GetStatus("A") == CardStatus.Mastered,
+			"상태: 상태+횟수 직렬화 왕복");
+
+		// 옛 형식(질문→숫자)도 그대로 읽힌다: 횟수는 유지, 상태는 New.
+		var old = Progress.FromJson("{\"A\": 4}");
+		this.Check(old.GetWrongCount("A") == 4 && old.GetStatus("A") == CardStatus.New,
+			"상태: 옛 형식은 횟수만 읽고 상태는 New");
+
+		// 질문을 고치면 상태도 카드를 따라온다.
+		var moved = new Progress();
+		moved.SetStatus("A", CardStatus.Learning);
+		moved.Rename("A", "B");
+		this.Check(moved.GetStatus("B") == CardStatus.Learning && moved.GetStatus("A") == CardStatus.New,
+			"상태: Rename이 상태도 옮긴다");
+
+		// 카드를 지우면 상태도 지워진다.
+		moved.Remove("B");
+		this.Check(moved.GetStatus("B") == CardStatus.New, "상태: Remove가 상태도 지운다");
+	}
+
+	// 내보내기: 지금 덱을 앱 밖 경로로 한 부 복사한다. 저장된 내용 그대로.
+	private void DeckExport()
+	{
+		WriteTestDeck();
+		var target = $"{OS.GetUserDataDir()}/__export_test.md";
+
+		this.Check(DeckStorage.ExportDeck(TestDeckFile, target), "내보내기: 성공 시 true");
+		this.Check(FileAccess.GetFileAsString(target) == TestDeckText,
+			"내보내기: 저장된 덱 내용 그대로 복사");
+		this.Check(!DeckStorage.ExportDeck("__없는덱.md", target),
+			"내보내기: 없는 덱은 false");
+
+		DirAccess.RemoveAbsolute(target);
+		RemoveTestDeck();
 	}
 
 	// 진행도 삭제: 카드를 지우면 그 질문의 기록도 사라진다.
@@ -324,7 +379,7 @@ public partial class TestRunner : Node
 		this.Check(questionLabel.VerticalAlignment == VerticalAlignment.Center,
 			"카드: 질문은 세로 가운데");
 
-		card.ShowCard("질문", "답", 0);
+		card.ShowCard("질문", "답", 0, CardStatus.New);
 		this.Check(!answerArea.Visible, "카드: 새 카드는 앞면으로 시작");
 		var frontFont = questionLabel.GetThemeFontSize("font_size");
 
@@ -350,8 +405,9 @@ public partial class TestRunner : Node
 			"카드: 앞면 질문은 길면 스크롤");
 		this.Check(questionLabel.Modulate.A == 1.0f, "카드: 앞면 질문은 원래 색으로 복귀");
 
-		card.ShowCard("다음 질문", "다음 답", 3);
+		card.ShowCard("다음 질문", "다음 답", 3, CardStatus.Learning);
 		this.Check(card.GetNode<TallyMarks>("%Tally").Count == 3, "카드: 틀린 횟수가 작대기로 전달됨");
+		this.Check(card.GetNode<Label>("%StatusLabel").Text == "LEARNING", "카드: 상태 라벨 표시");
 		this.Check(!answerArea.Visible, "카드: 뒷면 상태가 다음 카드로 넘어가지 않음");
 
 		card.QueueFree();
@@ -518,21 +574,27 @@ public partial class TestRunner : Node
 			"앱: 편집기에 질문이 채워진다");
 		this.Check(cardEditor.GetNode<TextEdit>("%AnswerEdit").Text == "1",
 			"앱: 편집기에 답이 채워진다");
+		this.Check((int)cardEditor.GetNode<SpinBox>("%WrongCountSpin").Value == 3,
+			"앱: 편집기에 저장된 틀린 횟수가 채워진다");
 
-		// 질문을 A→A2로 고쳐 저장(←): md가 바뀌고 진행도가 카드를 따라온다.
-		cardEditor.EmitSignal(CardEditorView.SignalName.EditingDone, "A2", "1");
+		// 질문을 A→A2로 고치고 상태를 LEARNING으로 저장(←): md·진행도·상태가 함께 반영된다.
+		cardEditor.EmitSignal(CardEditorView.SignalName.EditingDone,
+			"A2", "1", 3, (int)CardStatus.Learning);
 		this.Check(cardList.Visible && !cardEditor.Visible, "앱: 편집기에서 ← 누르면 카드 목록으로 복귀");
 		var edited = DeckParser.Parse(DeckStorage.ReadDeck(TestDeckFile));
 		this.Check(edited[0].Question == "A2", "앱: 편집한 질문이 md에 반영됨");
 		var afterEdit = DeckStorage.LoadProgress(TestDeckFile);
 		this.Check(afterEdit.GetWrongCount("A2") == 3 && afterEdit.GetWrongCount("A") == 0,
 			"앱: 질문을 고쳐도 진행도가 카드를 따라온다 (모델 A)");
+		this.Check(afterEdit.GetStatus("A2") == CardStatus.Learning,
+			"앱: 편집기에서 정한 상태가 저장됨");
 
 		// ＋ 카드 추가: 빈 편집기 → 저장 시 덱 끝에 붙는다. (덱은 지금 A2·B·C)
 		cardList.EmitSignal(CardListView.SignalName.AddCardRequested);
 		this.Check(cardEditor.Visible && cardEditor.GetNode<LineEdit>("%QuestionEdit").Text == "",
 			"앱: 카드 추가는 빈 편집기로 연다");
-		cardEditor.EmitSignal(CardEditorView.SignalName.EditingDone, "D", "4");
+		cardEditor.EmitSignal(CardEditorView.SignalName.EditingDone,
+			"D", "4", 0, (int)CardStatus.New);
 		var added = DeckParser.Parse(DeckStorage.ReadDeck(TestDeckFile));
 		this.Check(added.Count == 4 && added[3].Question == "D",
 			"앱: 새 카드가 덱 끝에 추가됨");

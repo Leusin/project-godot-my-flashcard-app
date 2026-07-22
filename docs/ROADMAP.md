@@ -35,9 +35,9 @@
 
 - [x] Card List 화면 (목록 보기만, WrongCount 표시) — Study의 ✏로 진입, ←로 복귀
 - [x] Card Editor (질문/답 수정 → md 재저장, 진행도가 카드를 따라옴 — 모델 A). ←로 나가면 자동 저장
-- [ ] 카드 상태 라벨 (NEW/LEARNING/MASTERED — 수동 설정, 표시용) + WrongCount 수동 수정
+- [x] 카드 상태 라벨 (NEW/LEARNING/MASTERED — 수동, 표시용. Study에 표시·Editor에서 편집) + WrongCount 수동 수정
 - [x] 카드 추가/삭제 (목록 ＋ 카드 추가 = 빈 편집기, 편집기 삭제 = 제거 + 진행도 정리)
-- [ ] Export
+- [x] Export (카드 목록 📝 내보내기 → 지금 덱을 고른 위치로 한 부 복사)
 
 ## v1.0 — 게임 느낌 + Android
 

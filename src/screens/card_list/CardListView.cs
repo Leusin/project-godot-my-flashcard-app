@@ -11,6 +11,7 @@ public partial class CardListView : Control
 	[Signal] public delegate void BackPressedEventHandler();
 	[Signal] public delegate void CardChosenEventHandler(int index);
 	[Signal] public delegate void AddCardRequestedEventHandler();
+	[Signal] public delegate void ExportRequestedEventHandler(string targetPath);
 
 	private const int QuestionFontSize = 22;
 	private const int RowHeight = 56;
@@ -19,23 +20,42 @@ public partial class CardListView : Control
 	private Label _deckLabel = null!;
 	private VBoxContainer _cardBox = null!;
 	private Label _emptyLabel = null!;
+	private FileDialog _exportDialog = null!;
+	private string _deckName = "";
 
 	public override void _Ready()
 	{
 		this._deckLabel = this.GetNode<Label>("%DeckLabel");
 		this._cardBox = this.GetNode<VBoxContainer>("%CardBox");
 		this._emptyLabel = this.GetNode<Label>("%EmptyLabel");
+		this._exportDialog = this.GetNode<FileDialog>("%ExportDialog");
 
 		this._emptyLabel.Text = EmptyText;
+
+		this._exportDialog.Access = FileDialog.AccessEnum.Filesystem;
+		this._exportDialog.FileMode = FileDialog.FileModeEnum.SaveFile;
+		this._exportDialog.Filters = ["*.md ; Markdown"];
+		this._exportDialog.UseNativeDialog = true;
+		this._exportDialog.FileSelected +=
+			path => this.EmitSignal(SignalName.ExportRequested, path);
+
 		this.GetNode<Button>("%BackButton").Pressed +=
 			() => this.EmitSignal(SignalName.BackPressed);
 		this.GetNode<Button>("%AddButton").Pressed +=
 			() => this.EmitSignal(SignalName.AddCardRequested);
+		this.GetNode<Button>("%ExportButton").Pressed += this.OpenExportDialog;
 	}
 
 	public void ShowDeckName(string deckName)
 	{
+		this._deckName = deckName;
 		this._deckLabel.Text = deckName;
+	}
+
+	private void OpenExportDialog()
+	{
+		this._exportDialog.CurrentFile = $"{this._deckName}.md";
+		this._exportDialog.PopupCentered();
 	}
 
 	public void ShowCards(IReadOnlyList<CardRow> rows)
