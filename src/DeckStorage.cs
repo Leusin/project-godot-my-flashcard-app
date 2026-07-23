@@ -104,6 +104,72 @@ public static class DeckStorage
 		return true;
 	}
 
+	// 덱 이름을 바꾼다. 진행도는 덱 이름으로 키를 잡으므로(ProgressFileName) 진행도 파일도 함께 옮긴다.
+	// 새 이름의 고유성은 부르는 쪽이 보장한다 (WriteDeck과 같은 계약).
+	public static bool RenameDeck(string oldFile, string newFile)
+	{
+		if (oldFile == newFile || !DeckExists(oldFile))
+		{
+			return false;
+		}
+
+		if (DirAccess.RenameAbsolute(DeckPath(oldFile), DeckPath(newFile)) != Error.Ok)
+		{
+			return false;
+		}
+
+		var oldProgress = ProgressPath(oldFile);
+		if (FileAccess.FileExists(oldProgress))
+		{
+			DirAccess.RenameAbsolute(oldProgress, ProgressPath(newFile));
+		}
+
+		return true;
+	}
+
+	// 덱을 한 부 복제한다. 이름이 겹치지 않게 번호를 붙이고, 진행도(틀린 횟수·상태)도 함께 복사한다.
+	// 만든 파일 이름을 돌려주고, 원본이 없으면 null.
+	public static string? DuplicateDeck(string deckFile)
+	{
+		if (!DeckExists(deckFile))
+		{
+			return null;
+		}
+
+		var newFile = DeckNaming.UniqueFileName(deckFile, ListDeckFiles());
+		if (!WriteDeck(newFile, ReadDeck(deckFile)))
+		{
+			return null;
+		}
+
+		// 진행도가 없으면 빈 파일을 만들지 않는다 (파일 목록을 가볍게 유지).
+		if (FileAccess.FileExists(ProgressPath(deckFile)))
+		{
+			SaveProgress(newFile, LoadProgress(deckFile));
+		}
+
+		return newFile;
+	}
+
+	// 덱을 지운다. 진행도 파일도 함께 지운다 (덱과 짝이므로 남길 이유가 없다).
+	public static bool DeleteDeck(string deckFile)
+	{
+		if (!DeckExists(deckFile))
+		{
+			return false;
+		}
+
+		DirAccess.RemoveAbsolute(DeckPath(deckFile));
+
+		var progress = ProgressPath(deckFile);
+		if (FileAccess.FileExists(progress))
+		{
+			DirAccess.RemoveAbsolute(progress);
+		}
+
+		return true;
+	}
+
 	// 기본 폴더가 비었을 때만 예시 덱을 넣는다. 사용자가 지운 덱을 되살리지 않고,
 	// 사용자가 지정한 폴더(Drive 동기화 등)에는 앱이 파일을 끼워넣지 않기 위해서다.
 	public static void SeedSampleIfEmpty()

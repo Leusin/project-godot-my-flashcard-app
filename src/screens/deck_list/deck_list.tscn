@@ -1,8 +1,8 @@
-[gd_scene format=3 uid="uid://dkea3eb13im1"]
+[gd_scene load_steps=2 format=3 uid="uid://dkea3eb13im1"]
 
 [ext_resource type="Script" uid="uid://bafqs08d1omyp" path="res://src/screens/deck_list/DeckListView.cs" id="1_decklist"]
 
-[node name="DeckListView" type="Control" unique_id=2053085236]
+[node name="DeckListView" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,7 +11,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_decklist")
 
-[node name="Margin" type="MarginContainer" parent="." unique_id=1814965027]
+[node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -23,27 +23,45 @@ theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="VBox" type="VBoxContainer" parent="Margin" unique_id=370323489]
+[node name="VBox" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="TitleLabel" type="Label" parent="Margin/VBox" unique_id=784540703]
+[node name="TitleLabel" type="Label" parent="Margin/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
 text = "Decks"
 
-[node name="DeckScroll" type="ScrollContainer" parent="Margin/VBox" unique_id=2142552337]
+[node name="DeckScroll" type="ScrollContainer" parent="Margin/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="DeckBox" type="HFlowContainer" parent="Margin/VBox/DeckScroll" unique_id=920506219]
+[node name="DeckBox" type="HFlowContainer" parent="Margin/VBox/DeckScroll"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="EmptyLabel" type="Label" parent="Margin/VBox" unique_id=1759961854]
+[node name="AddTile" type="Button" parent="Margin/VBox/DeckScroll/DeckBox"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="AddLabel" type="Label" parent="Margin/VBox/DeckScroll/DeckBox/AddTile"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 28
+text = "＋ 새 덱"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="EmptyLabel" type="Label" parent="Margin/VBox"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -52,17 +70,17 @@ theme_override_font_sizes/font_size = 22
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ImportButton" type="Button" parent="Margin/VBox" unique_id=540816822]
+[node name="ImportButton" type="Button" parent="Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "📂 가져오기"
 
-[node name="FolderRow" type="HBoxContainer" parent="Margin/VBox" unique_id=2049054079]
+[node name="FolderRow" type="HBoxContainer" parent="Margin/VBox"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="FolderLabel" type="Label" parent="Margin/VBox/FolderRow" unique_id=820467127]
+[node name="FolderLabel" type="Label" parent="Margin/VBox/FolderRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -70,37 +88,69 @@ theme_type_variation = &"CaptionLabel"
 text = "덱 폴더:"
 text_overrun_behavior = 1
 
-[node name="FolderButton" type="Button" parent="Margin/VBox/FolderRow" unique_id=654390958]
+[node name="FolderButton" type="Button" parent="Margin/VBox/FolderRow"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"GhostButton"
 text = "폴더 변경"
 
-[node name="ImportDialog" type="FileDialog" parent="." unique_id=1905024097]
+[node name="ImportDialog" type="FileDialog" parent="."]
 unique_name_in_owner = true
 title = "덱으로 가져올 Markdown 파일"
 initial_position = 2
 size = Vector2i(800, 600)
 ok_button_text = "가져오기"
 
-[node name="FolderDialog" type="FileDialog" parent="." unique_id=1136479854]
+[node name="FolderDialog" type="FileDialog" parent="."]
 unique_name_in_owner = true
 title = "덱을 둘 폴더"
 initial_position = 2
 size = Vector2i(800, 600)
 ok_button_text = "이 폴더 사용"
 
-[node name="NewDeckDialog" type="ConfirmationDialog" parent="." unique_id=1453733279]
+[node name="NewDeckDialog" type="ConfirmationDialog" parent="."]
 unique_name_in_owner = true
 title = "새 덱"
 initial_position = 2
 size = Vector2i(420, 200)
 ok_button_text = "만들기"
 
-[node name="NewDeckName" type="LineEdit" parent="NewDeckDialog" unique_id=920555964]
+[node name="NewDeckName" type="LineEdit" parent="NewDeckDialog"]
 unique_name_in_owner = true
 offset_left = 16.0
 offset_top = 16.0
 offset_right = 404.0
 offset_bottom = 76.0
 placeholder_text = "덱 이름"
+
+[node name="DeckMenu" type="PopupMenu" parent="."]
+unique_name_in_owner = true
+
+[node name="RenameDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "덱 이름 변경"
+initial_position = 2
+size = Vector2i(420, 200)
+ok_button_text = "변경"
+
+[node name="RenameName" type="LineEdit" parent="RenameDialog"]
+unique_name_in_owner = true
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 404.0
+offset_bottom = 76.0
+placeholder_text = "새 이름"
+
+[node name="DeleteDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "덱 삭제"
+initial_position = 2
+size = Vector2i(420, 200)
+ok_button_text = "삭제"
+
+[node name="ExportDialog" type="FileDialog" parent="."]
+unique_name_in_owner = true
+title = "덱을 Markdown으로 내보내기"
+initial_position = 2
+size = Vector2i(800, 600)
+ok_button_text = "내보내기"

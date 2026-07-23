@@ -5,22 +5,37 @@ using MyFlashCard.Core;
 namespace MyFlashCard;
 
 // 카드 목록 화면의 배치만 담당한다. 저장소·파싱·학습 규칙은 모른다.
-// 카드를 표시하고, 어떤 카드를 골랐는지·뒤로 가기를 시그널로 알린다 (편집은 위가 해석).
+// 고른 카드·뒤로·내보내기, 그리고 카드 메뉴의 행동(복제/삭제)을 시그널로만 알린다.
 public partial class CardListView : Control
 {
 	[Signal] public delegate void BackPressedEventHandler();
 	[Signal] public delegate void CardChosenEventHandler(int index);
 	[Signal] public delegate void AddCardRequestedEventHandler();
 	[Signal] public delegate void ExportRequestedEventHandler(string targetPath);
+	[Signal] public delegate void CardDuplicateRequestedEventHandler(int index);
+	[Signal] public delegate void CardDeleteRequestedEventHandler(int index);
 
-	private const int RowHeight = 64;
+	private enum CardMenuId
+	{
+		Duplicate,
+		Delete,
+	}
+
 	private const string EmptyText = "카드가 없습니다.";
+
+	private static readonly PackedScene CardRowScene =
+		GD.Load<PackedScene>("res://src/screens/card_list/card_row.tscn");
 
 	private Label _deckLabel = null!;
 	private VBoxContainer _cardBox = null!;
 	private Label _emptyLabel = null!;
 	private FileDialog _exportDialog = null!;
+	private PopupMenu _cardMenu = null!;
+	private ConfirmationDialog _deleteDialog = null!;
+
 	private string _deckName = "";
+	private IReadOnlyList<CardRow> _rows = new List<CardRow>();
+	private int _menuTargetIndex = -1;
 
 	public override void _Ready()
 	{
@@ -28,6 +43,8 @@ public partial class CardListView : Control
 		this._cardBox = this.GetNode<VBoxContainer>("%CardBox");
 		this._emptyLabel = this.GetNode<Label>("%EmptyLabel");
 		this._exportDialog = this.GetNode<FileDialog>("%ExportDialog");
+		this._cardMenu = this.GetNode<PopupMenu>("%CardMenu");
+		this._deleteDialog = this.GetNode<ConfirmationDialog>("%DeleteDialog");
 
 		this._emptyLabel.Text = EmptyText;
 
@@ -43,6 +60,13 @@ public partial class CardListView : Control
 		this.GetNode<Button>("%AddButton").Pressed +=
 			() => this.EmitSignal(SignalName.AddCardRequested);
 		this.GetNode<Button>("%ExportButton").Pressed += this.OpenExportDialog;
+
+		this._cardMenu.AddItem("복제", (int)CardMenuId.Duplicate);
+		this._cardMenu.AddSeparator();
+		this._cardMenu.AddItem("삭제", (int)CardMenuId.Delete);
+		this._cardMenu.IdPressed += this.OnCardMenuId;
+		this._deleteDialog.Confirmed +=
+			() => this.EmitSignal(SignalName.CardDeleteRequested, this._menuTargetIndex);
 	}
 
 	public void ShowDeckName(string deckName)
@@ -59,6 +83,7 @@ public partial class CardListView : Control
 
 	public void ShowCards(IReadOnlyList<CardRow> rows)
 	{
+		this._rows = rows;
 		foreach (var child in this._cardBox.GetChildren())
 		{
 			// 해제는 프레임 끝에 일어나므로, 새 목록과 섞이지 않게 먼저 떼어낸다.
@@ -70,52 +95,47 @@ public partial class CardListView : Control
 
 		for (var i = 0; i < rows.Count; i++)
 		{
-			this._cardBox.AddChild(this.MakeRow(rows[i], i));
+			var row = CardRowScene.Instantiate<CardRowView>();
+			this._cardBox.AddChild(row);
+			// AddChild로 _Ready가 끝난 뒤라야 라벨이 채워진다.
+			row.Setup(rows[i], i);
+			row.Chosen += this.OnRowChosen;
+			row.MenuRequested += this.OpenCardMenu;
 		}
 	}
 
-	// 행 전체가 탭 대상이라 Button으로 만들고, 그 위에 질문·횟수를 얹는다.
-	// 얹은 라벨은 클릭을 삼키지 않도록 마우스를 통과시켜 버튼이 눌리게 한다.
-	private Button MakeRow(CardRow row, int index)
+	private void OnRowChosen(int index)
 	{
-		// Flat이 아니라야 테마의 테두리 박스가 그려진다 (각 항목이 카드처럼 보이게).
-		var button = new Button
+		this.EmitSignal(SignalName.CardChosen, index);
+	}
+
+	private void OpenCardMenu(int index, Vector2 atPosition)
+	{
+		this._menuTargetIndex = index;
+		this._cardMenu.ResetSize();
+		this._cardMenu.Position = (Vector2I)atPosition;
+		this._cardMenu.Popup();
+	}
+
+	private void OnCardMenuId(long id)
+	{
+		switch ((CardMenuId)id)
 		{
-			CustomMinimumSize = new Vector2(0.0f, RowHeight),
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-		};
-		button.Pressed += () => this.EmitSignal(SignalName.CardChosen, index);
+			case CardMenuId.Duplicate:
+				this.EmitSignal(SignalName.CardDuplicateRequested, this._menuTargetIndex);
+				break;
+			case CardMenuId.Delete:
+				this.OpenDeleteDialog();
+				break;
+		}
+	}
 
-		var line = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
-		line.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-		// 테두리에 글자가 붙지 않게 좌우로 살짝 들여쓴다.
-		line.OffsetLeft = AppTheme.SpaceMd;
-		line.OffsetRight = -AppTheme.SpaceMd;
-
-		var question = new Label
-		{
-			Text = row.Question,
-			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
-			VerticalAlignment = VerticalAlignment.Center,
-			MouseFilter = Control.MouseFilterEnum.Ignore,
-			// 긴 질문이 틀린 횟수를 밀어내지 않도록 한 줄로 자른다.
-			TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
-		};
-		question.AddThemeFontSizeOverride("font_size", AppTheme.FontBody);
-		question.AddThemeColorOverride("font_color", AppTheme.SurfaceText);
-
-		var count = new Label
-		{
-			Text = $"틀림 {row.WrongCount}",
-			VerticalAlignment = VerticalAlignment.Center,
-			MouseFilter = Control.MouseFilterEnum.Ignore,
-		};
-		count.AddThemeFontSizeOverride("font_size", AppTheme.FontCaption);
-		count.AddThemeColorOverride("font_color", AppTheme.SurfaceTextMuted);
-
-		line.AddChild(question);
-		line.AddChild(count);
-		button.AddChild(line);
-		return button;
+	private void OpenDeleteDialog()
+	{
+		var question = this._menuTargetIndex >= 0 && this._menuTargetIndex < this._rows.Count
+			? this._rows[this._menuTargetIndex].Question
+			: "";
+		this._deleteDialog.DialogText = $"'{question}' 카드를 삭제할까요?\n되돌릴 수 없습니다.";
+		this._deleteDialog.PopupCentered();
 	}
 }

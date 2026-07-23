@@ -5,38 +5,66 @@ using MyFlashCard.Core;
 namespace MyFlashCard;
 
 // 덱 목록 화면의 배치만 담당한다. 저장소·파싱·학습 규칙은 모른다.
-// 어떤 덱을 골랐는지, 어떤 파일을 가져오라고 했는지는 시그널로만 알린다.
+// 고른 덱·가져올 파일·덱 메뉴의 행동(이름 변경/내보내기/복제/삭제)을 시그널로만 알린다.
 public partial class DeckListView : Control
 {
 	[Signal] public delegate void DeckChosenEventHandler(string deckFile);
 	[Signal] public delegate void ImportRequestedEventHandler(string sourcePath);
 	[Signal] public delegate void DeckFolderChosenEventHandler(string dir);
 	[Signal] public delegate void NewDeckRequestedEventHandler(string name);
+	[Signal] public delegate void DeckRenameRequestedEventHandler(string deckFile, string newName);
+	[Signal] public delegate void DeckDuplicateRequestedEventHandler(string deckFile);
+	[Signal] public delegate void DeckDeleteRequestedEventHandler(string deckFile);
+	[Signal] public delegate void DeckExportRequestedEventHandler(string deckFile, string targetPath);
 
-	// 타일은 고정 크기(카드 비율). HFlowContainer가 창 폭에 맞춰 알아서 줄을 바꾼다.
-	private const float TileWidth = 360.0f;
-	private static readonly float TileHeight = TileWidth / CardView.AspectRatio;
+	// 항목 순서와 무관하게 눌린 항목을 식별하는 값. AddItem에 넘긴 id로 되돌아온다.
+	private enum DeckMenuId
+	{
+		Rename,
+		Export,
+		Duplicate,
+		Delete,
+	}
 
 	// 덱이 하나도 없을 때 목록 자리에 대신 놓는 안내.
 	private const string EmptyText = "덱이 없습니다.\n아래에서 md 파일을 가져오세요.";
 
+	private static readonly PackedScene DeckTileScene =
+		GD.Load<PackedScene>("res://src/screens/deck_list/deck_tile.tscn");
+
 	private HFlowContainer _deckBox = null!;
 	private Label _emptyLabel = null!;
 	private Label _folderLabel = null!;
+	private Button _addTile = null!;
 	private FileDialog _importDialog = null!;
 	private FileDialog _folderDialog = null!;
 	private ConfirmationDialog _newDeckDialog = null!;
 	private LineEdit _newDeckName = null!;
+
+	private PopupMenu _deckMenu = null!;
+	private ConfirmationDialog _renameDialog = null!;
+	private LineEdit _renameName = null!;
+	private ConfirmationDialog _deleteDialog = null!;
+	private FileDialog _exportDialog = null!;
+
+	// 메뉴·다이얼로그가 대상으로 삼는 덱. 메뉴를 열 때 정해지고 확정할 때까지 유지된다.
+	private string _menuTargetDeck = "";
 
 	public override void _Ready()
 	{
 		this._deckBox = this.GetNode<HFlowContainer>("%DeckBox");
 		this._emptyLabel = this.GetNode<Label>("%EmptyLabel");
 		this._folderLabel = this.GetNode<Label>("%FolderLabel");
+		this._addTile = this.GetNode<Button>("%AddTile");
 		this._importDialog = this.GetNode<FileDialog>("%ImportDialog");
 		this._folderDialog = this.GetNode<FileDialog>("%FolderDialog");
 		this._newDeckDialog = this.GetNode<ConfirmationDialog>("%NewDeckDialog");
 		this._newDeckName = this.GetNode<LineEdit>("%NewDeckName");
+		this._deckMenu = this.GetNode<PopupMenu>("%DeckMenu");
+		this._renameDialog = this.GetNode<ConfirmationDialog>("%RenameDialog");
+		this._renameName = this.GetNode<LineEdit>("%RenameName");
+		this._deleteDialog = this.GetNode<ConfirmationDialog>("%DeleteDialog");
+		this._exportDialog = this.GetNode<FileDialog>("%ExportDialog");
 
 		this._emptyLabel.Text = EmptyText;
 
@@ -44,6 +72,11 @@ public partial class DeckListView : Control
 		this._deckBox.AddThemeConstantOverride("v_separation", AppTheme.SpaceLg);
 		this._deckBox.Alignment = FlowContainer.AlignmentMode.Center;
 		this._deckBox.LastWrapAlignment = FlowContainer.LastWrapAlignmentMode.Begin;
+
+		// 새 덱 타일은 씬에 있고, 크기·색만 코드가 넣는다 (수치는 DeckTile 상수, 색은 AppTheme 토큰).
+		this._addTile.CustomMinimumSize = new Vector2(DeckTile.TileWidth, DeckTile.TileHeight);
+		this.GetNode<Label>("%AddLabel").AddThemeColorOverride("font_color", AppTheme.SurfaceTextMuted);
+		this._addTile.Pressed += this.OpenNewDeckDialog;
 
 		this._newDeckDialog.Confirmed += this.OnNewDeckConfirmed;
 		this._newDeckDialog.RegisterTextEnter(this._newDeckName);
@@ -65,6 +98,31 @@ public partial class DeckListView : Control
 			() => this._importDialog.PopupCentered();
 		this.GetNode<Button>("%FolderButton").Pressed +=
 			() => this._folderDialog.PopupCentered();
+
+		this.SetupDeckMenu();
+	}
+
+	// 덱 메뉴와 그 행동을 확정하는 다이얼로그를 배선한다. 항목은 코드로 채운다(순서=책임 한곳).
+	private void SetupDeckMenu()
+	{
+		this._deckMenu.AddItem("이름 변경", (int)DeckMenuId.Rename);
+		this._deckMenu.AddItem("내보내기", (int)DeckMenuId.Export);
+		this._deckMenu.AddItem("복제", (int)DeckMenuId.Duplicate);
+		this._deckMenu.AddSeparator();
+		this._deckMenu.AddItem("삭제", (int)DeckMenuId.Delete);
+		this._deckMenu.IdPressed += this.OnDeckMenuId;
+
+		this._renameDialog.Confirmed += this.OnRenameConfirmed;
+		this._renameDialog.RegisterTextEnter(this._renameName);
+		this._deleteDialog.Confirmed +=
+			() => this.EmitSignal(SignalName.DeckDeleteRequested, this._menuTargetDeck);
+
+		this._exportDialog.Access = FileDialog.AccessEnum.Filesystem;
+		this._exportDialog.FileMode = FileDialog.FileModeEnum.SaveFile;
+		this._exportDialog.Filters = ["*.md ; Markdown"];
+		this._exportDialog.UseNativeDialog = true;
+		this._exportDialog.FileSelected +=
+			path => this.EmitSignal(SignalName.DeckExportRequested, this._menuTargetDeck, path);
 	}
 
 	// 덱이 실제로 저장되는 폴더 (사용자가 보게 OS 절대 경로로).
@@ -77,9 +135,12 @@ public partial class DeckListView : Control
 	{
 		foreach (var child in this._deckBox.GetChildren())
 		{
-			// 해제는 프레임 끝에 일어나므로, 새 목록과 섞이지 않게 먼저 떼어낸다.
-			this._deckBox.RemoveChild(child);
-			child.QueueFree();
+			// 새 덱 타일은 씬에 상주하므로 지우지 않는다. 동적으로 넣은 덱 타일만 걷어낸다.
+			if (child is DeckTile tile)
+			{
+				this._deckBox.RemoveChild(tile);
+				tile.QueueFree();
+			}
 		}
 
 		// 덱이 없어도 "새 덱" 타일은 늘 있으니 빈 안내는 숨긴다.
@@ -87,11 +148,84 @@ public partial class DeckListView : Control
 
 		foreach (var deck in decks)
 		{
-			this._deckBox.AddChild(this.MakeTile(deck));
+			var tile = DeckTileScene.Instantiate<DeckTile>();
+			this._deckBox.AddChild(tile);
+			// AddChild로 _Ready가 끝난 뒤라야 라벨이 채워진다.
+			tile.Setup(deck);
+			tile.Chosen += this.OnTileChosen;
+			tile.MenuRequested += this.OpenDeckMenu;
 		}
 
-		// 마지막 칸은 새 덱 추가 타일.
-		this._deckBox.AddChild(this.MakeAddTile());
+		// 새 덱 타일은 항상 마지막 칸에 둔다.
+		this._deckBox.MoveChild(this._addTile, this._deckBox.GetChildCount() - 1);
+	}
+
+	private void OnTileChosen(string deckFile)
+	{
+		this.EmitSignal(SignalName.DeckChosen, deckFile);
+	}
+
+	private void OpenDeckMenu(string deckFile, Vector2 atPosition)
+	{
+		this._menuTargetDeck = deckFile;
+		this._deckMenu.ResetSize();
+		this._deckMenu.Position = (Vector2I)atPosition;
+		this._deckMenu.Popup();
+	}
+
+	private void OnDeckMenuId(long id)
+	{
+		switch ((DeckMenuId)id)
+		{
+			case DeckMenuId.Rename:
+				this.OpenRenameDialog();
+				break;
+			case DeckMenuId.Export:
+				this.OpenExportDialog();
+				break;
+			case DeckMenuId.Duplicate:
+				this.EmitSignal(SignalName.DeckDuplicateRequested, this._menuTargetDeck);
+				break;
+			case DeckMenuId.Delete:
+				this.OpenDeleteDialog();
+				break;
+		}
+	}
+
+	private void OpenRenameDialog()
+	{
+		this._renameName.Text = DeckNaming.DisplayName(this._menuTargetDeck);
+		this._renameDialog.PopupCentered();
+		this._renameName.SelectAll();
+		this._renameName.GrabFocus();
+	}
+
+	private void OnRenameConfirmed()
+	{
+		var name = this._renameName.Text.Trim();
+		if (name.Length > 0)
+		{
+			this.EmitSignal(SignalName.DeckRenameRequested, this._menuTargetDeck, name);
+		}
+	}
+
+	private void OpenExportDialog()
+	{
+		this._exportDialog.CurrentFile = $"{DeckNaming.DisplayName(this._menuTargetDeck)}.md";
+		this._exportDialog.PopupCentered();
+	}
+
+	private void OpenDeleteDialog()
+	{
+		this._deleteDialog.DialogText =
+			$"'{DeckNaming.DisplayName(this._menuTargetDeck)}' 덱을 삭제할까요?\n되돌릴 수 없습니다.";
+		this._deleteDialog.PopupCentered();
+	}
+
+	private void OpenNewDeckDialog()
+	{
+		this._newDeckName.Text = "";
+		this._newDeckDialog.PopupCentered();
 	}
 
 	private void OnNewDeckConfirmed()
@@ -101,77 +235,5 @@ public partial class DeckListView : Control
 		{
 			this.EmitSignal(SignalName.NewDeckRequested, name);
 		}
-	}
-
-	// 새 덱 추가 타일. 다른 타일과 같은 크기, 누르면 이름을 묻는다.
-	private Button MakeAddTile()
-	{
-		var tile = new Button { 
-			CustomMinimumSize = new Vector2(TileWidth, TileHeight) 
-		};
-
-		tile.Pressed += () =>
-		{
-			this._newDeckName.Text = "";
-			this._newDeckDialog.PopupCentered();
-		};
-
-		var label = new Label
-		{
-			Text = "＋ 새 덱",
-			HorizontalAlignment = HorizontalAlignment.Center,
-			VerticalAlignment = VerticalAlignment.Center,
-			MouseFilter = Control.MouseFilterEnum.Ignore,
-		};
-		label.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-		label.AddThemeFontSizeOverride("font_size", AppTheme.FontSubtitle);
-		label.AddThemeColorOverride("font_color", AppTheme.SurfaceTextMuted);
-
-		tile.AddChild(label);
-		return tile;
-	}
-
-	// 덱 하나 = 카드 모양 타일. 버튼 위에 덱 이름·카드 수를 얹고, 얹은 라벨은
-	// 클릭을 삼키지 않게 마우스를 통과시켜 타일(버튼)이 눌리게 한다.
-	private Button MakeTile(DeckInfo deck)
-	{
-		var tile = new Button { CustomMinimumSize = new Vector2(TileWidth, TileHeight) };
-		var fileName = deck.FileName;
-		tile.Pressed += () => this.EmitSignal(SignalName.DeckChosen, fileName);
-
-		var box = new VBoxContainer
-		{
-			MouseFilter = Control.MouseFilterEnum.Ignore,
-			Alignment = BoxContainer.AlignmentMode.Center,
-		};
-		box.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-		box.OffsetLeft = AppTheme.SpaceSm;
-		box.OffsetTop = AppTheme.SpaceSm;
-		box.OffsetRight = -AppTheme.SpaceSm;
-		box.OffsetBottom = -AppTheme.SpaceSm;
-
-		var name = new Label
-		{
-			Text = deck.DisplayName,
-			HorizontalAlignment = HorizontalAlignment.Center,
-			AutowrapMode = TextServer.AutowrapMode.WordSmart,
-			MouseFilter = Control.MouseFilterEnum.Ignore,
-		};
-		name.AddThemeFontSizeOverride("font_size", AppTheme.FontSubtitle);
-		name.AddThemeColorOverride("font_color", AppTheme.SurfaceText);
-
-		var count = new Label
-		{
-			Text = $"{deck.CardCount} Cards",
-			HorizontalAlignment = HorizontalAlignment.Center,
-			MouseFilter = Control.MouseFilterEnum.Ignore,
-		};
-		count.AddThemeFontSizeOverride("font_size", AppTheme.FontCaption);
-		count.AddThemeColorOverride("font_color", AppTheme.SurfaceTextMuted);
-
-		box.AddChild(name);
-		box.AddChild(count);
-		tile.AddChild(box);
-		return tile;
 	}
 }
