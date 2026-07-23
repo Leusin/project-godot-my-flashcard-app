@@ -11,6 +11,9 @@ public sealed class AppSettings
 	// 덱(원본 md)을 둘 폴더. 빈 값이면 기본(user://decks)을 쓴다.
 	public string DeckDir { get; set; } = "";
 
+	// 허브 화면 Order 드롭다운의 마지막 선택. 덱마다 다르지 않고 전역 기본값 하나.
+	public bool ShuffleStudy { get; set; }
+
 	public string ToJson()
 	{
 		return JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
