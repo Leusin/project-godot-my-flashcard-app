@@ -27,6 +27,7 @@
 - [x] 덱 목록 화면 (내부 저장소의 md 파일 나열)
 - [x] Import: 파일 선택 → 내부 저장소로 복사
 - [x] 마지막 사용 덱 기억 (시작 화면)
+- [x] 새 덱 생성 (덱 목록 ＋ 새 덱 타일 → 이름 입력 → 빈 덱 → 카드 목록으로 이동, 2026-07-22 폴리싱 세션에서 추가)
 
 ## v0.3 - 편집
 
@@ -61,6 +62,6 @@ v1.0 이후, 실제로 써보면서 필요한 것만 꺼내온다.
 
 - Pass / Previous / Long Press 편집
 - Study 순서 토글 (Shuffle / Sequential — v0.1은 고정 순서로 시작)
-- 덱/카드 드래그 순서 변경, 검색, Rename / Duplicate / Delete 메뉴
-- 새 덱 생성 (앱 내에서)
+- 덱/카드 드래그 순서 변경, 검색
+- **Deck Menu (Rename/Export/Duplicate/Delete)** — 덱 목록(DeckListView) 타일의 `:` 로 진입, DESIGN 원래 목업과 동일한 자리(별도 Deck 상세 허브는 안 만듦). "최종 디자인대로 재구성" 작업 때 한 번에 구현하기로 결정(2026-07-22). Card List의 `:` → Card Menu(Duplicate/Delete)도 같은 패턴이라 그때 같이 볼 것.
 - 카드 상태 자동 전이, MASTERED Study 제외

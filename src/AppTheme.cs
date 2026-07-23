@@ -14,7 +14,9 @@ public static class AppTheme
 	// ── 팔레트 ──────────────────────────────────────────────────────
 	// 중성색은 순수 회색 대신 노랑기를 아주 살짝 섞었다 (형광등 같은 차가움을 피한다).
 
-	private static readonly Color Canvas = Rgb(0xF7, 0xF6, 0xF2);         // 창 배경 (따뜻한 오프화이트)
+	// 창 배경 (따뜻한 오프화이트). 카드 뒷면(SurfaceHover)보다 밝게 유지한다 —
+	// 같으면 뒷면 카드가 배경에 묻힌다.
+	private static readonly Color Canvas = Rgb(0xFB, 0xFA, 0xF6);
 	private static readonly Color Surface = Colors.White;                 // 카드·버튼·입력창
 	private static readonly Color SurfaceHover = Rgb(0xF6, 0xF5, 0xF1);
 	private static readonly Color SurfacePressed = Rgb(0xEC, 0xEA, 0xE4);
@@ -40,8 +42,10 @@ public static class AppTheme
 	public static readonly Color CanvasText = Ink;
 	public static readonly Color CanvasTextMuted = InkMuted;
 
-	// 카드 표면. 앞/뒤 모두 이 색 하나 — 뒷면을 따로 칠하지 않는다 (B안).
+	// 카드 표면. 앞면은 흰 종이, 뒷면은 버튼 호버와 같은 색 — 톤만 아주 살짝 낮춘다
+	// (강조색을 칠하는 대신, 이미 "상태가 바뀌었다"는 뜻으로 쓰던 색을 그대로 재사용).
 	public static readonly Color CardFront = Surface;
+	public static readonly Color CardBack = SurfaceHover;
 
 	// ── 타이포그래피 (Pretendard Variable) ──────────────────────────
 	// 4단계면 충분하다. 단계가 많으면 위계가 오히려 흐려진다.
@@ -100,6 +104,7 @@ public static class AppTheme
 		theme.SetColor("font_color", "SpinBox", Ink);
 
 		BuildLabel(theme);
+		BuildSeparator(theme);
 		BuildPanels(theme);
 		BuildItemList(theme);
 		BuildPopupMenu(theme);
@@ -215,6 +220,15 @@ public static class AppTheme
 		theme.SetTypeVariation("CaptionLabel", "Label");
 		theme.SetColor("font_color", "CaptionLabel", InkMuted);
 		theme.SetFontSize("font_size", "CaptionLabel", FontCaption);
+	}
+
+	// 구분선. 손대지 않으면 Godot 기본 회색 선이 나오는데, 이 앱의 옅은 팔레트와 겉돈다.
+	// 카드 테두리와 같은 색(Border)을 재사용해 "이 앱의 경계는 다 이 톤"으로 통일한다.
+	private static void BuildSeparator(Theme theme)
+	{
+		var line = new StyleBoxLine { Color = Border, Thickness = 1 };
+		theme.SetStylebox("separator", "HSeparator", line);
+		theme.SetStylebox("separator", "VSeparator", line);
 	}
 
 	// 카드·타일 표면. 그림자는 "떠 있다"는 느낌만 주는 최소치 —

@@ -57,7 +57,7 @@ unique_name_in_owner = true
 visible = false
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 12
+theme_override_constants/separation = 32
 
 [node name="HSeparator" type="HSeparator" parent="CardMargin/CardVBox/AnswerArea" unique_id=423843359]
 layout_mode = 2
