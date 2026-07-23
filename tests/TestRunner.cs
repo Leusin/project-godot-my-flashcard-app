@@ -22,14 +22,19 @@ public partial class TestRunner : Node
 		this.ProgressStatus();
 		this.DeckWriterRoundTrip();
 		this.DeckNamingRules();
+		this.DeckOrderingRules();
 		this.SettingsRoundTrip();
 		this.DeckStorageRoundTrip();
 		this.DeckStorageCustomDir();
 		this.DeckExport();
+		this.DeckRenameStorage();
+		this.DeckDuplicateStorage();
+		this.DeckDeleteStorage();
 		this.TallyWidth();
 		this.CardFlip();
 		this.SceneSmokeTest();
 		this.AppSmokeTest();
+		this.AppMenuActions();
 
 		GD.Print($"tests: {this._passed} passed, {this._failed} failed");
 		this.GetTree().Quit(this._failed);
@@ -101,6 +106,20 @@ public partial class TestRunner : Node
 		var empty = new StudySession(DeckParser.Parse(""));
 		empty.Next();
 		this.Check(empty.IsFinished, "세션: 빈 덱에서 Next는 아무 일도 하지 않음");
+
+		// 세션 중 편집: 현재 카드만 교체되고 순서·남은 수는 그대로다.
+		var edit = new StudySession(DeckParser.Parse("# A\n1\n# B\n2"));
+		edit.ReplaceCurrent(new Card("A2", "1e"));
+		this.Check(edit.Current?.Question == "A2" && edit.Remaining == 2,
+			"세션: ReplaceCurrent가 현재 카드만 바꾼다");
+		edit.Next();
+		this.Check(edit.Current?.Question == "B", "세션: 교체 후에도 다음 카드는 그대로");
+
+		var finished = new StudySession(DeckParser.Parse("# A\n1"));
+		finished.Next();
+		finished.ReplaceCurrent(new Card("X", "x"));
+		this.Check(finished.IsFinished && finished.Current == null,
+			"세션: 끝난 세션의 ReplaceCurrent는 아무 일도 하지 않음");
 	}
 
 	private void ProgressRoundTrip()
@@ -170,6 +189,80 @@ public partial class TestRunner : Node
 
 		DirAccess.RemoveAbsolute(target);
 		RemoveTestDeck();
+	}
+
+	// 덱 이름 변경: 덱 파일과 진행도 파일이 함께 새 이름으로 옮겨간다.
+	private void DeckRenameStorage()
+	{
+		const string oldFile = "__rename_src.md";
+		const string newFile = "__rename_dst.md";
+		DeckStorage.WriteDeck(oldFile, "# Q\n1\n");
+		var p = new Progress();
+		p.AddWrong("Q");
+		DeckStorage.SaveProgress(oldFile, p);
+
+		this.Check(DeckStorage.RenameDeck(oldFile, newFile), "덱 이름변경: 성공 시 true");
+		this.Check(!DeckStorage.DeckExists(oldFile), "덱 이름변경: 옛 덱 파일은 사라진다");
+		this.Check(DeckStorage.DeckExists(newFile), "덱 이름변경: 새 이름으로 존재");
+		this.Check(DeckStorage.LoadProgress(newFile).GetWrongCount("Q") == 1,
+			"덱 이름변경: 진행도가 새 이름을 따라온다");
+		this.Check(DeckStorage.LoadProgress(oldFile).GetWrongCount("Q") == 0,
+			"덱 이름변경: 옛 이름엔 진행도가 남지 않는다");
+		this.Check(!DeckStorage.RenameDeck("__없는덱.md", "__x.md"), "덱 이름변경: 없는 덱은 false");
+
+		DirAccess.RemoveAbsolute(DeckStorage.DeckPath(newFile));
+		if (FileAccess.FileExists(DeckStorage.ProgressPath(newFile)))
+		{
+			DirAccess.RemoveAbsolute(DeckStorage.ProgressPath(newFile));
+		}
+	}
+
+	// 덱 복제: 번호를 붙인 새 이름으로 내용과 진행도가 함께 복사된다.
+	private void DeckDuplicateStorage()
+	{
+		const string src = "__dup_src.md";
+		DeckStorage.WriteDeck(src, "# Q\n1\n");
+		var p = new Progress();
+		p.AddWrong("Q");
+		p.AddWrong("Q");
+		DeckStorage.SaveProgress(src, p);
+
+		var copy = DeckStorage.DuplicateDeck(src);
+		this.Check(copy == "__dup_src (2).md", "덱 복제: 번호를 붙인 새 이름");
+		this.Check(DeckStorage.DeckExists(src) && DeckStorage.DeckExists(copy ?? ""),
+			"덱 복제: 원본과 사본이 둘 다 있다");
+		this.Check(DeckStorage.ReadDeck(copy ?? "") == "# Q\n1\n", "덱 복제: 내용 동일");
+		this.Check(DeckStorage.LoadProgress(copy ?? "").GetWrongCount("Q") == 2,
+			"덱 복제: 진행도도 복사된다");
+		this.Check(DeckStorage.DuplicateDeck("__없는덱.md") == null, "덱 복제: 없는 덱은 null");
+
+		DirAccess.RemoveAbsolute(DeckStorage.DeckPath(src));
+		DirAccess.RemoveAbsolute(DeckStorage.ProgressPath(src));
+		if (copy != null)
+		{
+			DirAccess.RemoveAbsolute(DeckStorage.DeckPath(copy));
+			if (FileAccess.FileExists(DeckStorage.ProgressPath(copy)))
+			{
+				DirAccess.RemoveAbsolute(DeckStorage.ProgressPath(copy));
+			}
+		}
+	}
+
+	// 덱 삭제: 덱 파일과 진행도 파일이 함께 사라진다.
+	private void DeckDeleteStorage()
+	{
+		const string file = "__del_target.md";
+		DeckStorage.WriteDeck(file, "# Q\n1\n");
+		var p = new Progress();
+		p.AddWrong("Q");
+		DeckStorage.SaveProgress(file, p);
+		this.Check(FileAccess.FileExists(DeckStorage.ProgressPath(file)), "덱 삭제: 준비 - 진행도 존재");
+
+		this.Check(DeckStorage.DeleteDeck(file), "덱 삭제: 성공 시 true");
+		this.Check(!DeckStorage.DeckExists(file), "덱 삭제: 덱 파일이 사라진다");
+		this.Check(!FileAccess.FileExists(DeckStorage.ProgressPath(file)),
+			"덱 삭제: 진행도 파일도 사라진다");
+		this.Check(!DeckStorage.DeleteDeck("__없는덱.md"), "덱 삭제: 없는 덱은 false");
 	}
 
 	// 진행도 삭제: 카드를 지우면 그 질문의 기록도 사라진다.
@@ -269,14 +362,51 @@ public partial class TestRunner : Node
 			"덱 이름: 진행도 파일은 덱 이름을 따른다");
 	}
 
+	// Order 적용: 무작위성 자체보다 "카드를 잃거나 늘리지 않는다"를 기준으로 본다
+	// (TallyWidth가 정확한 픽셀 대신 상대 크기만 보는 것과 같은 실용적 기준).
+	private void DeckOrderingRules()
+	{
+		var cards = DeckParser.Parse("# A\n1\n# B\n2\n# C\n3\n# D\n4\n# E\n5\n");
+
+		var sequential = DeckOrdering.Apply(StudyOrder.Sequential, cards);
+		this.Check(sequential.Count == cards.Count
+			&& sequential[0].Question == "A" && sequential[4].Question == "E",
+			"순서: Sequential은 받은 순서 그대로");
+
+		var shuffled = DeckOrdering.Apply(StudyOrder.Shuffle, cards, new System.Random(42));
+		this.Check(shuffled.Count == cards.Count, "순서: Shuffle도 카드 수는 그대로");
+		var originalQuestions = new System.Collections.Generic.HashSet<string>();
+		foreach (var card in cards)
+		{
+			originalQuestions.Add(card.Question);
+		}
+
+		var shuffledQuestions = new System.Collections.Generic.HashSet<string>();
+		foreach (var card in shuffled)
+		{
+			shuffledQuestions.Add(card.Question);
+		}
+
+		this.Check(originalQuestions.SetEquals(shuffledQuestions),
+			"순서: Shuffle은 카드를 잃거나 늘리지 않는다 (질문 집합 동일)");
+
+		this.Check(DeckOrdering.Apply(StudyOrder.Shuffle, new System.Collections.Generic.List<Card>()).Count == 0,
+			"순서: 빈 덱을 섞어도 빈 목록");
+	}
+
 	private void SettingsRoundTrip()
 	{
-		var settings = new AppSettings { LastDeckFile = "영어단어.md", DeckDir = "D:/Flashcards" };
+		var settings = new AppSettings
+		{
+			LastDeckFile = "영어단어.md", DeckDir = "D:/Flashcards", ShuffleStudy = true,
+		};
 		var restored = AppSettings.FromJson(settings.ToJson());
 		this.Check(restored.LastDeckFile == "영어단어.md", "설정: 마지막 덱 직렬화 왕복");
 		this.Check(restored.DeckDir == "D:/Flashcards", "설정: 덱 폴더 직렬화 왕복");
+		this.Check(restored.ShuffleStudy, "설정: Order 선택 직렬화 왕복");
 		this.Check(AppSettings.FromJson("").LastDeckFile == "", "설정: 빈 JSON은 기본값");
 		this.Check(AppSettings.FromJson("").DeckDir == "", "설정: 덱 폴더 기본값은 빈 값");
+		this.Check(!AppSettings.FromJson("").ShuffleStudy, "설정: Order 기본값은 Sequential(false)");
 		this.Check(AppSettings.FromJson("{깨진 json").LastDeckFile == "", "설정: 깨진 JSON은 기본값");
 	}
 
@@ -457,14 +587,15 @@ public partial class TestRunner : Node
 
 		var studyView = study.GetNode<StudyView>("%StudyView");
 		var done = study.GetNode<Control>("%DoneView");
-		study.StartDeck(TestDeckFile);
+		study.StartDeck(TestDeckFile, StudyOrder.Sequential);
 		this.Check(studyView.Visible && !done.Visible, "씬: 덱을 받으면 Study 화면 표시");
 		this.Check(study.GetNode<Label>("%DeckLabel").Text == DeckNaming.DisplayName(TestDeckFile),
 			"씬: 상단바에 덱 이름 표시");
 
-		// 판정 버튼은 답을 보기 전에도 누를 수 있어야 한다.
+		// 판정 더미는 답을 보기 전에도 존재한다 (카드 뒤에 깔린 목적지).
 		var card = study.GetNode<CardView>("%Card");
-		this.Check(study.GetNode<Control>("%ButtonRow").Visible, "씬: 판정 버튼은 처음부터 표시");
+		this.Check(study.GetNode<Button>("%AgainButton").Visible
+			&& study.GetNode<Button>("%GoodButton").Visible, "씬: 판정 더미는 처음부터 존재");
 
 		// 비율 값은 씬이 아니라 CardView 상수가 출처다.
 		var cardAspect = study.GetNode<AspectRatioContainer>("%CardAspect");
@@ -496,7 +627,7 @@ public partial class TestRunner : Node
 		var exitRequested = false;
 		study.ExitRequested += () => exitRequested = true;
 		studyView.EmitSignal(StudyView.SignalName.BackPressed);
-		this.Check(exitRequested, "씬: ← Decks는 ExitRequested로 전달");
+		this.Check(exitRequested, "씬: ←는 ExitRequested로 전달");
 
 		study.QueueFree();
 
@@ -508,7 +639,7 @@ public partial class TestRunner : Node
 		}
 		var second = packed.Instantiate<Study>();
 		this.AddChild(second);
-		second.StartDeck(TestDeckFile);
+		second.StartDeck(TestDeckFile, StudyOrder.Sequential);
 		var savedTally = second.GetNode<CardView>("%Card").GetNode<TallyMarks>("%Tally");
 		this.Check(savedTally.Count == 5, "씬: 재실행 시 저장된 WrongCount가 작대기 수로 표시");
 		second.QueueFree();
@@ -534,8 +665,10 @@ public partial class TestRunner : Node
 		this.Check(app.Theme != null, "앱: 테마가 루트에 적용됨 (자식 화면에 상속)");
 
 		var deckList = app.GetNode<DeckListView>("%DeckListView");
+		var deckHome = app.GetNode<DeckHomeView>("%DeckHomeView");
 		var study = app.GetNode<Study>("%Study");
-		this.Check(deckList.Visible && !study.Visible, "앱: 마지막 덱이 없으면 덱 목록부터");
+		this.Check(deckList.Visible && !study.Visible && !deckHome.Visible,
+			"앱: 마지막 덱이 없으면 덱 목록부터");
 
 		var deckBox = deckList.GetNode<HFlowContainer>("%DeckBox");
 		// 덱 타일 + 마지막 "새 덱" 타일 하나.
@@ -543,9 +676,12 @@ public partial class TestRunner : Node
 			"앱: 저장소의 덱 수 + 새 덱 타일만큼 나온다");
 
 		deckList.EmitSignal(DeckListView.SignalName.DeckChosen, TestDeckFile);
-		this.Check(study.Visible && !deckList.Visible, "앱: 덱을 고르면 Study로 전환");
+		this.Check(deckHome.Visible && !deckList.Visible, "앱: 덱을 고르면 허브로 전환");
 		this.Check(DeckStorage.LoadSettings().LastDeckFile == TestDeckFile,
 			"앱: 고른 덱이 마지막 덱으로 저장됨");
+
+		deckHome.EmitSignal(DeckHomeView.SignalName.StudyRequested, (int)StudyOrder.Sequential);
+		this.Check(study.Visible && !deckHome.Visible, "앱: 허브에서 ▶ Study를 누르면 Study로 전환");
 
 		// ✏ → 카드 목록: 지금 덱의 카드가 저장된 틀린 횟수와 함께 나온다.
 		var savedProgress = new Progress();
@@ -554,34 +690,21 @@ public partial class TestRunner : Node
 		savedProgress.AddWrong("A");
 		DeckStorage.SaveProgress(TestDeckFile, savedProgress);
 
-		var cardList = app.GetNode<CardListView>("%CardListView");
-		study.EmitSignal(Study.SignalName.EditRequested);
-		this.Check(cardList.Visible && !study.Visible, "앱: ✏ 누르면 카드 목록으로 전환");
-
-		var cardBox = cardList.GetNode<VBoxContainer>("%CardBox");
-		this.Check(cardBox.GetChildCount() == 3, "앱: 덱의 카드 수만큼 목록에 나온다");
-		// 행은 Button(탭 대상) 위에 HBox[질문 라벨, 횟수 라벨]을 얹은 구조다.
-		var firstLine = cardBox.GetChild(0).GetChild(0);
-		this.Check(firstLine.GetChild<Label>(0).Text == "A",
-			"앱: 카드 행에 질문이 덱 순서대로 표시");
-		this.Check(firstLine.GetChild<Label>(1).Text.Contains("3"),
-			"앱: 카드 행에 저장된 틀린 횟수 표시");
-
-		// 카드 탭 → 편집기: 그 카드의 질문·답이 채워져 열린다.
+		var studyView = study.GetNode<StudyView>("%StudyView");
 		var cardEditor = app.GetNode<CardEditorView>("%CardEditorView");
-		cardList.EmitSignal(CardListView.SignalName.CardChosen, 0);
-		this.Check(cardEditor.Visible && !cardList.Visible, "앱: 카드를 고르면 편집기로 전환");
+		studyView.EmitSignal(StudyView.SignalName.EditPressed);
+		this.Check(cardEditor.Visible && !study.Visible, "앱: 세션 중 ✏는 현재 카드의 편집기를 연다");
 		this.Check(cardEditor.GetNode<LineEdit>("%QuestionEdit").Text == "A",
-			"앱: 편집기에 질문이 채워진다");
-		this.Check(cardEditor.GetNode<TextEdit>("%AnswerEdit").Text == "1",
-			"앱: 편집기에 답이 채워진다");
+			"앱: 세션 중 편집기에 지금 보는 카드가 채워진다");
 		this.Check((int)cardEditor.GetNode<SpinBox>("%WrongCountSpin").Value == 3,
-			"앱: 편집기에 저장된 틀린 횟수가 채워진다");
+			"앱: 세션 중 편집기에 저장된 틀린 횟수가 채워진다");
 
-		// 질문을 A→A2로 고치고 상태를 LEARNING으로 저장(←): md·진행도·상태가 함께 반영된다.
+		// A→A2로 고치고 ←: 세션이 유지된 채 Study로 돌아오고, 화면의 카드가 갱신된다.
 		cardEditor.EmitSignal(CardEditorView.SignalName.EditingDone,
 			"A2", "1", 3, (int)CardStatus.Learning);
-		this.Check(cardList.Visible && !cardEditor.Visible, "앱: 편집기에서 ← 누르면 카드 목록으로 복귀");
+		this.Check(study.Visible && !cardEditor.Visible, "앱: 세션 중 편집을 마치면 Study로 복귀");
+		this.Check(study.GetNode<CardView>("%Card").GetNode<Label>("%QuestionLabel").Text == "A2",
+			"앱: 복귀한 카드에 편집된 질문이 보인다");
 		var edited = DeckParser.Parse(DeckStorage.ReadDeck(TestDeckFile));
 		this.Check(edited[0].Question == "A2", "앱: 편집한 질문이 md에 반영됨");
 		var afterEdit = DeckStorage.LoadProgress(TestDeckFile);
@@ -590,31 +713,72 @@ public partial class TestRunner : Node
 		this.Check(afterEdit.GetStatus("A2") == CardStatus.Learning,
 			"앱: 편집기에서 정한 상태가 저장됨");
 
-		// ＋ 카드 추가: 빈 편집기 → 저장 시 덱 끝에 붙는다. (덱은 지금 A2·B·C)
+		// 편집 직후 Again: 다시 읽은 진행도 위에 쌓여야 한다 — 낡은 메모리 사본으로 덮어쓰면
+		// 방금 이사한 기록(A→A2)이 유실된다.
+		studyView.EmitSignal(StudyView.SignalName.AgainPressed);
+		var afterAgain = DeckStorage.LoadProgress(TestDeckFile);
+		this.Check(afterAgain.GetWrongCount("A2") == 4 && afterAgain.GetWrongCount("A") == 0,
+			"앱: 세션 중 편집 후 Again이 진행도를 덮어쓰지 않는다");
+
+		// 세션 중 삭제: 지금 카드(B)를 지우면 세션이 다음 카드(C)로 넘어간다.
+		studyView.EmitSignal(StudyView.SignalName.EditPressed);
+		this.Check(cardEditor.GetNode<LineEdit>("%QuestionEdit").Text == "B",
+			"앱: Again 뒤 ✏는 다음 카드를 연다");
+		cardEditor.EmitSignal(CardEditorView.SignalName.DeleteRequested);
+		this.Check(study.Visible && !cardEditor.Visible, "앱: 세션 중 삭제 후 Study로 복귀");
+		this.Check(study.GetNode<CardView>("%Card").GetNode<Label>("%QuestionLabel").Text == "C",
+			"앱: 삭제된 카드 대신 다음 카드가 보인다");
+		var afterMidDelete = DeckParser.Parse(DeckStorage.ReadDeck(TestDeckFile));
+		this.Check(afterMidDelete.Count == 2 && afterMidDelete[1].Question == "C",
+			"앱: 세션 중 삭제가 md에서도 빠진다");
+
+		study.EmitSignal(Study.SignalName.ExitRequested);
+		this.Check(deckHome.Visible && !study.Visible, "앱: Study에서 뒤로 가면 허브로 전환");
+
+		// 허브 ✏ → 카드 목록: 덱의 카드가 저장된 틀린 횟수와 함께 나온다. (덱은 지금 A2·C)
+		var cardList = app.GetNode<CardListView>("%CardListView");
+		deckHome.EmitSignal(DeckHomeView.SignalName.CardListRequested);
+		this.Check(cardList.Visible && !deckHome.Visible, "앱: 허브 ✏로 카드 목록 진입");
+
+		var cardBox = cardList.GetNode<VBoxContainer>("%CardBox");
+		this.Check(cardBox.GetChildCount() == 2, "앱: 덱의 카드 수만큼 목록에 나온다");
+		// 행은 CardRowView 씬(Button)이고, 질문·횟수는 그 안의 고유 이름으로 찾는다.
+		var firstRow = cardBox.GetChild<CardRowView>(0);
+		this.Check(firstRow.GetNode<Label>("%Question").Text == "A2",
+			"앱: 카드 행에 질문이 덱 순서대로 표시");
+		this.Check(firstRow.GetNode<Label>("%Count").Text.Contains("4"),
+			"앱: 카드 행에 저장된 틀린 횟수 표시");
+
+		// ＋ 카드 추가: 빈 편집기 → 저장 시 덱 끝에 붙고, 목록으로 돌아온다.
 		cardList.EmitSignal(CardListView.SignalName.AddCardRequested);
 		this.Check(cardEditor.Visible && cardEditor.GetNode<LineEdit>("%QuestionEdit").Text == "",
 			"앱: 카드 추가는 빈 편집기로 연다");
 		cardEditor.EmitSignal(CardEditorView.SignalName.EditingDone,
 			"D", "4", 0, (int)CardStatus.New);
+		this.Check(cardList.Visible && !cardEditor.Visible,
+			"앱: 목록에서 연 편집기는 ←로 목록에 복귀");
 		var added = DeckParser.Parse(DeckStorage.ReadDeck(TestDeckFile));
-		this.Check(added.Count == 4 && added[3].Question == "D",
+		this.Check(added.Count == 3 && added[2].Question == "D",
 			"앱: 새 카드가 덱 끝에 추가됨");
 
-		// 삭제: 진행도가 있는 카드(A2)를 지우면 그 기록도 정리된다.
+		// 목록에서 삭제: 진행도가 있는 카드(A2)를 지우면 그 기록도 정리되고 목록으로 돌아온다.
 		cardList.EmitSignal(CardListView.SignalName.CardChosen, 0);
+		this.Check(cardEditor.Visible && cardEditor.GetNode<LineEdit>("%QuestionEdit").Text == "A2",
+			"앱: 카드를 고르면 편집기로 전환");
 		cardEditor.EmitSignal(CardEditorView.SignalName.DeleteRequested);
-		this.Check(cardList.Visible && !cardEditor.Visible, "앱: 삭제 후 카드 목록으로 복귀");
+		this.Check(cardList.Visible && !cardEditor.Visible,
+			"앱: 목록에서 연 편집기의 삭제는 목록으로 복귀");
 		var afterDelete = DeckParser.Parse(DeckStorage.ReadDeck(TestDeckFile));
-		this.Check(afterDelete.Count == 3 && afterDelete[0].Question == "B",
+		this.Check(afterDelete.Count == 2 && afterDelete[0].Question == "C",
 			"앱: 삭제한 카드가 덱에서 빠짐");
 		this.Check(DeckStorage.LoadProgress(TestDeckFile).GetWrongCount("A2") == 0,
 			"앱: 삭제한 카드의 진행도도 정리됨");
 
 		cardList.EmitSignal(CardListView.SignalName.BackPressed);
-		this.Check(study.Visible && !cardList.Visible, "앱: 카드 목록에서 ← 누르면 Study로 복귀");
+		this.Check(deckHome.Visible && !cardList.Visible, "앱: 카드 목록 ←는 허브로 복귀");
 
-		study.EmitSignal(Study.SignalName.ExitRequested);
-		this.Check(deckList.Visible && !study.Visible, "앱: 뒤로 가면 덱 목록으로 전환");
+		deckHome.EmitSignal(DeckHomeView.SignalName.BackPressed);
+		this.Check(deckList.Visible && !deckHome.Visible, "앱: 허브에서 ← Decks 누르면 덱 목록으로");
 
 		// 새 덱: 빈 덱을 만들고 곧바로 카드 목록으로 간다.
 		const string newDeckFile = "__smoke_new.md";
@@ -631,13 +795,99 @@ public partial class TestRunner : Node
 
 		app.QueueFree();
 
-		// 재실행 시뮬레이션: 마지막 덱이 있으면 목록을 건너뛴다.
+		// 재실행 시뮬레이션: 마지막 덱이 있으면 목록을 건너뛰고 그 덱의 허브로 바로 간다
+		// (DESIGN의 "기본 진입 화면").
 		var second = GD.Load<PackedScene>("res://src/app.tscn").Instantiate<Control>();
 		this.AddChild(second);
-		this.Check(second.GetNode<Study>("%Study").Visible, "앱: 재실행 시 마지막 덱으로 바로 시작");
+		this.Check(second.GetNode<DeckHomeView>("%DeckHomeView").Visible,
+			"앱: 재실행 시 마지막 덱의 허브로 바로 시작");
 		second.QueueFree();
 
 		RemoveTestDeck();
+
+		if (settingsBackup != null)
+		{
+			using var file = FileAccess.Open(DeckStorage.SettingsPath, FileAccess.ModeFlags.Write);
+			file?.StoreString(settingsBackup);
+		}
+		else if (FileAccess.FileExists(DeckStorage.SettingsPath))
+		{
+			DirAccess.RemoveAbsolute(DeckStorage.SettingsPath);
+		}
+	}
+
+	// 덱/카드 메뉴 배선: App이 시그널을 받아 저장소·진행도·설정에 반영하는지. 파일·설정을 건드리므로 복원한다.
+	private void AppMenuActions()
+	{
+		var settingsBackup = FileAccess.FileExists(DeckStorage.SettingsPath)
+			? FileAccess.GetFileAsString(DeckStorage.SettingsPath)
+			: null;
+
+		const string deckFile = "__menu_deck.md";
+		DeckStorage.WriteDeck(deckFile, "# A\n1\n# B\n2\n");
+		// 마지막 덱으로 두면 앱이 곧장 그 덱의 허브로 시작한다 (Study는 신호로 직접 불러 시험한다).
+		DeckStorage.SaveSettings(new AppSettings { LastDeckFile = deckFile });
+
+		var app = GD.Load<PackedScene>("res://src/app.tscn").Instantiate<Control>();
+		this.AddChild(app);
+
+		var deckList = app.GetNode<DeckListView>("%DeckListView");
+		var deckHome = app.GetNode<DeckHomeView>("%DeckHomeView");
+		var cardList = app.GetNode<CardListView>("%CardListView");
+
+		// 허브 ✏로 카드 목록에 들어가 카드 메뉴를 시험한다 (화면이 안 보여도 신호는 발신할 수 있다).
+		deckHome.EmitSignal(DeckHomeView.SignalName.CardListRequested);
+
+		// 카드 복제: index 0(A) 뒤에 사본이 들어간다 → A·A·B.
+		cardList.EmitSignal(CardListView.SignalName.CardDuplicateRequested, 0);
+		var afterDup = DeckParser.Parse(DeckStorage.ReadDeck(deckFile));
+		this.Check(afterDup.Count == 3 && afterDup[1].Question == "A",
+			"앱 메뉴: 카드 복제가 원본 뒤에 사본을 넣는다");
+
+		// 카드 삭제(메뉴): 진행도 있는 카드 B(지금 index 2)를 지우면 그 기록도 정리된다.
+		var bp = new Progress();
+		bp.SetWrongCount("B", 2);
+		DeckStorage.SaveProgress(deckFile, bp);
+		cardList.EmitSignal(CardListView.SignalName.CardDeleteRequested, 2);
+		var afterDel = DeckParser.Parse(DeckStorage.ReadDeck(deckFile));
+		this.Check(afterDel.Count == 2 && afterDel[1].Question == "A",
+			"앱 메뉴: 카드 삭제가 그 자리 카드를 뺀다");
+		this.Check(DeckStorage.LoadProgress(deckFile).GetWrongCount("B") == 0,
+			"앱 메뉴: 삭제한 카드의 진행도도 정리된다");
+
+		// 덱 복제: 사본이 생긴다.
+		deckList.EmitSignal(DeckListView.SignalName.DeckDuplicateRequested, deckFile);
+		const string dupFile = "__menu_deck (2).md";
+		this.Check(DeckStorage.DeckExists(dupFile), "앱 메뉴: 덱 복제로 사본이 생긴다");
+
+		// 덱 이름 변경: 마지막 덱이면 설정도 새 이름을 따라온다.
+		const string renamed = "__menu_renamed.md";
+		deckList.EmitSignal(DeckListView.SignalName.DeckRenameRequested, deckFile, "__menu_renamed");
+		this.Check(DeckStorage.DeckExists(renamed) && !DeckStorage.DeckExists(deckFile),
+			"앱 메뉴: 덱 이름 변경이 파일 이름을 바꾼다");
+		this.Check(DeckStorage.LoadSettings().LastDeckFile == renamed,
+			"앱 메뉴: 마지막 덱이면 이름 변경이 설정에도 반영된다");
+
+		// 덱 삭제: 마지막 덱을 지우면 설정의 마지막 덱이 비워진다.
+		deckList.EmitSignal(DeckListView.SignalName.DeckDeleteRequested, renamed);
+		this.Check(!DeckStorage.DeckExists(renamed), "앱 메뉴: 덱 삭제가 파일을 지운다");
+		this.Check(DeckStorage.LoadSettings().LastDeckFile == "",
+			"앱 메뉴: 마지막 덱을 지우면 설정이 비워진다");
+
+		app.QueueFree();
+
+		foreach (var f in new[] { deckFile, renamed, dupFile })
+		{
+			if (DeckStorage.DeckExists(f))
+			{
+				DirAccess.RemoveAbsolute(DeckStorage.DeckPath(f));
+			}
+
+			if (FileAccess.FileExists(DeckStorage.ProgressPath(f)))
+			{
+				DirAccess.RemoveAbsolute(DeckStorage.ProgressPath(f));
+			}
+		}
 
 		if (settingsBackup != null)
 		{

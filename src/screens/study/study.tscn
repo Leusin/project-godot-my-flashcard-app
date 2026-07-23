@@ -1,10 +1,10 @@
-﻿[gd_scene load_steps=4 format=3]
+[gd_scene format=3 uid="uid://d0p46mbphfrt2"]
 
-[ext_resource type="Script" path="res://src/screens/study/Study.cs" id="1_study"]
-[ext_resource type="Script" path="res://src/screens/study/StudyView.cs" id="2_study"]
+[ext_resource type="Script" uid="uid://cm0a7uwx1cnsp" path="res://src/screens/study/Study.cs" id="1_study"]
+[ext_resource type="Script" uid="uid://dp6vf2ya06xyd" path="res://src/screens/study/StudyView.cs" id="2_study"]
 [ext_resource type="PackedScene" path="res://src/screens/study/card.tscn" id="3_card"]
 
-[node name="Study" type="Control"]
+[node name="Study" type="Control" unique_id=204561375]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -13,7 +13,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_study")
 
-[node name="StudyView" type="Control" parent="."]
+[node name="StudyView" type="Control" parent="." unique_id=243731170]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -23,7 +23,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_study")
 
-[node name="Margin" type="MarginContainer" parent="StudyView"]
+[node name="Margin" type="MarginContainer" parent="StudyView" unique_id=529521811]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -35,67 +35,97 @@ theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="VBox" type="VBoxContainer" parent="StudyView/Margin"]
+[node name="VBox" type="VBoxContainer" parent="StudyView/Margin" unique_id=2052731885]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="TopBar" type="HBoxContainer" parent="StudyView/Margin/VBox"]
+[node name="TopBar" type="HBoxContainer" parent="StudyView/Margin/VBox" unique_id=1539366990]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="BackButton" type="Button" parent="StudyView/Margin/VBox/TopBar"]
+[node name="BackButton" type="Button" parent="StudyView/Margin/VBox/TopBar" unique_id=833292770]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"GhostButton"
-text = "← Decks"
+text = "←"
 
-[node name="DeckLabel" type="Label" parent="StudyView/Margin/VBox/TopBar"]
+[node name="DeckLabel" type="Label" parent="StudyView/Margin/VBox/TopBar" unique_id=346673685]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-text_overrun_behavior = 3
 horizontal_alignment = 1
+text_overrun_behavior = 3
 
-[node name="RemainingLabel" type="Label" parent="StudyView/Margin/VBox/TopBar"]
+[node name="RemainingLabel" type="Label" parent="StudyView/Margin/VBox/TopBar" unique_id=1804936557]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="EditButton" type="Button" parent="StudyView/Margin/VBox/TopBar"]
+[node name="EditButton" type="Button" parent="StudyView/Margin/VBox/TopBar" unique_id=930929060]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"GhostButton"
 text = "✏"
 
-[node name="CardAspect" type="AspectRatioContainer" parent="StudyView/Margin/VBox"]
+[node name="CardZone" type="Control" parent="StudyView/Margin/VBox" unique_id=1534215667]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-stretch_mode = 2
 
-[node name="Card" parent="StudyView/Margin/VBox/CardAspect" instance=ExtResource("3_card")]
+[node name="AgainButton" type="Button" parent="StudyView/Margin/VBox/CardZone" unique_id=890352341]
 unique_name_in_owner = true
-layout_mode = 2
-
-[node name="ButtonRow" type="HBoxContainer" parent="StudyView/Margin/VBox"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_constants/separation = 16
-
-[node name="AgainButton" type="Button" parent="StudyView/Margin/VBox/ButtonRow"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.55
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+theme_type_variation = &"GhostButton"
 theme_override_font_sizes/font_size = 24
 text = "← Again"
 
-[node name="GoodButton" type="Button" parent="StudyView/Margin/VBox/ButtonRow"]
+[node name="GoodButton" type="Button" parent="StudyView/Margin/VBox/CardZone" unique_id=937670917]
 unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.45
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_bottom = -8.0
+theme_type_variation = &"GhostButton"
 theme_override_font_sizes/font_size = 24
 text = "Got it →"
 
-[node name="DoneView" type="Control" parent="."]
+[node name="CardAspect" type="AspectRatioContainer" parent="StudyView/Margin/VBox/CardZone" unique_id=719631436]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="CardHolder" type="Control" parent="StudyView/Margin/VBox/CardZone/CardAspect" unique_id=1034549988]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Card" parent="StudyView/Margin/VBox/CardZone/CardAspect/CardHolder" unique_id=1765753169 instance=ExtResource("3_card")]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 0.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DoneView" type="Control" parent="." unique_id=767449068]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -105,7 +135,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Center" type="CenterContainer" parent="DoneView"]
+[node name="Center" type="CenterContainer" parent="DoneView" unique_id=78781311]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -113,26 +143,26 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="DoneVBox" type="VBoxContainer" parent="DoneView/Center"]
+[node name="DoneVBox" type="VBoxContainer" parent="DoneView/Center" unique_id=478376486]
 layout_mode = 2
 theme_override_constants/separation = 24
 
-[node name="DoneLabel" type="Label" parent="DoneView/Center/DoneVBox"]
+[node name="DoneLabel" type="Label" parent="DoneView/Center/DoneVBox" unique_id=569938826]
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
 text = "학습 완료!"
 horizontal_alignment = 1
 
-[node name="RestartButton" type="Button" parent="DoneView/Center/DoneVBox"]
+[node name="RestartButton" type="Button" parent="DoneView/Center/DoneVBox" unique_id=87201458]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"AccentButton"
 theme_override_font_sizes/font_size = 24
 text = "다시 학습"
 
-[node name="DoneDecksButton" type="Button" parent="DoneView/Center/DoneVBox"]
+[node name="DoneDecksButton" type="Button" parent="DoneView/Center/DoneVBox" unique_id=447468997]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"GhostButton"
 theme_override_font_sizes/font_size = 24
-text = "← Decks"
+text = "←"
