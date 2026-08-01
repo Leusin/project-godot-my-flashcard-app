@@ -10,6 +10,12 @@
 - 독립 `tests/phase0_smoke.tscn`을 일반 Godot에서 실행했다. Output: `Phase 0 ready`, `res:// = /Users/mymac/MySpace/project-godot-my-flashcard-app/`, `user:// = /Users/mymac/Library/Application Support/Godot/app_userdata/MyFlashCard/`.
 - 확인: `res://`는 프로젝트 파일 위치, `user://`는 macOS의 앱 전용 저장소다. 덱·진행도·설정의 실제 저장 위치를 예측할 수 있게 됐다.
 
+## 2026-08-01 GDScript 마이그레이션 Phase 1 진행 중 — 데이터 모델과 덱 이름 규칙
+
+- `FlashCard`, `CardStatus`, `DeckInfo`, `CardRow`를 GDScript의 `RefCounted` 데이터 타입으로 옮겼다. 이들은 Scene Tree에 놓이지 않고 값만 담는다.
+- `DeckNaming`을 static 함수 모음으로 옮겼다. 표시 이름, 이름 충돌 회피, 진행도 파일명은 GDScript에서 확인했다. `is_deck_file`의 대소문자 무시 판정은 마무리 수정 뒤 확인한다.
+- 학습: `Array[String]`은 순서가 있는 목록이고, `Dictionary`는 여기서 기존 파일명의 소문자 key를 보관하는 Set처럼 쓴다. 파일명 출력은 원래 대소문자를 보존하고 조회 key만 소문자로 정규화한다.
+
 ## 2026-07-22 비주얼 폴리싱 — 테마 시스템, 카드 B안
 
 - **테마를 코드로 재구성** (`AppTheme.cs`, App 루트에 적용): 따뜻한 중성 캔버스 + 흰 표면 + 인디고 강조 하나. 팔레트·타이포(4단계)·8pt 간격을 토큰화하고 `AccentButton`/`GhostButton`/`DangerButton` variation을 만들었다. 이전엔 어두운 캔버스+인디고 카드였는데, "공부 앱은 밝아야 한다"는 피드백으로 라이트 톤으로 뒤집었다.

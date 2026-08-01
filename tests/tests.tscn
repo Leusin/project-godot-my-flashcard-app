@@ -1,6 +1,10 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://2you8vs116ln"]
 
-[ext_resource type="Script" path="res://tests/TestRunner.cs" id="1_runner"]
+[ext_resource type="PackedScene" uid="uid://diigoepiplgq1" path="res://tests/phase1_smoke.tscn" id="1_mlp16"]
+[ext_resource type="PackedScene" uid="uid://cvbi6jof8ncjt" path="res://tests/phase0_smoke.tscn" id="2_qpm35"]
 
-[node name="TestRunner" type="Node"]
-script = ExtResource("1_runner")
+[node name="Tests" type="Node2D" unique_id=1981310814]
+
+[node name="Phase0Smoke" parent="." unique_id=1220511921 instance=ExtResource("2_qpm35")]
+
+[node name="Phase1Smoke" parent="." unique_id=801495040 instance=ExtResource("1_mlp16")]

@@ -6,7 +6,7 @@ namespace MyFlashCard.Core;
 // 덱 파일 이름 규칙만 담당한다. 파일 IO와 화면은 모른다.
 public static class DeckNaming
 {
-	public const string Extension = ".md";
+	public const string EXTENTION = ".md";
 
 	// Windows 파일 시스템이 대소문자를 구분하지 않으므로 이름 충돌도 같은 기준으로 본다.
 	private static readonly StringComparer NameComparer = StringComparer.OrdinalIgnoreCase;
@@ -15,9 +15,9 @@ public static class DeckNaming
 	public static string DisplayName(string fileName)
 	{
 		var name = fileName.Trim();
-		if (name.EndsWith(Extension, StringComparison.OrdinalIgnoreCase))
+		if (name.EndsWith(EXTENTION, StringComparison.OrdinalIgnoreCase))
 		{
-			name = name[..^Extension.Length];
+			name = name[..^EXTENTION.Length];
 		}
 
 		return name.Trim();
@@ -25,7 +25,7 @@ public static class DeckNaming
 
 	public static bool IsDeckFile(string fileName)
 	{
-		return fileName.EndsWith(Extension, StringComparison.OrdinalIgnoreCase)
+		return fileName.EndsWith(EXTENTION, StringComparison.OrdinalIgnoreCase)
 			&& DisplayName(fileName).Length > 0;
 	}
 
@@ -41,7 +41,7 @@ public static class DeckNaming
 		var stem = DisplayName(fileName);
 		for (var n = 2; ; n++)
 		{
-			var candidate = $"{stem} ({n}){Extension}";
+			var candidate = $"{stem} ({n}){EXTENTION}";
 			if (!taken.Contains(candidate))
 			{
 				return candidate;

@@ -98,7 +98,7 @@ public partial class App : Control
 	private void CreateDeck(string name)
 	{
 		var fileName = DeckNaming.UniqueFileName(
-			$"{name}{DeckNaming.Extension}", DeckStorage.ListDeckFiles());
+			$"{name}{DeckNaming.EXTENTION}", DeckStorage.ListDeckFiles());
 		DeckStorage.WriteDeck(fileName, "");
 		this.OpenDeck(fileName);
 		this.ShowCardList();
@@ -116,7 +116,7 @@ public partial class App : Control
 	// 덱 이름 변경. 진행도는 이름을 따라 함께 옮겨간다 (DeckStorage가 처리).
 	private void RenameDeck(string deckFile, string newName)
 	{
-		var candidate = $"{newName}{DeckNaming.Extension}";
+		var candidate = $"{newName}{DeckNaming.EXTENTION}";
 		// 이름이 그대로면 바꿀 게 없다.
 		if (DeckNaming.DisplayName(candidate) == DeckNaming.DisplayName(deckFile))
 		{
