@@ -1,0 +1,10 @@
+{
+  "Apple": {
+    "wrong": 3,
+    "status": "LEARNING"
+  },
+  "Banana": {
+    "wrong": 0,
+    "status": "MASTERED"
+  }
+}

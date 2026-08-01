@@ -3,6 +3,13 @@
 결정과 교훈을 그날 기록한다. 세션이 끊겨도 이 문서만 읽으면 이어서 작업할 수 있게 쓴다.
 중간에 뒤집힌 시도는 남기지 않는다 — 최종 결정과 그 이유만 적는다.
 
+## 2026-08-01 GDScript 마이그레이션 Phase 0 — 기준 데이터와 일반 Godot 실행 확인
+
+- **C# 실행 환경은 준비하지 않는다.** 현재 C# 소스·씬·테스트를 읽을 수 있는 동작 명세로 삼고, 새 구현은 일반 Godot과 GDScript에서만 실행·검증한다.
+- `tests/fixtures/`에 빈/경계 덱, 중복 질문, 옛·현재·깨진 진행도 JSON을 추가했다. 이후 parser와 Progress 테스트는 실제 사용자 데이터를 건드리지 않고 이 고정 입력을 사용한다.
+- 독립 `tests/phase0_smoke.tscn`을 일반 Godot에서 실행했다. Output: `Phase 0 ready`, `res:// = /Users/mymac/MySpace/project-godot-my-flashcard-app/`, `user:// = /Users/mymac/Library/Application Support/Godot/app_userdata/MyFlashCard/`.
+- 확인: `res://`는 프로젝트 파일 위치, `user://`는 macOS의 앱 전용 저장소다. 덱·진행도·설정의 실제 저장 위치를 예측할 수 있게 됐다.
+
 ## 2026-07-22 비주얼 폴리싱 — 테마 시스템, 카드 B안
 
 - **테마를 코드로 재구성** (`AppTheme.cs`, App 루트에 적용): 따뜻한 중성 캔버스 + 흰 표면 + 인디고 강조 하나. 팔레트·타이포(4단계)·8pt 간격을 토큰화하고 `AccentButton`/`GhostButton`/`DangerButton` variation을 만들었다. 이전엔 어두운 캔버스+인디고 카드였는데, "공부 앱은 밝아야 한다"는 피드백으로 라이트 톤으로 뒤집었다.
