@@ -1,3 +1,6 @@
 [gd_scene format=3 uid="uid://diigoepiplgq1"]
 
+[ext_resource type="Script" path="res://tests/phase1_smoke.gd" id="1_phase1"]
+
 [node name="Phase1Smoke" type="Node2D" unique_id=801495040]
+script = ExtResource("1_phase1")

@@ -26,9 +26,9 @@ static func parse(text: String) -> Array[FlashCard]:
 		elif not question.is_empty():
 			answer_lines.append(line)
 		
-		# 마지막 카드 저장
-		if not question.is_empty():
-			var answer := "\n".join(answer_lines).strip_edges()
-			cards.append(FlashCard.new(question, answer))
+	# 마지막 카드 저장
+	if not question.is_empty():
+		var answer := "\n".join(answer_lines).strip_edges()
+		cards.append(FlashCard.new(question, answer))
 		
 	return cards

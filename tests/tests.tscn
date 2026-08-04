@@ -2,9 +2,12 @@
 
 [ext_resource type="PackedScene" uid="uid://diigoepiplgq1" path="res://tests/phase1_smoke.tscn" id="1_mlp16"]
 [ext_resource type="PackedScene" uid="uid://cvbi6jof8ncjt" path="res://tests/phase0_smoke.tscn" id="2_qpm35"]
+[ext_resource type="PackedScene" uid="uid://d0w3ka1w0xwq8" path="res://tests/phase2_smoke.tscn" id="3_qpm35"]
 
 [node name="Tests" type="Node2D" unique_id=1981310814]
 
 [node name="Phase0Smoke" parent="." unique_id=1220511921 instance=ExtResource("2_qpm35")]
 
 [node name="Phase1Smoke" parent="." unique_id=801495040 instance=ExtResource("1_mlp16")]
+
+[node name="Phase2Smoke" parent="." unique_id=375614156 instance=ExtResource("3_qpm35")]
