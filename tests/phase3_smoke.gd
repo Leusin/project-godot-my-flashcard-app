@@ -1,6 +1,6 @@
 extends TestCase
 
-# Phase 3: 학습 세션 큐 규칙(StudySession).
+# Phase 3: 학습 세션 큐와 덱 순서 규칙(StudySession, DeckOrdering).
 
 
 func run_tests() -> void:
@@ -8,6 +8,7 @@ func run_tests() -> void:
 	_test_single_and_empty_decks()
 	_test_replace_current()
 	_test_input_array_is_copied()
+	_test_sequential_ordering()
 
 
 func _test_queue_progression() -> void:
@@ -82,3 +83,29 @@ func _test_input_array_is_copied() -> void:
 	cards.clear()
 	check(session.remaining() == 2, "세션: 생성 후 입력 배열 변경의 영향을 받지 않음")
 	check(session.current().question == "A", "세션: 복사한 입력 배열의 첫 카드를 유지")
+
+
+func _test_sequential_ordering() -> void:
+	var cards: Array[FlashCard] = [
+		FlashCard.new("A", "1"),
+		FlashCard.new("B", "2"),
+		FlashCard.new("C", "3"),
+	]
+	var ordered := DeckOrdering.apply(DeckOrdering.StudyOrder.SEQUENTIAL, cards)
+
+	check(
+		ordered.size() == 3
+		and ordered[0].question == "A"
+		and ordered[1].question == "B"
+		and ordered[2].question == "C",
+		"순서: Sequential은 입력 순서를 유지"
+	)
+
+	ordered.clear()
+	check(
+		cards.size() == 3
+		and cards[0].question == "A"
+		and cards[1].question == "B"
+		and cards[2].question == "C",
+		"순서: Sequential 결과를 변경해도 원본 배열은 유지"
+	)

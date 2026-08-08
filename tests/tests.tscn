@@ -15,4 +15,4 @@ script = ExtResource("1_runner")
 
 [node name="Phase2Smoke" parent="." unique_id=375614156 instance=ExtResource("4_qpm35")]
 
-[node name="Phase3Smoke" parent="." instance=ExtResource("5_phase3")]
+[node name="Phase3Smoke" parent="." unique_id=387999132 instance=ExtResource("5_phase3")]
