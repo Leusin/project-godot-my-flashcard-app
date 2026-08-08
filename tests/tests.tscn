@@ -1,13 +1,18 @@
 [gd_scene format=3 uid="uid://2you8vs116ln"]
 
-[ext_resource type="PackedScene" uid="uid://diigoepiplgq1" path="res://tests/phase1_smoke.tscn" id="1_mlp16"]
+[ext_resource type="Script" uid="uid://k7e3uhq5a4kv" path="res://tests/test_runner.gd" id="1_runner"]
 [ext_resource type="PackedScene" uid="uid://cvbi6jof8ncjt" path="res://tests/phase0_smoke.tscn" id="2_qpm35"]
-[ext_resource type="PackedScene" uid="uid://d0w3ka1w0xwq8" path="res://tests/phase2_smoke.tscn" id="3_qpm35"]
+[ext_resource type="PackedScene" uid="uid://diigoepiplgq1" path="res://tests/phase1_smoke.tscn" id="3_mlp16"]
+[ext_resource type="PackedScene" uid="uid://d0w3ka1w0xwq8" path="res://tests/phase2_smoke.tscn" id="4_qpm35"]
+[ext_resource type="PackedScene" path="res://tests/phase3_smoke.tscn" id="5_phase3"]
 
-[node name="Tests" type="Node2D" unique_id=1981310814]
+[node name="Tests" type="Node" unique_id=1981310814]
+script = ExtResource("1_runner")
 
 [node name="Phase0Smoke" parent="." unique_id=1220511921 instance=ExtResource("2_qpm35")]
 
-[node name="Phase1Smoke" parent="." unique_id=801495040 instance=ExtResource("1_mlp16")]
+[node name="Phase1Smoke" parent="." unique_id=801495040 instance=ExtResource("3_mlp16")]
 
-[node name="Phase2Smoke" parent="." unique_id=375614156 instance=ExtResource("3_qpm35")]
+[node name="Phase2Smoke" parent="." unique_id=375614156 instance=ExtResource("4_qpm35")]
+
+[node name="Phase3Smoke" parent="." instance=ExtResource("5_phase3")]
