@@ -1,10 +1,18 @@
 class_name DeckStorage
 extends RefCounted
 
+enum ExportResult {
+	OK,
+	DECK_NOT_FOUND,
+	TARGET_OPEN_FAILED,
+	WRITE_FAILED,
+}
+
 const DEFAULT_DECKS_DIR := "user://decks"
 const PROGRESS_DIR := "user://progress"
 const SETTINGS_PATH := "user://settings.json"
 const SAMPLE_DECK_PATH := "res://sample_deck.md"
+const SAMPLE_SEEDED_MARKER := "user://.sample_deck_seeded"
 
 static var _decks_dir := DEFAULT_DECKS_DIR
 
@@ -62,15 +70,23 @@ static func import_deck(source_path: String) -> Variant:
 
 
 static func export_deck(deck_file: String, target_path: String) -> bool:
+	return export_deck_result(deck_file, target_path) == ExportResult.OK
+
+
+static func export_deck_result(deck_file: String, target_path: String) -> ExportResult:
 	if not deck_exists(deck_file):
-		return false
+		return ExportResult.DECK_NOT_FOUND
 	
 	var target := FileAccess.open(target_path, FileAccess.WRITE)
 	if target == null:
-		return false
+		return ExportResult.TARGET_OPEN_FAILED
 	
 	target.store_string(read_deck(deck_file))
-	return true
+	target.flush()
+	if target.get_error() != OK:
+		return ExportResult.WRITE_FAILED
+
+	return ExportResult.OK
 
 
 static func write_deck(deck_file: String, content: String) -> bool:
@@ -126,13 +142,18 @@ static func delete_deck(deck_file: String) -> bool:
 
 
 static func seed_sample_if_empty() -> void:
-	if _decks_dir != DEFAULT_DECKS_DIR or not list_deck_files().is_empty():
+	if _decks_dir != DEFAULT_DECKS_DIR or FileAccess.file_exists(SAMPLE_SEEDED_MARKER):
 		return
 
-	write_deck(
-		SAMPLE_DECK_PATH.get_file(),
-		FileAccess.get_file_as_string(SAMPLE_DECK_PATH)
-	)
+	if list_deck_files().is_empty():
+		write_deck(
+			SAMPLE_DECK_PATH.get_file(),
+			FileAccess.get_file_as_string(SAMPLE_DECK_PATH)
+		)
+
+	var marker := FileAccess.open(SAMPLE_SEEDED_MARKER, FileAccess.WRITE)
+	if marker != null:
+		marker.store_string("seeded")
 
 
 static func progress_path(deck_file: String) -> String:

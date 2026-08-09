@@ -23,10 +23,13 @@ layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="DeckList" type="VBoxContainer" parent="DeckListScroll"]
+[node name="DeckList" type="HFlowContainer" parent="DeckListScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 12
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 24
+alignment = 0
+last_wrap_alignment = 0
 
 [node name="EmptyDecksLabel" type="Label" parent="."]
 visible = false
@@ -35,20 +38,20 @@ theme_override_font_sizes/font_size = 20
 text = "덱이 없습니다."
 horizontal_alignment = 1
 
-[node name="ImportButton" type="Button" parent="."]
-custom_minimum_size = Vector2(0, 72)
-layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "덱 가져오기 (.md)"
-
-[node name="ImportStatusLabel" type="Label" parent="."]
+[node name="LibraryStatusLabel" type="Label" parent="."]
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "가져오기 완료"
+text = "작업 완료"
 horizontal_alignment = 1
+autowrap_mode = 3
 
 [node name="ImportDialog" type="FileDialog" parent="."]
 title = "가져올 Markdown 덱 선택"
+initial_position = 2
+size = Vector2i(720, 900)
+
+[node name="ExportDialog" type="FileDialog" parent="."]
+title = "Markdown 덱 내보내기"
 initial_position = 2
 size = Vector2i(720, 900)

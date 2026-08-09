@@ -85,8 +85,25 @@ func _test_import_and_export() -> void:
 	check(DeckStorage.export_deck(TEST_DECK, EXPORTED_PATH), "저장소: 덱 Export 성공")
 	check(FileAccess.get_file_as_string(EXPORTED_PATH) == TEST_TEXT, "저장소: Export 내용 보존")
 	check(
+		DeckStorage.export_deck_result(TEST_DECK, EXPORTED_PATH)
+		== DeckStorage.ExportResult.OK,
+		"저장소: Export 성공 원인을 구분"
+	)
+	check(
 		not DeckStorage.export_deck("__없는덱.md", EXPORTED_PATH),
 		"저장소: 없는 덱 Export는 false"
+	)
+	check(
+		DeckStorage.export_deck_result("__없는덱.md", EXPORTED_PATH)
+		== DeckStorage.ExportResult.DECK_NOT_FOUND,
+		"저장소: 없는 덱 Export 오류를 구분"
+	)
+	check(
+		DeckStorage.export_deck_result(
+			TEST_DECK,
+			"user://__gd_phase4_missing_dir/export.md"
+		) == DeckStorage.ExportResult.TARGET_OPEN_FAILED,
+		"저장소: 저장 위치 열기 오류를 구분"
 	)
 
 

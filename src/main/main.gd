@@ -4,15 +4,34 @@ extends Control
 const BASE_PAGE_MARGIN := 32.0
 const EMPTY_DECK_MESSAGE := "빈 덱입니다. '# 질문' 형식으로 카드를 추가하세요."
 const BROKEN_DECK_MESSAGE := "카드를 찾지 못했습니다. 각 질문을 '# 질문' 형식으로 작성하세요."
+const EXPORT_DECK_NOT_FOUND_MESSAGE := "내보낼 덱 파일을 찾을 수 없습니다."
+const EXPORT_TARGET_OPEN_FAILED_MESSAGE := "선택한 위치에 파일을 만들 수 없습니다. 저장 권한이나 위치를 확인하세요."
+const EXPORT_WRITE_FAILED_MESSAGE := "파일을 저장하지 못했습니다. 저장 공간을 확인하고 다시 시도하세요."
+const EXPORT_UNKNOWN_FAILED_MESSAGE := "덱을 내보내지 못했습니다. 다른 위치를 선택해 다시 시도하세요."
+const DELETE_DECK_NOT_FOUND_MESSAGE := "삭제할 덱 파일을 찾을 수 없습니다."
+const DELETE_DECK_FAILED_MESSAGE := "덱을 삭제하지 못했습니다. 파일이 사용 중인지 확인하고 다시 시도하세요."
+const DECK_TILE_SCENE := preload("res://src/main/deck_tile.tscn")
+const ADD_DECK_TILE_SCENE := preload("res://src/main/add_deck_tile.tscn")
 
 @export var auto_start := true
 
 @onready var page_margin: MarginContainer = $Margin
 @onready var library_container: VBoxContainer = $Margin/Page/LibraryContainer
-@onready var deck_list: VBoxContainer = $Margin/Page/LibraryContainer/DeckListScroll/DeckList
+@onready var deck_list: HFlowContainer = $Margin/Page/LibraryContainer/DeckListScroll/DeckList
 @onready var empty_decks_label: Label = $Margin/Page/LibraryContainer/EmptyDecksLabel
-@onready var import_status_label: Label = $Margin/Page/LibraryContainer/ImportStatusLabel
+@onready var library_status_label: Label = $Margin/Page/LibraryContainer/LibraryStatusLabel
 @onready var import_dialog: FileDialog = $Margin/Page/LibraryContainer/ImportDialog
+@onready var export_dialog: FileDialog = $Margin/Page/LibraryContainer/ExportDialog
+@onready var deck_context_menu: Control = $DeckContextMenu
+@onready var deck_context_menu_panel: PanelContainer = $DeckContextMenu/DeckContextMenuPanel
+@onready var export_deck_button := (
+	deck_context_menu.find_child("ExportDeckButton", true, false) as Button
+)
+@onready var delete_deck_button := (
+	deck_context_menu.find_child("DeleteDeckButton", true, false) as Button
+)
+@onready var delete_confirmation_overlay: Control = $DeleteConfirmationOverlay
+@onready var delete_confirmation_title: Label = $DeleteConfirmationOverlay/DeleteConfirmationPanel/Margin/Content/DeleteConfirmationTitle
 @onready var exit_confirmation_overlay: Control = $ExitConfirmationOverlay
 @onready var study_flow: VBoxContainer = $Margin/Page/StudyFlow
 @onready var deck_label: Label = $Margin/Page/StudyFlow/Header/DeckLabel
@@ -30,18 +49,30 @@ var _order := DeckOrdering.StudyOrder.SEQUENTIAL
 var _session: StudySession
 var _progress := Progress.new()
 var _source_cards: Array[FlashCard] = []
+var _menu_deck_file := ""
 
 
 func _ready() -> void:
 	get_tree().root.size_changed.connect(_apply_safe_area)
 	call_deferred("_apply_safe_area")
-	$Margin/Page/LibraryContainer/ImportButton.pressed.connect(_on_import_pressed)
 	import_dialog.file_selected.connect(import_deck_from_path)
 	import_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	import_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
 	import_dialog.use_native_dialog = true
 	import_dialog.clear_filters()
 	import_dialog.add_filter("*.md", "Markdown", "text/markdown,text/plain")
+	export_dialog.file_selected.connect(_on_export_file_selected)
+	export_dialog.canceled.connect(_on_export_canceled)
+	export_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	export_dialog.file_mode = FileDialog.FILE_MODE_SAVE_FILE
+	export_dialog.use_native_dialog = true
+	export_dialog.clear_filters()
+	export_dialog.add_filter("*.md", "Markdown", "text/markdown,text/plain")
+	export_deck_button.pressed.connect(_on_export_pressed)
+	delete_deck_button.pressed.connect(_on_delete_pressed)
+	$DeckContextMenu/DismissContextMenuButton.pressed.connect(_on_deck_context_dismissed)
+	$DeleteConfirmationOverlay/DeleteConfirmationPanel/Margin/Content/Buttons/CancelDeleteButton.pressed.connect(_on_delete_canceled)
+	$DeleteConfirmationOverlay/DeleteConfirmationPanel/Margin/Content/Buttons/ConfirmDeleteButton.pressed.connect(_on_delete_confirmed)
 	$ExitConfirmationOverlay/ExitConfirmationPanel/Margin/Content/Buttons/CancelExitButton.pressed.connect(_on_exit_canceled)
 	$ExitConfirmationOverlay/ExitConfirmationPanel/Margin/Content/Buttons/ConfirmExitButton.pressed.connect(_on_exit_confirmed)
 	$Margin/Page/StudyFlow/Header/BackToLibraryButton.pressed.connect(show_library)
@@ -104,7 +135,10 @@ func show_library() -> void:
 	DeckStorage.seed_sample_if_empty()
 	_session = null
 	_deck_file = ""
-	import_status_label.visible = false
+	_menu_deck_file = ""
+	deck_context_menu.hide()
+	delete_confirmation_overlay.hide()
+	library_status_label.visible = false
 	library_container.visible = true
 	study_flow.visible = false
 	study_container.visible = false
@@ -162,21 +196,72 @@ func _refresh_deck_list() -> void:
 	empty_decks_label.visible = deck_files.is_empty()
 
 	for deck_file in deck_files:
-		var deck_button := Button.new()
-		deck_button.name = "Deck_%s" % deck_file.validate_node_name()
-		deck_button.text = DeckNaming.display_name(deck_file)
-		deck_button.custom_minimum_size = Vector2(0, 84)
-		deck_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		deck_button.add_theme_font_size_override("font_size", 22)
-		deck_button.pressed.connect(_on_deck_selected.bind(deck_file))
-		deck_list.add_child(deck_button)
+		var deck_tile := DECK_TILE_SCENE.instantiate() as DeckTileView
+		deck_tile.name = "Deck_%s" % deck_file.validate_node_name()
+		deck_list.add_child(deck_tile)
+		var card_count := DeckParser.parse(DeckStorage.read_deck(deck_file)).size()
+		deck_tile.setup(deck_file, DeckNaming.display_name(deck_file), card_count)
+		deck_tile.selected.connect(_on_deck_selected)
+		deck_tile.menu_requested.connect(_on_deck_menu_requested)
+
+	var add_deck_tile := ADD_DECK_TILE_SCENE.instantiate() as AddDeckTileView
+	deck_list.add_child(add_deck_tile)
+	add_deck_tile.pressed.connect(_on_import_pressed)
 
 
 func _on_deck_selected(deck_file: String) -> void:
+	deck_context_menu.hide()
 	start_deck(deck_file)
 
 
+func _on_deck_menu_requested(deck_file: String, anchor: Control) -> void:
+	_menu_deck_file = deck_file
+	export_dialog.current_file = "%s%s" % [
+		DeckNaming.display_name(deck_file),
+		DeckNaming.EXTENSION,
+	]
+	deck_context_menu.show()
+	deck_context_menu_panel.reset_size()
+	_position_deck_context_menu(anchor)
+
+
+func _position_deck_context_menu(anchor: Control) -> void:
+	var anchor_to_menu := (
+		deck_context_menu.get_global_transform().affine_inverse()
+		* anchor.get_global_transform()
+	)
+	var anchor_position := anchor_to_menu * Vector2.ZERO
+	var anchor_end := anchor_to_menu * anchor.size
+	var anchor_rect := Rect2(anchor_position, anchor_end - anchor_position)
+	var menu_size := deck_context_menu_panel.get_combined_minimum_size()
+	deck_context_menu_panel.size = menu_size
+	var viewport_size := deck_context_menu.size
+	var margin := 12.0
+	var position := Vector2(
+		anchor_rect.end.x - menu_size.x,
+		anchor_rect.position.y
+	)
+	position.x = clampf(position.x, margin, viewport_size.x - menu_size.x - margin)
+	if position.y + menu_size.y > viewport_size.y - margin:
+		position.y = anchor_rect.end.y - menu_size.y
+	position.y = clampf(position.y, margin, viewport_size.y - menu_size.y - margin)
+	deck_context_menu_panel.position = position
+
+
+func _on_deck_context_dismissed() -> void:
+	deck_context_menu.hide()
+	_menu_deck_file = ""
+
+
 func handle_back_request() -> bool:
+	if delete_confirmation_overlay.visible:
+		_on_delete_canceled()
+		return true
+
+	if deck_context_menu.visible:
+		_on_deck_context_dismissed()
+		return true
+
 	if exit_confirmation_overlay.visible:
 		_on_exit_canceled()
 		return true
@@ -198,8 +283,102 @@ func _on_exit_confirmed() -> void:
 
 
 func _on_import_pressed() -> void:
-	import_status_label.visible = false
+	library_status_label.visible = false
 	import_dialog.popup_file_dialog()
+
+
+func _on_export_pressed() -> void:
+	if _menu_deck_file.is_empty():
+		deck_context_menu.hide()
+		_show_library_status(EXPORT_DECK_NOT_FOUND_MESSAGE)
+		return
+
+	deck_context_menu.hide()
+	export_dialog.popup_file_dialog()
+
+
+func _on_export_file_selected(target_path: String) -> void:
+	export_deck_to_path(_menu_deck_file, target_path)
+	_menu_deck_file = ""
+
+
+func _on_export_canceled() -> void:
+	_menu_deck_file = ""
+
+
+func _on_delete_pressed() -> void:
+	deck_context_menu.hide()
+	if not DeckStorage.deck_exists(_menu_deck_file):
+		_menu_deck_file = ""
+		_show_library_status(DELETE_DECK_NOT_FOUND_MESSAGE)
+		return
+
+	delete_confirmation_title.text = "'%s' 덱을 삭제할까요?" % DeckNaming.display_name(
+		_menu_deck_file
+	)
+	delete_confirmation_overlay.show()
+
+
+func _on_delete_canceled() -> void:
+	delete_confirmation_overlay.hide()
+	_menu_deck_file = ""
+
+
+func _on_delete_confirmed() -> void:
+	var deck_file := _menu_deck_file
+	delete_confirmation_overlay.hide()
+	_menu_deck_file = ""
+	delete_deck_from_library(deck_file)
+
+
+func delete_deck_from_library(deck_file: String) -> bool:
+	if not DeckStorage.deck_exists(deck_file):
+		_show_library_status(DELETE_DECK_NOT_FOUND_MESSAGE)
+		return false
+
+	var display_name := DeckNaming.display_name(deck_file)
+	if not DeckStorage.delete_deck(deck_file):
+		push_warning("Deck delete failed (source=%s)" % deck_file)
+		_show_library_status(DELETE_DECK_FAILED_MESSAGE)
+		return false
+
+	_refresh_deck_list()
+	_show_library_status("'%s' 삭제 완료" % display_name)
+	return true
+
+
+func export_deck_to_path(deck_file: String, target_path: String) -> bool:
+	var markdown_path := ensure_markdown_extension(target_path)
+	var result := DeckStorage.export_deck_result(deck_file, markdown_path)
+	if result == DeckStorage.ExportResult.OK:
+		_show_library_status("'%s' 내보내기 완료" % markdown_path.uri_decode().get_file())
+		return true
+
+	var message := export_error_message(result)
+	push_warning(
+		"Deck export failed (result=%s, source=%s, target=%s)"
+		% [result, deck_file, markdown_path]
+	)
+	_show_library_status(message)
+	return false
+
+
+static func ensure_markdown_extension(target_path: String) -> String:
+	if target_path.to_lower().ends_with(DeckNaming.EXTENSION):
+		return target_path
+	return "%s%s" % [target_path, DeckNaming.EXTENSION]
+
+
+static func export_error_message(result: DeckStorage.ExportResult) -> String:
+	match result:
+		DeckStorage.ExportResult.DECK_NOT_FOUND:
+			return EXPORT_DECK_NOT_FOUND_MESSAGE
+		DeckStorage.ExportResult.TARGET_OPEN_FAILED:
+			return EXPORT_TARGET_OPEN_FAILED_MESSAGE
+		DeckStorage.ExportResult.WRITE_FAILED:
+			return EXPORT_WRITE_FAILED_MESSAGE
+		_:
+			return EXPORT_UNKNOWN_FAILED_MESSAGE
 
 
 func import_deck_from_path(source_path: String) -> bool:
@@ -237,8 +416,8 @@ func _show_library_status(message: String) -> void:
 	if not library_container.visible:
 		show_library()
 
-	import_status_label.text = message
-	import_status_label.visible = true
+	library_status_label.text = message
+	library_status_label.visible = true
 
 
 func _restart_session() -> void:

@@ -1,0 +1,93 @@
+[gd_scene format=3 uid="uid://b68fahjksyvpr"]
+
+[ext_resource type="Theme" uid="uid://cqshs8ofnmh0w" path="res://src/main/main_theme.tres" id="1_theme"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxActionSheet"]
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+
+[node name="DeckActionsOverlay" type="ColorRect" unique_id=30320680]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_theme")
+color = Color(0, 0, 0, 0.18)
+
+[node name="DeckActionsPanel" type="PanelContainer" parent="." unique_id=2040647444]
+custom_minimum_size = Vector2(640, 340)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -320.0
+offset_top = -364.0
+offset_right = 320.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxActionSheet")
+
+[node name="Margin" type="MarginContainer" parent="DeckActionsPanel" unique_id=644519731]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="Content" type="VBoxContainer" parent="DeckActionsPanel/Margin" unique_id=1186556626]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="DeckActionsTitle" type="Label" parent="DeckActionsPanel/Margin/Content" unique_id=1072483622]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "덱 관리"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="DeckActionsHint" type="Label" parent="DeckActionsPanel/Margin/Content" unique_id=1954460849]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "이 덱으로 무엇을 할까요?"
+horizontal_alignment = 1
+
+[node name="Actions" type="HBoxContainer" parent="DeckActionsPanel/Margin/Content" unique_id=1786138415]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ExportDeckButton" type="Button" parent="DeckActionsPanel/Margin/Content/Actions" unique_id=1083058641]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 88)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 21
+text = "Markdown 내보내기"
+
+[node name="DeleteDeckButton" type="Button" parent="DeckActionsPanel/Margin/Content/Actions" unique_id=373106681]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 88)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 21
+text = "덱 삭제"
+
+[node name="CancelDeckActionsButton" type="Button" parent="DeckActionsPanel/Margin/Content" unique_id=1633259018]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "취소"
