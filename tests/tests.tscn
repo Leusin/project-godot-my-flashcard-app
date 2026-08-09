@@ -6,7 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://d0w3ka1w0xwq8" path="res://tests/phase2_smoke.tscn" id="4_qpm35"]
 [ext_resource type="PackedScene" uid="uid://b4ejb5ii4jrf6" path="res://tests/phase3_smoke.tscn" id="5_phase3"]
 [ext_resource type="PackedScene" path="res://tests/phase4_smoke.tscn" id="6_phase4"]
-[ext_resource type="PackedScene" path="res://tests/mvp_smoke.tscn" id="7_mvp"]
+[ext_resource type="PackedScene" path="res://tests/main_smoke.tscn" id="7_main"]
 
 [node name="Tests" type="Node" unique_id=1981310814]
 script = ExtResource("1_runner")
@@ -21,4 +21,4 @@ script = ExtResource("1_runner")
 
 [node name="Phase4Smoke" parent="." unique_id=2115457025 instance=ExtResource("6_phase4")]
 
-[node name="MvpSmoke" parent="." instance=ExtResource("7_mvp")]
+[node name="MainSmoke" parent="." instance=ExtResource("7_main")]
