@@ -184,6 +184,25 @@ func run_tests() -> void:
 		and _view(app, "StudyOrderOption").item_count == 2,
 		"Main Ready: 학습 범위와 카드 순서 설정 표시"
 	)
+	var scope_option := _view(app, "StudyScopeOption") as OptionButton
+	var dropdown_style := scope_option.get_theme_stylebox("normal") as StyleBoxFlat
+	var dropdown_popup := scope_option.get_popup()
+	var popup_style := dropdown_popup.get_theme_stylebox("panel") as StyleBoxFlat
+	check(
+		dropdown_style != null
+		and dropdown_style.bg_color == Color.WHITE
+		and dropdown_style.border_color == Color.BLACK
+		and scope_option.get_theme_color("font_color") == Color.BLACK,
+		"Main Ready: 새 학습 dropdown을 흰 배경·검은 글씨·검은 테두리로 표시"
+	)
+	check(
+		popup_style != null
+		and popup_style.bg_color == Color.WHITE
+		and popup_style.border_color == Color.BLACK
+		and dropdown_popup.get_theme_color("font_color") == Color.BLACK
+		and dropdown_popup.get_theme_font_size("font_size") == 20,
+		"Main Ready: dropdown 목록도 밝은 고대비 메뉴로 표시"
+	)
 	check(
 		_view(app, "DeckCover") != null
 		and _view(app, "BackCardFar") != null
@@ -359,14 +378,37 @@ func run_tests() -> void:
 
 	check(_view(app, "DeckLabel").text == "__gd_main", "Main: 덱 이름 표시")
 	check(_view(app, "QuestionLabel").text == "A", "MVP: 첫 질문 표시")
-	check(not _view(app, "AnswerLabel").visible, "MVP: 첫 화면에서 답 숨김")
+	check(not _view(app, "AnswerScroll").visible, "Main Study: 첫 화면에서 답 영역 숨김")
+	check(_view(app, "Actions").visible, "Main Study: 답 공개 전에도 자기평가 버튼 표시")
 	check(_view(app, "RemainingLabel").text == "2장 남음", "MVP: 남은 카드 수 표시")
+	check(
+		_view(app, "CardStatusLabel").text == "NEW"
+		and _view(app, "WrongTally").wrong_count == 0
+		and _view(app, "WrongCountLabel") == null,
+		"Main Study: 카드의 학습 상태와 오답 횟수 표시"
+	)
+	check(
+		_view(app, "WrongTally").get_index() < _view(app, "Spacer").get_index()
+		and _view(app, "StatusBadge").get_index() > _view(app, "Spacer").get_index(),
+		"Main Study: 오답은 좌상단, 카드 속성은 우상단 배치"
+	)
+	check(
+		_view(app, "WrongTally").get_parent() is HBoxContainer
+		and _view(app, "WrongTally").get_child_count() == 0,
+		"Main Study: 프레임과 문구 없이 직접 그리는 tally 사용"
+	)
+	check(_view(app, "QuestionCaption") == null, "Main Study: QUESTION 장식 문구 제거")
+	check(
+		_view(app, "StudyProgressBar").value == 0
+		and _view(app, "StudyProgressBar").max_value == 2,
+		"Main Study: 첫 카드에서 학습 진행 bar 표시"
+	)
 	check(
 		app.get_node("Margin/Page/Title").get_theme_color("font_color") == Color.BLACK,
 		"MVP 스타일: 모든 Label 글자는 검은색"
 	)
 	var card_style := (
-		app.get_node("Margin/Page/StudyFlow/StudyContainer/Card").get_theme_stylebox("panel")
+		app.get_node("Margin/Page/StudyFlow/StudyContainer/CardFrame").get_theme_stylebox("panel")
 		as StyleBoxFlat
 	)
 	check(
@@ -374,6 +416,11 @@ func run_tests() -> void:
 		and card_style.bg_color == Color.WHITE
 		and card_style.border_color == Color.BLACK,
 		"MVP 스타일: 카드는 흰 바탕과 검은 테두리"
+	)
+	check(
+		_view(app, "CardStack") == null
+		and _view(app, "RevealButton").get_parent().name == "CardContent",
+		"Main Study: 카드 stack 없이 단일 frame 안에 답 보기 버튼 배치"
 	)
 	var button_style := (
 		_view(app, "RevealButton").get_theme_stylebox("normal") as StyleBoxFlat
@@ -386,12 +433,43 @@ func run_tests() -> void:
 	)
 
 	_view(app, "RevealButton").pressed.emit()
-	check(_view(app, "AnswerLabel").visible, "MVP: 답 보기 버튼으로 답 공개")
+	check(_view(app, "AnswerScroll").visible, "Main Study: 답 보기 버튼으로 답 영역 공개")
+	check(
+		_view(app, "AnswerCaption") == null and _view(app, "Separator") == null,
+		"Main Study: ANSWER 문구와 질문·답 구분선 제거"
+	)
 	check(_view(app, "AnswerLabel").text == "1", "MVP: 현재 카드의 답 표시")
+	check(
+		_view(app, "AnswerLabel").horizontal_alignment == HORIZONTAL_ALIGNMENT_LEFT
+		and _view(app, "AnswerLabel").vertical_alignment == VERTICAL_ALIGNMENT_TOP,
+		"Main Study: 답 내용은 좌측 상단 정렬"
+	)
+	check(
+		_view(app, "QuestionLabel").get_theme_color("font_color")
+		== Color(0.56, 0.56, 0.56, 1),
+		"Main Study: 답과 함께 표시되는 질문은 옅은 색으로 전환"
+	)
+	check(
+		_view(app, "QuestionScroll").custom_minimum_size.y == 150.0
+		and _view(app, "QuestionScroll").size_flags_vertical == Control.SIZE_FILL,
+		"Main Study: 답 공개 후 질문 영역을 compact header 높이로 축소"
+	)
+	check(
+		_view(app, "Actions").visible
+		and not _view(app, "RevealButton").visible
+		and _view(app, "AgainButton").text == "다시 보기"
+		and _view(app, "GoodButton").text == "알겠음",
+		"Main Study: 답 공개 후에도 자기평가 버튼 유지"
+	)
 
 	_view(app, "AgainButton").pressed.emit()
 	check(_view(app, "QuestionLabel").text == "B", "MVP: Again 후 다음 질문")
+	check(
+		_view(app, "QuestionLabel").get_theme_color("font_color") == Color.BLACK,
+		"Main Study: 다음 카드 질문은 검은색으로 복구"
+	)
 	check(_view(app, "RemainingLabel").text == "1장 남음", "MVP: Again 후 남은 수 감소")
+	check(_view(app, "StudyProgressBar").value == 1, "Main Study: 다음 카드에서 진행 bar 갱신")
 	check(
 		DeckStorage.load_progress(TEST_DECK).get_wrong_count("A") == 1
 		and DeckStorage.load_progress(TEST_DECK).get_status("A")
@@ -410,6 +488,12 @@ func run_tests() -> void:
 	_view(app, "RestartButton").pressed.emit()
 	check(_view(app, "StudyContainer").visible, "MVP: 다시 시작으로 학습 화면 복귀")
 	check(_view(app, "QuestionLabel").text == "A", "MVP: 다시 시작하면 첫 카드")
+	check(
+		_view(app, "CardStatusLabel").text == "LEARNING"
+		and _view(app, "WrongTally").wrong_count == 1
+		and _view(app, "WrongTally").tooltip_text == "오답 1회",
+		"Main Study: 다시 표시한 카드에 저장된 속성 반영"
+	)
 	_view(app, "BackToReadyButton").pressed.emit()
 	check(
 		_view(app, "ReadyNewCountLabel").text == "0"

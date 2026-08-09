@@ -1,4 +1,8 @@
-[gd_resource type="Theme" format=3 uid="uid://cqshs8ofnmh0w"]
+[gd_resource type="Theme" load_steps=9 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/icons/chevron_down.svg" id="1_arrow"]
+[ext_resource type="Texture2D" path="res://assets/icons/radio_checked.svg" id="2_checked"]
+[ext_resource type="Texture2D" path="res://assets/icons/radio_unchecked.svg" id="3_unchecked"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxWhite"]
 bg_color = Color(1, 1, 1, 1)
@@ -36,6 +40,32 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxPopupPanel"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.22)
+shadow_size = 8
+shadow_offset = Vector2(4, 6)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxPopupHover"]
+bg_color = Color(0.9, 0.9, 0.88, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
 [resource]
 Button/colors/font_color = Color(0, 0, 0, 1)
 Button/colors/font_disabled_color = Color(0, 0, 0, 1)
@@ -49,4 +79,33 @@ Button/styles/hover = SubResource("StyleBoxHover")
 Button/styles/normal = SubResource("StyleBoxWhite")
 Button/styles/pressed = SubResource("StyleBoxPressed")
 Label/colors/font_color = Color(0, 0, 0, 1)
+OptionButton/colors/font_color = Color(0, 0, 0, 1)
+OptionButton/colors/font_disabled_color = Color(0.35, 0.35, 0.35, 1)
+OptionButton/colors/font_focus_color = Color(0, 0, 0, 1)
+OptionButton/colors/font_hover_color = Color(0, 0, 0, 1)
+OptionButton/colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+OptionButton/colors/font_pressed_color = Color(0, 0, 0, 1)
+OptionButton/constants/arrow_margin = 18
+OptionButton/constants/modulate_arrow = 1
+OptionButton/icons/arrow = ExtResource("1_arrow")
+OptionButton/styles/disabled = SubResource("StyleBoxWhite")
+OptionButton/styles/focus = SubResource("StyleBoxWhite")
+OptionButton/styles/hover = SubResource("StyleBoxHover")
+OptionButton/styles/normal = SubResource("StyleBoxWhite")
+OptionButton/styles/pressed = SubResource("StyleBoxPressed")
 PanelContainer/styles/panel = SubResource("StyleBoxWhite")
+PopupMenu/colors/font_accelerator_color = Color(0, 0, 0, 1)
+PopupMenu/colors/font_color = Color(0, 0, 0, 1)
+PopupMenu/colors/font_disabled_color = Color(0.4, 0.4, 0.4, 1)
+PopupMenu/colors/font_hover_color = Color(0, 0, 0, 1)
+PopupMenu/colors/font_separator_color = Color(0, 0, 0, 1)
+PopupMenu/constants/indent = 10
+PopupMenu/constants/item_end_padding = 18
+PopupMenu/constants/item_start_padding = 18
+PopupMenu/constants/v_separation = 14
+PopupMenu/font_sizes/font_size = 20
+PopupMenu/icons/checked = ExtResource("2_checked")
+PopupMenu/icons/radio_checked = ExtResource("2_checked")
+PopupMenu/icons/radio_unchecked = ExtResource("3_unchecked")
+PopupMenu/styles/hover = SubResource("StyleBoxPopupHover")
+PopupMenu/styles/panel = SubResource("StyleBoxPopupPanel")

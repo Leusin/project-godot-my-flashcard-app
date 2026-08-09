@@ -91,9 +91,15 @@ const CARD_LIST_ROW_SCENE := preload("res://src/main/card_list_row.tscn")
 @onready var study_flow: VBoxContainer = $Margin/Page/StudyFlow
 @onready var deck_label: Label = $Margin/Page/StudyFlow/Header/DeckLabel
 @onready var remaining_label: Label = $Margin/Page/StudyFlow/Header/RemainingLabel
-@onready var question_label: Label = $Margin/Page/StudyFlow/StudyContainer/Card/CardMargin/CardContent/QuestionScroll/QuestionLabel
-@onready var answer_label: Label = $Margin/Page/StudyFlow/StudyContainer/Card/CardMargin/CardContent/AnswerScroll/AnswerLabel
-@onready var reveal_button: Button = $Margin/Page/StudyFlow/StudyContainer/RevealButton
+@onready var study_progress_bar: ProgressBar = $Margin/Page/StudyFlow/StudyProgressBar
+@onready var card_status_label: Label = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/CardProperties/StatusBadge/Margin/CardStatusLabel
+@onready var wrong_tally: WrongTallyView = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/CardProperties/WrongTally
+@onready var question_scroll: ScrollContainer = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/QuestionScroll
+@onready var question_label: Label = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/QuestionScroll/QuestionLabel
+@onready var answer_label: Label = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/AnswerScroll/AnswerLabel
+@onready var answer_scroll: ScrollContainer = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/AnswerScroll
+@onready var reveal_button: Button = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/RevealButton
+@onready var study_actions: HBoxContainer = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/Actions
 @onready var study_container: VBoxContainer = $Margin/Page/StudyFlow/StudyContainer
 @onready var done_container: VBoxContainer = $Margin/Page/StudyFlow/DoneContainer
 @onready var done_label: Label = $Margin/Page/StudyFlow/DoneContainer/DoneLabel
@@ -181,8 +187,8 @@ func _ready() -> void:
 	)
 	$Margin/Page/StudyFlow/Header/BackToReadyButton.pressed.connect(_return_to_study_ready)
 	reveal_button.pressed.connect(_on_reveal_pressed)
-	$Margin/Page/StudyFlow/StudyContainer/Actions/AgainButton.pressed.connect(_on_again_pressed)
-	$Margin/Page/StudyFlow/StudyContainer/Actions/GoodButton.pressed.connect(_on_good_pressed)
+	(study_actions.get_node("AgainButton") as Button).pressed.connect(_on_again_pressed)
+	(study_actions.get_node("GoodButton") as Button).pressed.connect(_on_good_pressed)
 	restart_button.pressed.connect(_on_restart_pressed)
 	_setup_study_ready_options()
 
@@ -1144,11 +1150,30 @@ func _show_current() -> void:
 	var card := _session.current()
 	study_container.visible = true
 	done_container.visible = false
+	card_status_label.text = card_status_text(_progress.get_status(card.question))
+	var wrong_count := _progress.get_wrong_count(card.question)
+	wrong_tally.set_count(wrong_count)
 	question_label.text = card.question
+	question_label.remove_theme_color_override("font_color")
 	answer_label.text = card.answer
-	answer_label.visible = false
+	question_scroll.custom_minimum_size.y = 0.0
+	question_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	answer_scroll.hide()
 	reveal_button.visible = true
+	study_actions.show()
 	remaining_label.text = "%d장 남음" % _session.remaining()
+	study_progress_bar.max_value = maxi(_source_cards.size(), 1)
+	study_progress_bar.value = _source_cards.size() - _session.remaining()
+
+
+static func card_status_text(status: CardStatus.Value) -> String:
+	match status:
+		CardStatus.Value.LEARNING:
+			return "LEARNING"
+		CardStatus.Value.MASTERED:
+			return "MASTERED"
+		_:
+			return "NEW"
 
 
 func _show_message(message: String, can_restart: bool) -> void:
@@ -1157,14 +1182,20 @@ func _show_message(message: String, can_restart: bool) -> void:
 	done_label.text = message
 	restart_button.visible = can_restart
 	remaining_label.text = "0장 남음"
+	study_progress_bar.max_value = maxi(_source_cards.size(), 1)
+	study_progress_bar.value = _source_cards.size()
 
 
 func _on_reveal_pressed() -> void:
 	if _session == null or _session.is_finished():
 		return
 
-	answer_label.visible = true
+	answer_scroll.show()
+	question_scroll.custom_minimum_size.y = 150.0
+	question_scroll.size_flags_vertical = Control.SIZE_FILL
+	question_label.add_theme_color_override("font_color", Color(0.56, 0.56, 0.56, 1))
 	reveal_button.visible = false
+	study_actions.show()
 
 
 func _on_again_pressed() -> void:

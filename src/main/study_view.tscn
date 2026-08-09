@@ -1,19 +1,61 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
+[ext_resource type="Script" path="res://src/main/wrong_tally.gd" id="2_tally"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxStudyCard"]
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+shadow_color = Color(0, 0, 0, 0.16)
+shadow_size = 7
+shadow_offset = Vector2(4, 6)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxProgressBackground"]
+bg_color = Color(0.88, 0.88, 0.86, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxProgressFill"]
+bg_color = Color(0.12, 0.12, 0.12, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxCardProperty"]
+bg_color = Color(0.94, 0.94, 0.92, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 
 [node name="StudyFlow" type="VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 theme = ExtResource("1_theme")
-theme_override_constants/separation = 18
+theme_override_constants/separation = 14
 
 [node name="Header" type="HBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="BackToReadyButton" type="Button" parent="Header"]
-custom_minimum_size = Vector2(140, 56)
+custom_minimum_size = Vector2(140, 60)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "← 학습 준비"
@@ -21,92 +63,135 @@ text = "← 학습 준비"
 [node name="DeckLabel" type="Label" parent="Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 22
 text = "덱"
+horizontal_alignment = 1
+vertical_alignment = 1
+text_overrun_behavior = 3
 
 [node name="RemainingLabel" type="Label" parent="Header"]
+custom_minimum_size = Vector2(140, 60)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "0장 남음"
 horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="StudyProgressBar" type="ProgressBar" parent="."]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxProgressBackground")
+theme_override_styles/fill = SubResource("StyleBoxProgressFill")
+show_percentage = false
 
 [node name="StudyContainer" type="VBoxContainer" parent="."]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 16
 
-[node name="Card" type="PanelContainer" parent="StudyContainer"]
-custom_minimum_size = Vector2(0, 640)
+[node name="CardFrame" type="PanelContainer" parent="StudyContainer"]
+custom_minimum_size = Vector2(0, 720)
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxStudyCard")
 
-[node name="CardMargin" type="MarginContainer" parent="StudyContainer/Card"]
+[node name="CardMargin" type="MarginContainer" parent="StudyContainer/CardFrame"]
 layout_mode = 2
-theme_override_constants/margin_left = 28
-theme_override_constants/margin_top = 28
-theme_override_constants/margin_right = 28
-theme_override_constants/margin_bottom = 28
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 30
 
-[node name="CardContent" type="VBoxContainer" parent="StudyContainer/Card/CardMargin"]
+[node name="CardContent" type="VBoxContainer" parent="StudyContainer/CardFrame/CardMargin"]
 layout_mode = 2
-theme_override_constants/separation = 24
+theme_override_constants/separation = 18
 
-[node name="QuestionScroll" type="ScrollContainer" parent="StudyContainer/Card/CardMargin/CardContent"]
+[node name="CardProperties" type="HBoxContainer" parent="StudyContainer/CardFrame/CardMargin/CardContent"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="WrongTally" type="Control" parent="StudyContainer/CardFrame/CardMargin/CardContent/CardProperties"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+script = ExtResource("2_tally")
+
+[node name="Spacer" type="Control" parent="StudyContainer/CardFrame/CardMargin/CardContent/CardProperties"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="StatusBadge" type="PanelContainer" parent="StudyContainer/CardFrame/CardMargin/CardContent/CardProperties"]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxCardProperty")
+
+[node name="Margin" type="MarginContainer" parent="StudyContainer/CardFrame/CardMargin/CardContent/CardProperties/StatusBadge"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 6
+
+[node name="CardStatusLabel" type="Label" parent="StudyContainer/CardFrame/CardMargin/CardContent/CardProperties/StatusBadge/Margin"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "NEW"
+vertical_alignment = 1
+
+[node name="QuestionScroll" type="ScrollContainer" parent="StudyContainer/CardFrame/CardMargin/CardContent"]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="QuestionLabel" type="Label" parent="StudyContainer/Card/CardMargin/CardContent/QuestionScroll"]
+[node name="QuestionLabel" type="Label" parent="StudyContainer/CardFrame/CardMargin/CardContent/QuestionScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 34
 text = "질문"
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 
-[node name="Separator" type="HSeparator" parent="StudyContainer/Card/CardMargin/CardContent"]
-layout_mode = 2
-
-[node name="AnswerScroll" type="ScrollContainer" parent="StudyContainer/Card/CardMargin/CardContent"]
+[node name="AnswerScroll" type="ScrollContainer" parent="StudyContainer/CardFrame/CardMargin/CardContent"]
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="AnswerLabel" type="Label" parent="StudyContainer/Card/CardMargin/CardContent/AnswerScroll"]
-visible = false
+[node name="AnswerLabel" type="Label" parent="StudyContainer/CardFrame/CardMargin/CardContent/AnswerScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 29
 text = "답"
-vertical_alignment = 1
+horizontal_alignment = 0
+vertical_alignment = 0
 autowrap_mode = 2
 
-[node name="RevealButton" type="Button" parent="StudyContainer"]
-custom_minimum_size = Vector2(0, 72)
+[node name="RevealButton" type="Button" parent="StudyContainer/CardFrame/CardMargin/CardContent"]
+custom_minimum_size = Vector2(0, 82)
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 23
 text = "답 보기"
 
-[node name="Actions" type="HBoxContainer" parent="StudyContainer"]
+[node name="Actions" type="HBoxContainer" parent="StudyContainer/CardFrame/CardMargin/CardContent"]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="AgainButton" type="Button" parent="StudyContainer/Actions"]
-custom_minimum_size = Vector2(0, 84)
+[node name="AgainButton" type="Button" parent="StudyContainer/CardFrame/CardMargin/CardContent/Actions"]
+custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
-text = "Again"
+text = "다시 보기"
 
-[node name="GoodButton" type="Button" parent="StudyContainer/Actions"]
-custom_minimum_size = Vector2(0, 84)
+[node name="GoodButton" type="Button" parent="StudyContainer/CardFrame/CardMargin/CardContent/Actions"]
+custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
-text = "Good"
+text = "알겠음"
 
 [node name="DoneContainer" type="VBoxContainer" parent="."]
 visible = false
@@ -122,7 +207,7 @@ text = "학습 완료!"
 horizontal_alignment = 1
 
 [node name="RestartButton" type="Button" parent="DoneContainer"]
-custom_minimum_size = Vector2(0, 84)
+custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "다시 시작"
