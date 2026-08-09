@@ -246,6 +246,12 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 21
 text = "새 학습 설정"
 
+[node name="ManageCardsButton" type="Button" parent="DeckStack/DeckCover/Margin/OverviewContent"]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "카드 관리"
+
 [node name="NewStudyContent" type="VBoxContainer" parent="DeckStack/DeckCover/Margin"]
 visible = false
 layout_mode = 2

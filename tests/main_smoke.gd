@@ -13,6 +13,8 @@ const DELETE_DECK := "__gd_main_delete.md"
 const RENAME_DECK := "__gd_main_rename.md"
 const RENAMED_DECK := "__gd_main_renamed.md"
 const DUPLICATED_DECK := "__gd_main (2).md"
+const EDIT_DECK := "__gd_main_edit.md"
+const EDIT_TEXT := "# Old\nAnswer\n# Keep\nStay\n"
 const EXPORT_TARGET_WITHOUT_EXTENSION := "user://__gd_main_export"
 const EXPORTED_PATH := "user://__gd_main_export.md"
 
@@ -506,6 +508,101 @@ func run_tests() -> void:
 		"Main Delete: 사라진 덱 오류 안내"
 	)
 
+	DeckStorage.write_deck(EDIT_DECK, EDIT_TEXT)
+	var edit_progress := Progress.new()
+	edit_progress.set_wrong_count("Old", 3)
+	edit_progress.set_status("Old", CardStatus.Value.LEARNING)
+	DeckStorage.save_progress(EDIT_DECK, edit_progress)
+	var edit_resume := StudyResume.new()
+	edit_resume.deck_hash = EDIT_TEXT.hash()
+	edit_resume.remaining_indices = [0]
+	DeckStorage.save_study_resume(EDIT_DECK, edit_resume)
+	app.show_library()
+	var edit_tile := _find_deck_tile(app, "__gd_main_edit")
+	check(edit_tile != null, "Main Card Edit: 편집할 덱 타일 표시")
+	if edit_tile != null:
+		_view(edit_tile, "DeckButton").pressed.emit()
+	_view(app, "ManageCardsButton").pressed.emit()
+	check(
+		_view(app, "CardListView").visible
+		and _view(app, "CardRows").get_child_count() == 2,
+		"Main Card Edit: Study Ready에서 카드 목록 진입"
+	)
+	(_view(app, "CardRows").get_child(0) as Button).pressed.emit()
+	check(
+		_view(app, "CardEditorView").visible
+		and _view(app, "CardQuestionInput").text == "Old"
+		and _view(app, "CardAnswerInput").text == "Answer",
+		"Main Card Edit: 선택한 질문과 답을 편집기에 표시"
+	)
+	_view(app, "CardQuestionInput").text = "New"
+	_view(app, "CardAnswerInput").text = "# 잘못된 답 제목"
+	_view(app, "SaveCardButton").pressed.emit()
+	check(
+		_view(app, "CardEditorErrorLabel").text
+		== MainApp.CARD_ANSWER_HEADING_MESSAGE
+		and DeckStorage.read_deck(EDIT_DECK) == EDIT_TEXT,
+		"Main Card Edit: 카드를 분리시키는 답의 # 제목 저장 차단"
+	)
+	_view(app, "CardAnswerInput").text = "Updated"
+	_view(app, "SaveCardButton").pressed.emit()
+	var edited_cards := DeckParser.parse(DeckStorage.read_deck(EDIT_DECK))
+	check(
+		edited_cards.size() == 2
+		and edited_cards[0].question == "New"
+		and edited_cards[0].answer == "Updated",
+		"Main Card Edit: 질문과 답을 Markdown 덱에 저장"
+	)
+	check(
+		DeckStorage.load_progress(EDIT_DECK).get_wrong_count("New") == 3
+		and DeckStorage.load_progress(EDIT_DECK).get_status("New")
+		== CardStatus.Value.LEARNING,
+		"Main Card Edit: 질문 변경 시 학습 기록 이전"
+	)
+	check(
+		DeckStorage.load_study_resume(EDIT_DECK) == null,
+		"Main Card Edit: 카드 변경 시 진행 중 세션 폐기"
+	)
+	_view(app, "AddCardButton").pressed.emit()
+	_view(app, "CardQuestionInput").text = "Added"
+	_view(app, "CardAnswerInput").text = "Added answer"
+	_view(app, "SaveCardButton").pressed.emit()
+	check(
+		DeckParser.parse(DeckStorage.read_deck(EDIT_DECK)).size() == 3,
+		"Main Card Edit: 새 카드 추가"
+	)
+	(_view(app, "CardRows").get_child(0) as Button).pressed.emit()
+	_view(app, "CardQuestionInput").text = "Unsaved"
+	_view(app, "CancelCardEditButton").pressed.emit()
+	check(
+		_view(app, "DiscardCardChangesOverlay").visible,
+		"Main Card Edit: 저장하지 않은 변경사항 취소 확인"
+	)
+	_view(app, "KeepEditingButton").pressed.emit()
+	check(_view(app, "CardEditorView").visible, "Main Card Edit: 계속 편집 선택")
+	_view(app, "CancelCardEditButton").pressed.emit()
+	_view(app, "DiscardChangesButton").pressed.emit()
+	check(
+		_view(app, "CardListView").visible
+		and DeckParser.parse(DeckStorage.read_deck(EDIT_DECK))[0].question == "New",
+		"Main Card Edit: 변경사항 버리고 카드 목록 복귀"
+	)
+	(_view(app, "CardRows").get_child(2) as Button).pressed.emit()
+	_view(app, "DeleteCardButton").pressed.emit()
+	check(_view(app, "CardDeleteConfirmationOverlay").visible, "Main Card Edit: 카드 삭제 확인")
+	_view(app, "ConfirmCardDeleteButton").pressed.emit()
+	check(
+		DeckParser.parse(DeckStorage.read_deck(EDIT_DECK)).size() == 2
+		and _view(app, "CardRows").get_child_count() == 2,
+		"Main Card Edit: 카드 삭제 후 목록과 Markdown 갱신"
+	)
+	_view(app, "BackFromCardListButton").pressed.emit()
+	check(
+		_view(app, "StudyReadyView").visible
+		and _view(app, "ReadyTotalCountLabel").text == "2",
+		"Main Card Edit: 카드 관리에서 갱신된 Study Ready로 복귀"
+	)
+
 	app.queue_free()
 	_cleanup()
 	DeckStorage.set_decks_dir("")
@@ -548,6 +645,7 @@ func _cleanup() -> void:
 		RENAME_DECK,
 		RENAMED_DECK,
 		DUPLICATED_DECK,
+		EDIT_DECK,
 	]:
 		var resume_path := DeckStorage.study_resume_path(deck_file)
 		if FileAccess.file_exists(resume_path):

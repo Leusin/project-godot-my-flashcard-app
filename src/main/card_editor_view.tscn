@@ -1,0 +1,135 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFieldNormal"]
+content_margin_left = 18.0
+content_margin_top = 14.0
+content_margin_right = 18.0
+content_margin_bottom = 14.0
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFieldFocus"]
+content_margin_left = 17.0
+content_margin_top = 13.0
+content_margin_right = 17.0
+content_margin_bottom = 13.0
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFieldReadOnly"]
+content_margin_left = 18.0
+content_margin_top = 14.0
+content_margin_right = 18.0
+content_margin_bottom = 14.0
+bg_color = Color(0.94, 0.94, 0.94, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="CardEditorView" type="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme = ExtResource("1_theme")
+theme_override_constants/separation = 14
+
+[node name="Header" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="CancelCardEditButton" type="Button" parent="Header"]
+custom_minimum_size = Vector2(112, 64)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "← 취소"
+
+[node name="CardEditorTitle" type="Label" parent="Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 26
+text = "카드 편집"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DeleteCardButton" type="Button" parent="Header"]
+custom_minimum_size = Vector2(112, 64)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "삭제"
+
+[node name="QuestionCaption" type="Label" parent="."]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "질문"
+
+[node name="CardQuestionInput" type="LineEdit" parent="."]
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_selected_color = Color(0, 0, 0, 1)
+theme_override_colors/font_uneditable_color = Color(0.25, 0.25, 0.25, 1)
+theme_override_colors/font_placeholder_color = Color(0.42, 0.42, 0.42, 1)
+theme_override_colors/caret_color = Color(0, 0, 0, 1)
+theme_override_colors/selection_color = Color(0.75, 0.75, 0.75, 1)
+theme_override_font_sizes/font_size = 28
+theme_override_styles/normal = SubResource("StyleBoxFieldNormal")
+theme_override_styles/focus = SubResource("StyleBoxFieldFocus")
+theme_override_styles/read_only = SubResource("StyleBoxFieldReadOnly")
+placeholder_text = "질문을 입력하세요"
+
+[node name="AnswerCaption" type="Label" parent="."]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "답"
+
+[node name="CardAnswerInput" type="TextEdit" parent="."]
+custom_minimum_size = Vector2(0, 420)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_readonly_color = Color(0.25, 0.25, 0.25, 1)
+theme_override_colors/font_placeholder_color = Color(0.42, 0.42, 0.42, 1)
+theme_override_colors/caret_color = Color(0, 0, 0, 1)
+theme_override_colors/selection_color = Color(0.75, 0.75, 0.75, 1)
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("StyleBoxFieldNormal")
+theme_override_styles/focus = SubResource("StyleBoxFieldFocus")
+theme_override_styles/read_only = SubResource("StyleBoxFieldReadOnly")
+placeholder_text = "답을 입력하세요"
+wrap_mode = 1
+
+[node name="CardEditorErrorLabel" type="Label" parent="."]
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "오류"
+autowrap_mode = 3
+
+[node name="SaveCardButton" type="Button" parent="."]
+custom_minimum_size = Vector2(0, 88)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "카드 저장"

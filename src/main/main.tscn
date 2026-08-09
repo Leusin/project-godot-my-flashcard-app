@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://bh17ip0fnu6v3"]
+[gd_scene load_steps=14 format=3 uid="uid://bh17ip0fnu6v3"]
 
 [ext_resource type="Script" uid="uid://c6jw5vgiox3f5" path="res://src/main/main.gd" id="1_main"]
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="2_theme"]
@@ -9,6 +9,10 @@
 [ext_resource type="PackedScene" path="res://src/main/delete_confirmation.tscn" id="7_delete"]
 [ext_resource type="PackedScene" path="res://src/main/rename_deck_dialog.tscn" id="8_rename"]
 [ext_resource type="PackedScene" path="res://src/main/study_ready_view.tscn" id="9_ready"]
+[ext_resource type="PackedScene" path="res://src/main/card_list_view.tscn" id="10_card_list"]
+[ext_resource type="PackedScene" path="res://src/main/card_editor_view.tscn" id="11_card_editor"]
+[ext_resource type="PackedScene" path="res://src/main/card_delete_confirmation.tscn" id="12_card_delete"]
+[ext_resource type="PackedScene" path="res://src/main/discard_card_changes_confirmation.tscn" id="13_discard"]
 
 [node name="Main" type="Control" unique_id=1978189679]
 layout_mode = 3
@@ -59,6 +63,14 @@ layout_mode = 2
 visible = false
 layout_mode = 2
 
+[node name="CardListView" parent="Margin/Page" instance=ExtResource("10_card_list")]
+visible = false
+layout_mode = 2
+
+[node name="CardEditorView" parent="Margin/Page" instance=ExtResource("11_card_editor")]
+visible = false
+layout_mode = 2
+
 [node name="StudyFlow" parent="Margin/Page" instance=ExtResource("4_study")]
 visible = false
 layout_mode = 2
@@ -76,5 +88,13 @@ visible = false
 layout_mode = 1
 
 [node name="ExitConfirmationOverlay" parent="." instance=ExtResource("5_exit")]
+visible = false
+layout_mode = 1
+
+[node name="CardDeleteConfirmationOverlay" parent="." instance=ExtResource("12_card_delete")]
+visible = false
+layout_mode = 1
+
+[node name="DiscardCardChangesOverlay" parent="." instance=ExtResource("13_discard")]
 visible = false
 layout_mode = 1

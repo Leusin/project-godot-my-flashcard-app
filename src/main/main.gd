@@ -23,8 +23,13 @@ const RENAME_DECK_NOT_FOUND_MESSAGE := "이름을 변경할 덱 파일을 찾을
 const RENAME_FAILED_MESSAGE := "덱 이름을 변경하지 못했습니다. 다시 시도하세요."
 const DUPLICATE_DECK_NOT_FOUND_MESSAGE := "복제할 덱 파일을 찾을 수 없습니다."
 const DUPLICATE_DECK_FAILED_MESSAGE := "덱을 복제하지 못했습니다. 저장 공간을 확인하고 다시 시도하세요."
+const CARD_QUESTION_EMPTY_MESSAGE := "질문을 입력하세요."
+const CARD_ANSWER_HEADING_MESSAGE := "답의 줄 시작에는 '# '를 사용할 수 없습니다."
+const CARD_SAVE_FAILED_MESSAGE := "카드를 저장하지 못했습니다. 저장 공간을 확인하세요."
+const LAST_CARD_DELETE_MESSAGE := "덱에는 카드가 최소 1장 필요합니다."
 const DECK_TILE_SCENE := preload("res://src/main/deck_tile.tscn")
 const ADD_DECK_TILE_SCENE := preload("res://src/main/add_deck_tile.tscn")
+const CARD_LIST_ROW_SCENE := preload("res://src/main/card_list_row.tscn")
 
 @export var auto_start := true
 
@@ -71,6 +76,18 @@ const ADD_DECK_TILE_SCENE := preload("res://src/main/add_deck_tile.tscn")
 @onready var setup_description: Label = new_study_content.get_node("SetupDescription")
 @onready var start_study_button: Button = new_study_content.get_node("StartStudyButton")
 @onready var continue_study_button: Button = ready_overview.get_node("ContinueStudyButton")
+@onready var card_list_view: VBoxContainer = $Margin/Page/CardListView
+@onready var card_list_deck_label: Label = $Margin/Page/CardListView/Header/CardListDeckLabel
+@onready var card_list_status_label: Label = $Margin/Page/CardListView/CardListStatusLabel
+@onready var card_rows: VBoxContainer = $Margin/Page/CardListView/CardListScroll/CardRows
+@onready var card_editor_view: VBoxContainer = $Margin/Page/CardEditorView
+@onready var card_editor_title: Label = $Margin/Page/CardEditorView/Header/CardEditorTitle
+@onready var delete_card_button: Button = $Margin/Page/CardEditorView/Header/DeleteCardButton
+@onready var card_question_input: LineEdit = $Margin/Page/CardEditorView/CardQuestionInput
+@onready var card_answer_input: TextEdit = $Margin/Page/CardEditorView/CardAnswerInput
+@onready var card_editor_error_label: Label = $Margin/Page/CardEditorView/CardEditorErrorLabel
+@onready var card_delete_confirmation_overlay: Control = $CardDeleteConfirmationOverlay
+@onready var discard_card_changes_overlay: Control = $DiscardCardChangesOverlay
 @onready var study_flow: VBoxContainer = $Margin/Page/StudyFlow
 @onready var deck_label: Label = $Margin/Page/StudyFlow/Header/DeckLabel
 @onready var remaining_label: Label = $Margin/Page/StudyFlow/Header/RemainingLabel
@@ -94,6 +111,11 @@ var _ready_deck_hash: int
 var _active_card_indices: Array[int] = []
 var _active_order: DeckOrdering.StudyOrder = DeckOrdering.StudyOrder.SEQUENTIAL
 var _active_scope: StudyScope = StudyScope.ALL
+var _editing_deck_file := ""
+var _editing_cards: Array[FlashCard] = []
+var _editing_card_index := -1
+var _editing_original_question := ""
+var _editing_original_answer := ""
 
 
 func _ready() -> void:
@@ -132,6 +154,30 @@ func _ready() -> void:
 	start_study_button.pressed.connect(_on_start_study_pressed)
 	(new_study_content.get_node("CancelStudySetupButton") as Button).pressed.connect(
 		_on_cancel_study_setup
+	)
+	(ready_overview.get_node("ManageCardsButton") as Button).pressed.connect(
+		_on_manage_cards_pressed
+	)
+	$Margin/Page/CardListView/Header/BackFromCardListButton.pressed.connect(
+		_return_to_ready_from_card_list
+	)
+	$Margin/Page/CardListView/AddCardButton.pressed.connect(_on_add_card_pressed)
+	$Margin/Page/CardEditorView/Header/CancelCardEditButton.pressed.connect(
+		_request_close_card_editor
+	)
+	delete_card_button.pressed.connect(_on_delete_card_pressed)
+	$Margin/Page/CardEditorView/SaveCardButton.pressed.connect(_on_save_card_pressed)
+	$CardDeleteConfirmationOverlay/Panel/Margin/Content/Buttons/CancelCardDeleteButton.pressed.connect(
+		_on_card_delete_canceled
+	)
+	$CardDeleteConfirmationOverlay/Panel/Margin/Content/Buttons/ConfirmCardDeleteButton.pressed.connect(
+		_on_card_delete_confirmed
+	)
+	$DiscardCardChangesOverlay/Panel/Margin/Content/Buttons/KeepEditingButton.pressed.connect(
+		_on_discard_card_changes_canceled
+	)
+	$DiscardCardChangesOverlay/Panel/Margin/Content/Buttons/DiscardChangesButton.pressed.connect(
+		_on_discard_card_changes_confirmed
 	)
 	$Margin/Page/StudyFlow/Header/BackToReadyButton.pressed.connect(_return_to_study_ready)
 	reveal_button.pressed.connect(_on_reveal_pressed)
@@ -198,13 +244,19 @@ func show_library() -> void:
 	_ready_cards.clear()
 	_ready_deck_hash = 0
 	_active_card_indices.clear()
+	_editing_deck_file = ""
+	_editing_cards.clear()
 	_menu_deck_file = ""
 	deck_context_menu.hide()
 	rename_deck_overlay.hide()
 	delete_confirmation_overlay.hide()
+	card_delete_confirmation_overlay.hide()
+	discard_card_changes_overlay.hide()
 	library_status_label.visible = false
 	library_container.visible = true
 	study_ready_view.visible = false
+	card_list_view.visible = false
+	card_editor_view.visible = false
 	study_flow.visible = false
 	study_container.visible = false
 	done_container.visible = false
@@ -228,6 +280,8 @@ func show_study_ready(deck_file: String) -> bool:
 	_menu_deck_file = ""
 	deck_context_menu.hide()
 	library_container.visible = false
+	card_list_view.visible = false
+	card_editor_view.visible = false
 	study_flow.visible = false
 	study_ready_view.visible = true
 	ready_status_label.hide()
@@ -277,6 +331,8 @@ func _start_cards(
 	_active_card_indices.clear()
 	library_container.visible = false
 	study_ready_view.visible = false
+	card_list_view.visible = false
+	card_editor_view.visible = false
 	study_flow.visible = true
 	_restart_session()
 
@@ -367,6 +423,224 @@ func _on_open_study_setup() -> void:
 
 func _on_cancel_study_setup() -> void:
 	_show_ready_overview()
+
+
+func _on_manage_cards_pressed() -> void:
+	_open_card_list(_ready_deck_file)
+
+
+func _open_card_list(deck_file: String) -> bool:
+	if not DeckStorage.deck_exists(deck_file):
+		_show_library_status("편집할 덱 파일을 찾을 수 없습니다.")
+		return false
+
+	_editing_deck_file = deck_file
+	_editing_cards = _copy_cards(DeckParser.parse(DeckStorage.read_deck(deck_file)))
+	card_list_deck_label.text = DeckNaming.display_name(deck_file)
+	card_list_status_label.hide()
+	var source := DeckStorage.read_deck(deck_file).replace("\r\n", "\n")
+	if DeckWriter.to_markdown(_editing_cards) != source:
+		_show_card_list_status(
+			"카드를 저장하면 Markdown이 앱 표준 형식으로 정리됩니다."
+		)
+	_refresh_card_rows()
+	library_container.hide()
+	study_ready_view.hide()
+	study_flow.hide()
+	card_editor_view.hide()
+	card_list_view.show()
+	return true
+
+
+static func _copy_cards(cards: Array[FlashCard]) -> Array[FlashCard]:
+	var copies: Array[FlashCard] = []
+	for card in cards:
+		copies.append(FlashCard.new(card.question, card.answer))
+	return copies
+
+
+func _refresh_card_rows() -> void:
+	for child in card_rows.get_children():
+		child.free()
+	for index in _editing_cards.size():
+		var row := CARD_LIST_ROW_SCENE.instantiate() as CardListRow
+		card_rows.add_child(row)
+		row.setup(index, _editing_cards[index])
+		row.selected.connect(_on_card_row_selected)
+
+
+func _on_card_row_selected(index: int) -> void:
+	if index < 0 or index >= _editing_cards.size():
+		return
+	_open_card_editor(index)
+
+
+func _on_add_card_pressed() -> void:
+	_open_card_editor(-1)
+
+
+func _open_card_editor(index: int) -> void:
+	_editing_card_index = index
+	card_editor_error_label.hide()
+	card_delete_confirmation_overlay.hide()
+	discard_card_changes_overlay.hide()
+	if index < 0:
+		_editing_original_question = ""
+		_editing_original_answer = ""
+		card_editor_title.text = "카드 추가"
+		delete_card_button.hide()
+	else:
+		var card := _editing_cards[index]
+		_editing_original_question = card.question
+		_editing_original_answer = card.answer
+		card_editor_title.text = "카드 편집"
+		delete_card_button.show()
+	card_question_input.text = _editing_original_question
+	card_answer_input.text = _editing_original_answer
+	card_list_view.hide()
+	card_editor_view.show()
+	card_question_input.call_deferred("grab_focus")
+
+
+func _request_close_card_editor() -> void:
+	if _card_editor_has_changes():
+		discard_card_changes_overlay.show()
+		return
+	_close_card_editor_without_save()
+
+
+func _card_editor_has_changes() -> bool:
+	return (
+		card_question_input.text != _editing_original_question
+		or card_answer_input.text != _editing_original_answer
+	)
+
+
+func _on_discard_card_changes_canceled() -> void:
+	discard_card_changes_overlay.hide()
+
+
+func _on_discard_card_changes_confirmed() -> void:
+	discard_card_changes_overlay.hide()
+	_close_card_editor_without_save()
+
+
+func _close_card_editor_without_save() -> void:
+	card_delete_confirmation_overlay.hide()
+	discard_card_changes_overlay.hide()
+	card_editor_view.hide()
+	card_list_view.show()
+	_editing_card_index = -1
+
+
+func _on_save_card_pressed() -> void:
+	var question := card_question_input.text.strip_edges()
+	var answer := card_answer_input.text.replace("\r\n", "\n").strip_edges()
+	if question.is_empty():
+		_show_card_editor_error(CARD_QUESTION_EMPTY_MESSAGE)
+		return
+	if answer_has_question_heading(answer):
+		_show_card_editor_error(CARD_ANSWER_HEADING_MESSAGE)
+		return
+
+	var updated := _copy_cards(_editing_cards)
+	if _editing_card_index < 0:
+		updated.append(FlashCard.new(question, answer))
+	else:
+		updated[_editing_card_index] = FlashCard.new(question, answer)
+
+	if not DeckStorage.write_deck(_editing_deck_file, DeckWriter.to_markdown(updated)):
+		_show_card_editor_error(CARD_SAVE_FAILED_MESSAGE)
+		return
+
+	var progress := DeckStorage.load_progress(_editing_deck_file)
+	if _editing_card_index >= 0 and _editing_original_question != question:
+		var old_question_still_exists := false
+		for index in updated.size():
+			if index != _editing_card_index and (
+				updated[index].question == _editing_original_question
+			):
+				old_question_still_exists = true
+				break
+		if not old_question_still_exists:
+			progress.rename(_editing_original_question, question)
+	var progress_saved := DeckStorage.save_progress(_editing_deck_file, progress)
+	DeckStorage.delete_study_resume(_editing_deck_file)
+	_editing_cards = updated
+	_close_card_editor_without_save()
+	_refresh_card_rows()
+	_show_card_list_status(
+		"카드 저장 완료"
+		if progress_saved
+		else "카드는 저장했지만 학습 기록을 저장하지 못했습니다."
+	)
+
+
+static func answer_has_question_heading(answer: String) -> bool:
+	for line in answer.replace("\r\n", "\n").split("\n"):
+		if line.begins_with("# "):
+			return true
+	return false
+
+
+func _show_card_editor_error(message: String) -> void:
+	card_editor_error_label.text = message
+	card_editor_error_label.show()
+
+
+func _on_delete_card_pressed() -> void:
+	if _editing_card_index < 0 or _editing_card_index >= _editing_cards.size():
+		return
+	if _editing_cards.size() <= 1:
+		_show_card_editor_error(LAST_CARD_DELETE_MESSAGE)
+		return
+	card_delete_confirmation_overlay.show()
+
+
+func _on_card_delete_canceled() -> void:
+	card_delete_confirmation_overlay.hide()
+
+
+func _on_card_delete_confirmed() -> void:
+	card_delete_confirmation_overlay.hide()
+	if _editing_card_index < 0 or _editing_card_index >= _editing_cards.size():
+		return
+
+	var deleted_question := _editing_cards[_editing_card_index].question
+	var updated := _copy_cards(_editing_cards)
+	updated.remove_at(_editing_card_index)
+	if not DeckStorage.write_deck(_editing_deck_file, DeckWriter.to_markdown(updated)):
+		_show_card_editor_error(CARD_SAVE_FAILED_MESSAGE)
+		return
+
+	var progress := DeckStorage.load_progress(_editing_deck_file)
+	var question_still_exists := false
+	for card in updated:
+		if card.question == deleted_question:
+			question_still_exists = true
+			break
+	if not question_still_exists:
+		progress.remove(deleted_question)
+	var progress_saved := DeckStorage.save_progress(_editing_deck_file, progress)
+	DeckStorage.delete_study_resume(_editing_deck_file)
+	_editing_cards = updated
+	_close_card_editor_without_save()
+	_refresh_card_rows()
+	_show_card_list_status(
+		"카드 삭제 완료"
+		if progress_saved
+		else "카드는 삭제했지만 학습 기록을 저장하지 못했습니다."
+	)
+
+
+func _show_card_list_status(message: String) -> void:
+	card_list_status_label.text = message
+	card_list_status_label.show()
+
+
+func _return_to_ready_from_card_list() -> void:
+	var deck_file := _editing_deck_file
+	show_study_ready(deck_file)
 
 
 func _update_continue_action() -> void:
@@ -563,6 +837,14 @@ func _on_deck_context_dismissed() -> void:
 
 
 func handle_back_request() -> bool:
+	if card_delete_confirmation_overlay.visible:
+		_on_card_delete_canceled()
+		return true
+
+	if discard_card_changes_overlay.visible:
+		_on_discard_card_changes_canceled()
+		return true
+
 	if rename_deck_overlay.visible:
 		_on_rename_canceled()
 		return true
@@ -581,6 +863,14 @@ func handle_back_request() -> bool:
 
 	if library_container.visible:
 		exit_confirmation_overlay.show()
+		return true
+
+	if card_editor_view.visible:
+		_request_close_card_editor()
+		return true
+
+	if card_list_view.visible:
+		_return_to_ready_from_card_list()
 		return true
 
 	if study_ready_view.visible:
