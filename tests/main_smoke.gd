@@ -476,7 +476,20 @@ func run_tests() -> void:
 		== CardStatus.Value.LEARNING,
 		"Main Ready: Again이 오답 횟수와 학습 중 상태를 저장"
 	)
+	check(
+		_view(app, "AgainButton").disabled and _view(app, "GoodButton").disabled,
+		"Main Study: 판정 직후 자기평가 입력 잠금"
+	)
 
+	_view(app, "GoodButton").pressed.emit()
+	check(
+		_view(app, "QuestionLabel").text == "B"
+		and not _view(app, "DoneContainer").visible
+		and DeckStorage.load_progress(TEST_DECK).get_status("B")
+		== CardStatus.Value.NEW,
+		"Main Study: 빠른 연속 판정은 다음 카드에 적용하지 않음"
+	)
+	app._reset_study_input_lock()
 	_view(app, "GoodButton").pressed.emit()
 	check(_view(app, "DoneContainer").visible, "MVP: 마지막 카드 후 완료 표시")
 	check(not _view(app, "StudyContainer").visible, "MVP: 완료 시 학습 화면 숨김")

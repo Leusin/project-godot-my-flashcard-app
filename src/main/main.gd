@@ -27,6 +27,7 @@ const CARD_QUESTION_EMPTY_MESSAGE := "질문을 입력하세요."
 const CARD_ANSWER_HEADING_MESSAGE := "답의 줄 시작에는 '# '를 사용할 수 없습니다."
 const CARD_SAVE_FAILED_MESSAGE := "카드를 저장하지 못했습니다. 저장 공간을 확인하세요."
 const LAST_CARD_DELETE_MESSAGE := "덱에는 카드가 최소 1장 필요합니다."
+const STUDY_INPUT_LOCK_SECONDS := 0.22
 const DECK_TILE_SCENE := preload("res://src/main/deck_tile.tscn")
 const ADD_DECK_TILE_SCENE := preload("res://src/main/add_deck_tile.tscn")
 const CARD_LIST_ROW_SCENE := preload("res://src/main/card_list_row.tscn")
@@ -100,6 +101,8 @@ const CARD_LIST_ROW_SCENE := preload("res://src/main/card_list_row.tscn")
 @onready var answer_scroll: ScrollContainer = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/AnswerScroll
 @onready var reveal_button: Button = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/RevealButton
 @onready var study_actions: HBoxContainer = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/Actions
+@onready var again_button: Button = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/Actions/AgainButton
+@onready var good_button: Button = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/Actions/GoodButton
 @onready var study_container: VBoxContainer = $Margin/Page/StudyFlow/StudyContainer
 @onready var done_container: VBoxContainer = $Margin/Page/StudyFlow/DoneContainer
 @onready var done_label: Label = $Margin/Page/StudyFlow/DoneContainer/DoneLabel
@@ -122,6 +125,8 @@ var _editing_cards: Array[FlashCard] = []
 var _editing_card_index := -1
 var _editing_original_question := ""
 var _editing_original_answer := ""
+var _study_input_locked := false
+var _study_input_lock_generation := 0
 
 
 func _ready() -> void:
@@ -187,8 +192,8 @@ func _ready() -> void:
 	)
 	$Margin/Page/StudyFlow/Header/BackToReadyButton.pressed.connect(_return_to_study_ready)
 	reveal_button.pressed.connect(_on_reveal_pressed)
-	(study_actions.get_node("AgainButton") as Button).pressed.connect(_on_again_pressed)
-	(study_actions.get_node("GoodButton") as Button).pressed.connect(_on_good_pressed)
+	again_button.pressed.connect(_on_again_pressed)
+	good_button.pressed.connect(_on_good_pressed)
 	restart_button.pressed.connect(_on_restart_pressed)
 	_setup_study_ready_options()
 
@@ -1136,6 +1141,7 @@ func _restart_session() -> void:
 	var ordered_cards := DeckOrdering.apply(_order, _source_cards)
 	_session = StudySession.new(ordered_cards)
 	deck_label.text = DeckNaming.display_name(_deck_file)
+	_reset_study_input_lock()
 	_save_active_study_resume()
 	_show_current()
 
@@ -1199,7 +1205,7 @@ func _on_reveal_pressed() -> void:
 
 
 func _on_again_pressed() -> void:
-	if _session == null or _session.is_finished():
+	if _session == null or _session.is_finished() or not _try_lock_study_input():
 		return
 
 	_progress.add_wrong(_session.current().question)
@@ -1211,7 +1217,7 @@ func _on_again_pressed() -> void:
 
 
 func _on_good_pressed() -> void:
-	if _session == null or _session.is_finished():
+	if _session == null or _session.is_finished() or not _try_lock_study_input():
 		return
 
 	_progress.set_status(_session.current().question, CardStatus.Value.MASTERED)
@@ -1219,6 +1225,34 @@ func _on_good_pressed() -> void:
 	_session.next()
 	_save_active_study_resume()
 	_show_current()
+
+
+func _try_lock_study_input() -> bool:
+	if _study_input_locked:
+		return false
+
+	_study_input_locked = true
+	_study_input_lock_generation += 1
+	again_button.disabled = true
+	good_button.disabled = true
+	var generation := _study_input_lock_generation
+	get_tree().create_timer(STUDY_INPUT_LOCK_SECONDS).timeout.connect(
+		_on_study_input_lock_timeout.bind(generation)
+	)
+	return true
+
+
+func _on_study_input_lock_timeout(generation: int) -> void:
+	if generation != _study_input_lock_generation:
+		return
+	_reset_study_input_lock()
+
+
+func _reset_study_input_lock() -> void:
+	_study_input_lock_generation += 1
+	_study_input_locked = false
+	again_button.disabled = false
+	good_button.disabled = false
 
 
 func _on_restart_pressed() -> void:
