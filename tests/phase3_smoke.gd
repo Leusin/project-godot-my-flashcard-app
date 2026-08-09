@@ -9,12 +9,15 @@ func run_tests() -> void:
 	_test_replace_current()
 	_test_input_array_is_copied()
 	_test_sequential_ordering()
+	_test_shuffle_ordering()
 	_test_app_settings_round_trip()
 	_test_app_settings_defaults()
 	_test_progress_wrong_count()
 	_test_progress_status()
 	_test_progress_remove()
 	_test_progress_rename()
+	_test_progress_json()
+	_test_progress_fixtures()
 
 func _test_queue_progression() -> void:
 	var cards: Array[FlashCard] = [
@@ -113,6 +116,34 @@ func _test_sequential_ordering() -> void:
 		and cards[1].question == "B"
 		and cards[2].question == "C",
 		"순서: Sequential 결과를 변경해도 원본 배열은 유지"
+	)
+
+
+func _test_shuffle_ordering() -> void:
+	var cards: Array[FlashCard] = [
+		FlashCard.new("A", "1"),
+		FlashCard.new("B", "2"),
+		FlashCard.new("C", "3"),
+		FlashCard.new("D", "4"),
+		FlashCard.new("E", "5"),
+	]
+	var shuffled := DeckOrdering.apply(DeckOrdering.StudyOrder.SHUFFLE, cards)
+	var questions: Array[String] = []
+	for card in shuffled:
+		questions.append(card.question)
+
+	check(shuffled.size() == cards.size(), "순서: Shuffle도 카드 수를 유지")
+	questions.sort()
+	check(questions == ["A", "B", "C", "D", "E"], "순서: Shuffle은 카드를 잃지 않음")
+	check(
+		cards[0].question == "A" and cards[4].question == "E",
+		"순서: Shuffle이 원본 배열을 변경하지 않음"
+	)
+
+	var empty_cards: Array[FlashCard] = []
+	check(
+		DeckOrdering.apply(DeckOrdering.StudyOrder.SHUFFLE, empty_cards).is_empty(),
+		"순서: 빈 덱 Shuffle은 빈 배열"
 	)
 
 func _test_app_settings_round_trip() -> void:
@@ -293,4 +324,67 @@ func _test_progress_rename() -> void:
 		blank.get_wrong_count("A") == 1
 		and blank.get_status("A") == CardStatus.Value.LEARNING,
 		"진행도 이사: 빈 새 질문이면 기존 기록 유지"
+	)
+
+
+func _test_progress_json() -> void:
+	var progress := Progress.new()
+	progress.set_wrong_count("Apple", 3)
+	progress.set_status("Apple", CardStatus.Value.LEARNING)
+	progress.set_status("Banana", CardStatus.Value.MASTERED)
+
+	var restored := Progress.from_json(progress.to_json())
+	check(
+		restored.get_wrong_count("Apple") == 3
+		and restored.get_status("Apple") == CardStatus.Value.LEARNING,
+		"진행도 JSON: 횟수와 상태 왕복"
+	)
+	check(
+		restored.get_wrong_count("Banana") == 0
+		and restored.get_status("Banana") == CardStatus.Value.MASTERED,
+		"진행도 JSON: 상태만 있는 카드 왕복"
+	)
+	check(Progress.from_json("").get_wrong_count("x") == 0, "진행도 JSON: 빈 값 복구")
+	check(
+		Progress.from_json("{깨진 json").get_wrong_count("x") == 0,
+		"진행도 JSON: 깨진 값 복구"
+	)
+	check(
+		Progress.from_json("[]").get_status("x") == CardStatus.Value.NEW,
+		"진행도 JSON: 객체가 아니면 빈 진행도"
+	)
+
+
+func _test_progress_fixtures() -> void:
+	var legacy := Progress.from_json(
+		FileAccess.get_file_as_string("res://tests/fixtures/progress_legacy.json")
+	)
+	check(
+		legacy.get_wrong_count("Apple") == 3
+		and legacy.get_status("Apple") == CardStatus.Value.NEW,
+		"진행도 fixture: 옛 숫자 형식 호환"
+	)
+	check(legacy.get_wrong_count("Zero") == 0, "진행도 fixture: 옛 형식의 0은 기본값")
+
+	var current := Progress.from_json(
+		FileAccess.get_file_as_string("res://tests/fixtures/progress_current.json")
+	)
+	check(
+		current.get_wrong_count("Apple") == 3
+		and current.get_status("Apple") == CardStatus.Value.LEARNING,
+		"진행도 fixture: 현재 형식의 횟수와 상태"
+	)
+	check(
+		current.get_wrong_count("Banana") == 0
+		and current.get_status("Banana") == CardStatus.Value.MASTERED,
+		"진행도 fixture: 현재 형식의 상태만 복원"
+	)
+
+	var malformed := Progress.from_json(
+		FileAccess.get_file_as_string("res://tests/fixtures/progress_malformed.json")
+	)
+	check(
+		malformed.get_wrong_count("Apple") == 0
+		and malformed.get_status("Apple") == CardStatus.Value.NEW,
+		"진행도 fixture: 깨진 JSON은 빈 진행도로 복구"
 	)

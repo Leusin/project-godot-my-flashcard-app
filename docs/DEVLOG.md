@@ -3,6 +3,22 @@
 결정과 교훈을 그날 기록한다. 세션이 끊겨도 이 문서만 읽으면 이어서 작업할 수 있게 쓴다.
 중간에 뒤집힌 시도는 남기지 않는다 — 최종 결정과 그 이유만 적는다.
 
+## 2026-08-09 GDScript 마이그레이션 Phase 3 완료 — 세션, 순서, 진행도, 설정
+
+- 옮긴 책임: `StudySession`, `DeckOrdering`, `Progress`, `AppSettings`의 순수 규칙과 JSON 호환.
+- 새로 이해한 Godot 개념: `Array.shuffle()`은 복사한 배열에 적용하고 `JSON.new().parse()`의 오류값은 직접 처리한다.
+- 가장 헷갈린 점: Shuffle의 정확한 순서가 아니라 원본·개수·구성 보존이 이 앱의 실제 계약이다.
+- 자동 검증: 옛·현재·깨진 진행도 fixture를 포함해 Phase 0~3까지 99 checks, 0 failures.
+- 직접 확인한 화면: 이번 Phase는 Scene Tree 없는 순수 로직이라 화면 확인 대상이 없다.
+
+## 2026-08-09 GDScript 마이그레이션 Phase 4 완료 — 파일 저장소
+
+- 옮긴 책임: 덱 CRUD, Import/Export, 진행도·설정 IO, 커스텀 덱 폴더와 샘플 덱 초기화.
+- 새로 이해한 Godot 개념: `FileAccess`는 파일 내용, `DirAccess`는 폴더·이름 변경·삭제를 담당한다.
+- 가장 헷갈린 점: 새 `class_name`의 에디터 캐시와 무관하게 테스트하려면 대상 스크립트를 명시적으로 `preload()`해야 한다.
+- 자동 검증: `user://__gd_phase4_decks` 전용 폴더에서 CRUD 후 정리, 전체 131 checks, 0 failures.
+- 직접 확인한 화면: 파일 계층 작업이라 화면 대신 실제 `user://` 파일 생성·왕복·삭제를 확인했다.
+
 ## 2026-08-01 GDScript 마이그레이션 Phase 0 — 기준 데이터와 일반 Godot 실행 확인
 
 - **C# 실행 환경은 준비하지 않는다.** 현재 C# 소스·씬·테스트를 읽을 수 있는 동작 명세로 삼고, 새 구현은 일반 Godot과 GDScript에서만 실행·검증한다.
