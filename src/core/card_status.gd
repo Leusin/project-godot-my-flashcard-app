@@ -1,8 +1,7 @@
 class_name CardStatus
 extends RefCounted
 
-enum
-{
+enum Value {
 	NEW,
 	LEARNING,
 	MASTERED,

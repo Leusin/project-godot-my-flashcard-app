@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://cvbi6jof8ncjt" path="res://tests/phase0_smoke.tscn" id="2_qpm35"]
 [ext_resource type="PackedScene" uid="uid://diigoepiplgq1" path="res://tests/phase1_smoke.tscn" id="3_mlp16"]
 [ext_resource type="PackedScene" uid="uid://d0w3ka1w0xwq8" path="res://tests/phase2_smoke.tscn" id="4_qpm35"]
-[ext_resource type="PackedScene" path="res://tests/phase3_smoke.tscn" id="5_phase3"]
+[ext_resource type="PackedScene" uid="uid://b4ejb5ii4jrf6" path="res://tests/phase3_smoke.tscn" id="5_phase3"]
 
 [node name="Tests" type="Node" unique_id=1981310814]
 script = ExtResource("1_runner")

@@ -11,6 +11,10 @@ func run_tests() -> void:
 	_test_sequential_ordering()
 	_test_app_settings_round_trip()
 	_test_app_settings_defaults()
+	_test_progress_wrong_count()
+	_test_progress_status()
+	_test_progress_remove()
+	_test_progress_rename()
 
 func _test_queue_progression() -> void:
 	var cards: Array[FlashCard] = [
@@ -110,7 +114,7 @@ func _test_sequential_ordering() -> void:
 		and cards[2].question == "C",
 		"순서: Sequential 결과를 변경해도 원본 배열은 유지"
 	)
-	
+
 func _test_app_settings_round_trip() -> void:
 	var settings := AppSettings.new()
 	settings.last_deck_file = "영어단어.md"
@@ -155,4 +159,138 @@ func _test_app_settings_defaults() -> void:
 		and malformed.deck_dir.is_empty()
 		and not malformed.shuffle_study,
 		"설정: 깨진 JSON은 모든 값을 기본값으로 복구"
+	)
+
+func _test_progress_wrong_count() -> void:
+	var progress := Progress.new()
+
+	check(
+		progress.get_wrong_count("없는 질문") == 0,
+		"진행도: 기록이 없는 질문은 0"
+	)
+
+	progress.add_wrong("Apple")
+	progress.add_wrong("Apple")
+	progress.add_wrong("Red")
+
+	check(
+		progress.get_wrong_count("Apple") == 2,
+		"진행도: 같은 질문의 오답 횟수 누적"
+	)
+	check(
+		progress.get_wrong_count("Red") == 1,
+		"진행도: 질문별 오답 횟수 독립"
+	)
+
+	progress.set_wrong_count("Apple", 7)
+
+	check(
+		progress.get_wrong_count("Apple") == 7,
+		"진행도: 오답 횟수 직접 수정"
+	)
+
+	progress.set_wrong_count("Apple", 0)
+	check(
+		progress.get_wrong_count("Apple") == 0,
+		"진행도: 오답 횟수 0이면 기록 제거"
+	)
+
+	progress.set_wrong_count("Red", -1)
+	check(
+		progress.get_wrong_count("Red") == 0,
+		"진행도: 음수 오답 횟수는 기록 제거"
+	)
+
+func _test_progress_status() -> void:
+	var progress := Progress.new()
+
+	check(
+		progress.get_status("Apple") == CardStatus.Value.NEW,
+		"진행도: 상태 기록이 없으면 NEW"
+	)
+
+	progress.set_status("Apple", CardStatus.Value.LEARNING)
+	check(
+		progress.get_status("Apple") == CardStatus.Value.LEARNING,
+		"진행도: 상태를 LEARNING으로 변경"
+	)
+
+	progress.set_status("Apple", CardStatus.Value.MASTERED)
+	check(
+		progress.get_status("Apple") == CardStatus.Value.MASTERED,
+		"진행도: 상태를 MASTERED로 변경"
+	)
+
+	progress.set_status("Apple", CardStatus.Value.NEW)
+	check(
+		progress.get_status("Apple") == CardStatus.Value.NEW,
+		"진행도: NEW로 변경하면 상태 기록 제거"
+	)
+
+
+func _test_progress_remove() -> void:
+	var progress := Progress.new()
+	progress.set_wrong_count("Apple", 5)
+	progress.set_status("Apple", CardStatus.Value.LEARNING)
+
+	progress.remove("Apple")
+
+	check(
+		progress.get_wrong_count("Apple") == 0,
+		"진행도: remove가 오답 횟수를 제거"
+	)
+	check(
+		progress.get_status("Apple") == CardStatus.Value.NEW,
+		"진행도: remove가 카드 상태를 제거"
+	)
+
+	progress.remove("없는 질문")
+	check(
+		progress.get_wrong_count("없는 질문") == 0,
+		"진행도: 없는 질문 제거는 아무 일도 하지 않음"
+	)
+
+
+func _test_progress_rename() -> void:
+	var moved := Progress.new()
+	moved.set_wrong_count("A", 2)
+	moved.set_status("A", CardStatus.Value.LEARNING)
+	moved.set_status("B", CardStatus.Value.MASTERED)
+	moved.rename("A", "B")
+
+	check(moved.get_wrong_count("B") == 2, "진행도 이사: 오답 횟수가 새 질문으로 이동")
+	check(moved.get_wrong_count("A") == 0, "진행도 이사: 옛 질문의 오답 기록 제거")
+	check(
+		moved.get_status("B") == CardStatus.Value.LEARNING,
+		"진행도 이사: 이동한 카드 상태로 목적지 상태 덮어쓰기"
+	)
+	check(
+		moved.get_status("A") == CardStatus.Value.NEW,
+		"진행도 이사: 옛 질문의 상태 기록 제거"
+	)
+
+	var merged := Progress.new()
+	merged.set_wrong_count("A", 2)
+	merged.set_wrong_count("B", 1)
+	merged.rename("A", "B")
+	check(merged.get_wrong_count("B") == 3, "진행도 이사: 목적지 오답 횟수와 병합")
+
+	var same := Progress.new()
+	same.set_wrong_count("A", 1)
+	same.rename("A", "A")
+	check(same.get_wrong_count("A") == 1, "진행도 이사: 같은 질문이면 아무 일도 하지 않음")
+
+	var absent := Progress.new()
+	absent.set_wrong_count("B", 1)
+	absent.rename("A", "B")
+	check(absent.get_wrong_count("B") == 1, "진행도 이사: 옮길 기록이 없으면 목적지 유지")
+
+	var blank := Progress.new()
+	blank.set_wrong_count("A", 1)
+	blank.set_status("A", CardStatus.Value.LEARNING)
+	blank.rename("A", "")
+	check(
+		blank.get_wrong_count("A") == 1
+		and blank.get_status("A") == CardStatus.Value.LEARNING,
+		"진행도 이사: 빈 새 질문이면 기존 기록 유지"
 	)
