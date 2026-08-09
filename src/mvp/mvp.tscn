@@ -130,6 +130,21 @@ theme_override_font_sizes/font_size = 20
 text = "덱이 없습니다."
 horizontal_alignment = 1
 
+[node name="ImportButton" type="Button" parent="Margin/Page/LibraryContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "덱 가져오기 (.md)"
+
+[node name="ImportStatusLabel" type="Label" parent="Margin/Page/LibraryContainer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "가져오기 완료"
+horizontal_alignment = 1
+
 [node name="Header" type="HBoxContainer" parent="Margin/Page" unique_id=1177577146]
 unique_name_in_owner = true
 visible = false
@@ -263,3 +278,9 @@ custom_minimum_size = Vector2(0, 84)
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "다시 시작"
+
+[node name="ImportDialog" type="FileDialog" parent="."]
+unique_name_in_owner = true
+title = "가져올 Markdown 덱 선택"
+initial_position = 2
+size = Vector2i(720, 900)

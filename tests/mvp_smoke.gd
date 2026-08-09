@@ -4,12 +4,26 @@ const MVP_SCENE := preload("res://src/mvp/mvp.tscn")
 const TEST_DECKS_DIR := "user://__gd_mvp_decks"
 const TEST_DECK := "__gd_mvp.md"
 const TEST_TEXT := "# A\n1\n# B\n2\n"
+const IMPORT_SOURCE := "user://__gd_mvp_import.md"
 
 
 func run_tests() -> void:
 	_cleanup()
 	DeckStorage.set_decks_dir(TEST_DECKS_DIR)
 	DeckStorage.write_deck(TEST_DECK, TEST_TEXT)
+
+	var safe_insets := MvpApp.safe_insets_in_viewport(
+		Rect2i(0, 94, 1080, 2402),
+		Vector2i(1080, 2640),
+		Vector2(720, 1760)
+	)
+	check(is_equal_approx(safe_insets.y, 62.666668), "MVP Safe Area: 노치 상단 여백 환산")
+	check(is_equal_approx(safe_insets.w, 96.0), "MVP Safe Area: 하단 제스처 영역 환산")
+	check(
+		MvpApp.safe_insets_in_viewport(Rect2i(), Vector2i.ZERO, Vector2.ZERO)
+		== Vector4.ZERO,
+		"MVP Safe Area: 창 크기가 없으면 추가 여백 없음"
+	)
 
 	var app := MVP_SCENE.instantiate()
 	app.auto_start = false
@@ -26,6 +40,30 @@ func run_tests() -> void:
 	check(app.get_node("%StudyContainer").visible, "MVP: 덱 선택 후 학습 화면 표시")
 	app.get_node("%BackToLibraryButton").pressed.emit()
 	check(app.get_node("%LibraryContainer").visible, "MVP: 덱 목록 버튼으로 복귀")
+	check(
+		app.get_node("%ImportDialog").access == FileDialog.ACCESS_FILESYSTEM,
+		"MVP Import: 파일시스템 접근 다이얼로그"
+	)
+	check(app.get_node("%ImportDialog").use_native_dialog, "MVP Import: 네이티브 다이얼로그")
+
+	var import_source := FileAccess.open(IMPORT_SOURCE, FileAccess.WRITE)
+	import_source.store_string("# Imported\nWorks\n")
+	import_source = null
+	check(app.import_deck_from_path(IMPORT_SOURCE), "MVP Import: Markdown 덱 가져오기 성공")
+	check(DeckStorage.deck_exists("__gd_mvp_import.md"), "MVP Import: 앱 덱 폴더에 복사")
+	check(app.get_node("%DeckList").get_child_count() == 2, "MVP Import: 목록 즉시 갱신")
+	check(
+		app.get_node("%ImportStatusLabel").text == "'__gd_mvp_import' 가져오기 완료",
+		"MVP Import: 성공 메시지 표시"
+	)
+	check(
+		not app.import_deck_from_path("user://__gd_mvp_missing.md"),
+		"MVP Import: 없는 파일 가져오기 실패"
+	)
+	check(
+		app.get_node("%ImportStatusLabel").text == "덱을 가져오지 못했습니다.",
+		"MVP Import: 실패 메시지 표시"
+	)
 
 	app.start_deck(TEST_DECK)
 
@@ -98,3 +136,6 @@ func _cleanup() -> void:
 	var progress_path := DeckStorage.progress_path(TEST_DECK)
 	if FileAccess.file_exists(progress_path):
 		DirAccess.remove_absolute(progress_path)
+
+	if FileAccess.file_exists(IMPORT_SOURCE):
+		DirAccess.remove_absolute(IMPORT_SOURCE)

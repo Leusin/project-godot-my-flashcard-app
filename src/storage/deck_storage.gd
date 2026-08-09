@@ -43,12 +43,16 @@ static func read_deck(deck_file: String) -> String:
 
 
 static func import_deck(source_path: String) -> Variant:
+	var source_file_name := source_path.uri_decode().get_file()
+	if not DeckNaming.is_deck_file(source_file_name):
+		return null
+
 	var source := FileAccess.open(source_path, FileAccess.READ)
 	if source == null:
 		return null
-	
+
 	var file_name := DeckNaming.unique_file_name(
-		source_path.get_file(),
+		source_file_name,
 		list_deck_files()
 	)
 	if not write_deck(file_name, source.get_as_text()):

@@ -1,11 +1,16 @@
 class_name MvpApp
 extends Control
 
+const BASE_PAGE_MARGIN := 32.0
+
 @export var auto_start := true
 
+@onready var page_margin: MarginContainer = $Margin
 @onready var library_container: VBoxContainer = %LibraryContainer
 @onready var deck_list: VBoxContainer = %DeckList
 @onready var empty_decks_label: Label = %EmptyDecksLabel
+@onready var import_status_label: Label = %ImportStatusLabel
+@onready var import_dialog: FileDialog = %ImportDialog
 @onready var header: HBoxContainer = %Header
 @onready var deck_label: Label = %DeckLabel
 @onready var remaining_label: Label = %RemainingLabel
@@ -25,6 +30,15 @@ var _source_cards: Array[FlashCard] = []
 
 
 func _ready() -> void:
+	get_tree().root.size_changed.connect(_apply_safe_area)
+	call_deferred("_apply_safe_area")
+	%ImportButton.pressed.connect(_on_import_pressed)
+	import_dialog.file_selected.connect(import_deck_from_path)
+	import_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	import_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	import_dialog.use_native_dialog = true
+	import_dialog.clear_filters()
+	import_dialog.add_filter("*.md", "Markdown", "text/markdown,text/plain")
 	%BackToLibraryButton.pressed.connect(show_library)
 	reveal_button.pressed.connect(_on_reveal_pressed)
 	%AgainButton.pressed.connect(_on_again_pressed)
@@ -35,6 +49,41 @@ func _ready() -> void:
 		show_library()
 
 
+static func safe_insets_in_viewport(
+	safe_area: Rect2i,
+	window_size: Vector2i,
+	viewport_size: Vector2
+) -> Vector4:
+	if window_size.x <= 0 or window_size.y <= 0:
+		return Vector4.ZERO
+
+	var scale := Vector2(
+		viewport_size.x / float(window_size.x),
+		viewport_size.y / float(window_size.y)
+	)
+	return Vector4(
+		maxi(safe_area.position.x, 0) * scale.x,
+		maxi(safe_area.position.y, 0) * scale.y,
+		maxi(window_size.x - safe_area.end.x, 0) * scale.x,
+		maxi(window_size.y - safe_area.end.y, 0) * scale.y
+	)
+
+
+func _apply_safe_area() -> void:
+	var safe_insets := Vector4.ZERO
+	if OS.get_name() == "Android" or OS.get_name() == "iOS":
+		safe_insets = safe_insets_in_viewport(
+			DisplayServer.get_display_safe_area(),
+			DisplayServer.window_get_size(),
+			get_viewport_rect().size
+		)
+
+	page_margin.offset_left = BASE_PAGE_MARGIN + safe_insets.x
+	page_margin.offset_top = BASE_PAGE_MARGIN + safe_insets.y
+	page_margin.offset_right = -(BASE_PAGE_MARGIN + safe_insets.z)
+	page_margin.offset_bottom = -(BASE_PAGE_MARGIN + safe_insets.w)
+
+
 func start_default_deck() -> void:
 	show_library()
 
@@ -43,6 +92,7 @@ func show_library() -> void:
 	DeckStorage.seed_sample_if_empty()
 	_session = null
 	_deck_file = ""
+	import_status_label.visible = false
 	library_container.visible = true
 	header.visible = false
 	study_container.visible = false
@@ -101,6 +151,24 @@ func _refresh_deck_list() -> void:
 
 func _on_deck_selected(deck_file: String) -> void:
 	start_deck(deck_file)
+
+
+func _on_import_pressed() -> void:
+	import_status_label.visible = false
+	import_dialog.popup_file_dialog()
+
+
+func import_deck_from_path(source_path: String) -> bool:
+	var imported: Variant = DeckStorage.import_deck(source_path)
+	if imported is not String:
+		import_status_label.text = "덱을 가져오지 못했습니다."
+		import_status_label.visible = true
+		return false
+
+	_refresh_deck_list()
+	import_status_label.text = "'%s' 가져오기 완료" % DeckNaming.display_name(imported)
+	import_status_label.visible = true
+	return true
 
 
 func _restart_session() -> void:

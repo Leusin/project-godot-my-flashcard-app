@@ -7,6 +7,7 @@ const TEST_DECK := "__gd_phase4_a.md"
 const TEST_TEXT := "# A\n1\n# B\n2\n"
 const RENAMED_DECK := "__gd_phase4_renamed.md"
 const EXPORTED_PATH := "user://__gd_phase4_export.md"
+const INVALID_IMPORT_PATH := "user://__gd_phase4_invalid.txt"
 
 
 func run_tests() -> void:
@@ -73,6 +74,13 @@ func _test_import_and_export() -> void:
 		DeckStorage.import_deck("user://__gd_phase4_missing.md") == null,
 		"저장소: 없는 파일 Import는 null"
 	)
+	var invalid_import := FileAccess.open(INVALID_IMPORT_PATH, FileAccess.WRITE)
+	invalid_import.store_string(TEST_TEXT)
+	invalid_import.close()
+	check(
+		DeckStorage.import_deck(INVALID_IMPORT_PATH) == null,
+		"저장소: Markdown이 아닌 파일 Import는 null"
+	)
 
 	check(DeckStorage.export_deck(TEST_DECK, EXPORTED_PATH), "저장소: 덱 Export 성공")
 	check(FileAccess.get_file_as_string(EXPORTED_PATH) == TEST_TEXT, "저장소: Export 내용 보존")
@@ -136,3 +144,5 @@ func _cleanup() -> void:
 
 	if FileAccess.file_exists(EXPORTED_PATH):
 		DirAccess.remove_absolute(EXPORTED_PATH)
+	if FileAccess.file_exists(INVALID_IMPORT_PATH):
+		DirAccess.remove_absolute(INVALID_IMPORT_PATH)
