@@ -86,8 +86,8 @@ user://settings.json
 ```json
 {
   "질문": {
-    "wrong": 3,
-    "status": "LEARNING"
+	"wrong": 3,
+	"status": "LEARNING"
   }
 }
 ```
@@ -133,7 +133,7 @@ src/
 ├── screens/
 │   └── 기존 화면별 폴더
 └── debug/
-    └── apply_project_settings.gd
+	└── apply_project_settings.gd
 
 tests/
 ├── test_runner.gd
@@ -714,4 +714,3 @@ docs: GDScript 구조와 실행 절차 갱신
 - View가 Again을 WrongCount 증가로 해석하면 왜 결합도가 커지는가?
 - Tween 도중 입력을 막지 않으면 어떤 중복 상태가 생기는가?
 - C# 파일을 제거해도 기존 사용자 데이터가 유지된다고 어떻게 증명했는가?
-

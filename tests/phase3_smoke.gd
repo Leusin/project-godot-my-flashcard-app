@@ -9,7 +9,8 @@ func run_tests() -> void:
 	_test_replace_current()
 	_test_input_array_is_copied()
 	_test_sequential_ordering()
-
+	_test_app_settings_round_trip()
+	_test_app_settings_defaults()
 
 func _test_queue_progression() -> void:
 	var cards: Array[FlashCard] = [
@@ -108,4 +109,50 @@ func _test_sequential_ordering() -> void:
 		and cards[1].question == "B"
 		and cards[2].question == "C",
 		"순서: Sequential 결과를 변경해도 원본 배열은 유지"
+	)
+	
+func _test_app_settings_round_trip() -> void:
+	var settings := AppSettings.new()
+	settings.last_deck_file = "영어단어.md"
+	settings.deck_dir = "user://test-decks"
+	settings.shuffle_study = true
+
+	var restored := AppSettings.from_json(settings.to_json())
+
+	check(
+		restored.last_deck_file == "영어단어.md",
+		"설정: 마지막 덱 직렬화 왕복"
+	)
+	check(
+		restored.deck_dir == "user://test-decks",
+		"설정: 덱 폴더 직렬화 왕복"
+	)
+	check(
+		restored.shuffle_study,
+		"설정: 학습 순서 직렬화 왕복"
+	)
+
+
+func _test_app_settings_defaults() -> void:
+	var empty := AppSettings.from_json("")
+
+	check(
+		empty.last_deck_file.is_empty(),
+		"설정: 빈 JSON의 마지막 덱 기본값"
+	)
+	check(
+		empty.deck_dir.is_empty(),
+		"설정: 빈 JSON의 덱 폴더 기본값"
+	)
+	check(
+		not empty.shuffle_study,
+		"설정: 학습 순서 기본값은 Sequential"
+	)
+
+	var malformed := AppSettings.from_json("{깨진 json")
+	check(
+		malformed.last_deck_file.is_empty()
+		and malformed.deck_dir.is_empty()
+		and not malformed.shuffle_study,
+		"설정: 깨진 JSON은 모든 값을 기본값으로 복구"
 	)
