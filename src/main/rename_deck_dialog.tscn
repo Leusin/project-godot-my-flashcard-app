@@ -1,0 +1,129 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxDialog"]
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxInput"]
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 16.0
+content_margin_right = 16.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxInputFocus"]
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+content_margin_left = 15.0
+content_margin_right = 15.0
+
+[node name="RenameDeckOverlay" type="ColorRect"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_theme")
+color = Color(0, 0, 0, 0.18)
+
+[node name="RenameDeckPanel" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(600, 400)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -200.0
+offset_right = 300.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxDialog")
+
+[node name="Margin" type="MarginContainer" parent="RenameDeckPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 28
+
+[node name="Content" type="VBoxContainer" parent="RenameDeckPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="RenameDeckTitle" type="Label" parent="RenameDeckPanel/Margin/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "덱 이름 변경"
+horizontal_alignment = 1
+
+[node name="RenameDeckInput" type="LineEdit" parent="RenameDeckPanel/Margin/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/caret_color = Color(0, 0, 0, 1)
+theme_override_colors/selection_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("StyleBoxInput")
+theme_override_styles/focus = SubResource("StyleBoxInputFocus")
+placeholder_text = "덱 이름"
+select_all_on_focus = true
+
+[node name="RenameErrorLabel" type="Label" parent="RenameDeckPanel/Margin/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "이름을 확인하세요."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Buttons" type="HBoxContainer" parent="RenameDeckPanel/Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="CancelRenameButton" type="Button" parent="RenameDeckPanel/Margin/Content/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 88)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 22
+text = "취소"
+
+[node name="ConfirmRenameButton" type="Button" parent="RenameDeckPanel/Margin/Content/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 88)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 22
+text = "변경"

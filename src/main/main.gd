@@ -10,6 +10,11 @@ const EXPORT_WRITE_FAILED_MESSAGE := "파일을 저장하지 못했습니다. �
 const EXPORT_UNKNOWN_FAILED_MESSAGE := "덱을 내보내지 못했습니다. 다른 위치를 선택해 다시 시도하세요."
 const DELETE_DECK_NOT_FOUND_MESSAGE := "삭제할 덱 파일을 찾을 수 없습니다."
 const DELETE_DECK_FAILED_MESSAGE := "덱을 삭제하지 못했습니다. 파일이 사용 중인지 확인하고 다시 시도하세요."
+const RENAME_EMPTY_MESSAGE := "덱 이름을 입력하세요."
+const RENAME_INVALID_MESSAGE := "덱 이름에 < > : \" / \\ | ? * 문자나 끝 마침표를 사용할 수 없습니다."
+const RENAME_DUPLICATE_MESSAGE := "같은 이름의 덱이 이미 있습니다."
+const RENAME_DECK_NOT_FOUND_MESSAGE := "이름을 변경할 덱 파일을 찾을 수 없습니다."
+const RENAME_FAILED_MESSAGE := "덱 이름을 변경하지 못했습니다. 다시 시도하세요."
 const DECK_TILE_SCENE := preload("res://src/main/deck_tile.tscn")
 const ADD_DECK_TILE_SCENE := preload("res://src/main/add_deck_tile.tscn")
 
@@ -24,12 +29,18 @@ const ADD_DECK_TILE_SCENE := preload("res://src/main/add_deck_tile.tscn")
 @onready var export_dialog: FileDialog = $Margin/Page/LibraryContainer/ExportDialog
 @onready var deck_context_menu: Control = $DeckContextMenu
 @onready var deck_context_menu_panel: PanelContainer = $DeckContextMenu/DeckContextMenuPanel
+@onready var rename_deck_button := (
+	deck_context_menu.find_child("RenameDeckButton", true, false) as Button
+)
 @onready var export_deck_button := (
 	deck_context_menu.find_child("ExportDeckButton", true, false) as Button
 )
 @onready var delete_deck_button := (
 	deck_context_menu.find_child("DeleteDeckButton", true, false) as Button
 )
+@onready var rename_deck_overlay: Control = $RenameDeckOverlay
+@onready var rename_deck_input: LineEdit = $RenameDeckOverlay/RenameDeckPanel/Margin/Content/RenameDeckInput
+@onready var rename_error_label: Label = $RenameDeckOverlay/RenameDeckPanel/Margin/Content/RenameErrorLabel
 @onready var delete_confirmation_overlay: Control = $DeleteConfirmationOverlay
 @onready var delete_confirmation_title: Label = $DeleteConfirmationOverlay/DeleteConfirmationPanel/Margin/Content/DeleteConfirmationTitle
 @onready var exit_confirmation_overlay: Control = $ExitConfirmationOverlay
@@ -68,9 +79,13 @@ func _ready() -> void:
 	export_dialog.use_native_dialog = true
 	export_dialog.clear_filters()
 	export_dialog.add_filter("*.md", "Markdown", "text/markdown,text/plain")
+	rename_deck_button.pressed.connect(_on_rename_pressed)
 	export_deck_button.pressed.connect(_on_export_pressed)
 	delete_deck_button.pressed.connect(_on_delete_pressed)
 	$DeckContextMenu/DismissContextMenuButton.pressed.connect(_on_deck_context_dismissed)
+	$RenameDeckOverlay/RenameDeckPanel/Margin/Content/Buttons/CancelRenameButton.pressed.connect(_on_rename_canceled)
+	$RenameDeckOverlay/RenameDeckPanel/Margin/Content/Buttons/ConfirmRenameButton.pressed.connect(_on_rename_confirmed)
+	rename_deck_input.text_submitted.connect(_on_rename_submitted)
 	$DeleteConfirmationOverlay/DeleteConfirmationPanel/Margin/Content/Buttons/CancelDeleteButton.pressed.connect(_on_delete_canceled)
 	$DeleteConfirmationOverlay/DeleteConfirmationPanel/Margin/Content/Buttons/ConfirmDeleteButton.pressed.connect(_on_delete_confirmed)
 	$ExitConfirmationOverlay/ExitConfirmationPanel/Margin/Content/Buttons/CancelExitButton.pressed.connect(_on_exit_canceled)
@@ -137,6 +152,7 @@ func show_library() -> void:
 	_deck_file = ""
 	_menu_deck_file = ""
 	deck_context_menu.hide()
+	rename_deck_overlay.hide()
 	delete_confirmation_overlay.hide()
 	library_status_label.visible = false
 	library_container.visible = true
@@ -254,6 +270,10 @@ func _on_deck_context_dismissed() -> void:
 
 
 func handle_back_request() -> bool:
+	if rename_deck_overlay.visible:
+		_on_rename_canceled()
+		return true
+
 	if delete_confirmation_overlay.visible:
 		_on_delete_canceled()
 		return true
@@ -304,6 +324,76 @@ func _on_export_file_selected(target_path: String) -> void:
 
 func _on_export_canceled() -> void:
 	_menu_deck_file = ""
+
+
+func _on_rename_pressed() -> void:
+	deck_context_menu.hide()
+	if not DeckStorage.deck_exists(_menu_deck_file):
+		_menu_deck_file = ""
+		_show_library_status(RENAME_DECK_NOT_FOUND_MESSAGE)
+		return
+
+	rename_deck_input.text = DeckNaming.display_name(_menu_deck_file)
+	rename_error_label.hide()
+	rename_deck_overlay.show()
+	rename_deck_input.call_deferred("grab_focus")
+	rename_deck_input.call_deferred("select_all")
+
+
+func _on_rename_canceled() -> void:
+	rename_deck_overlay.hide()
+	_menu_deck_file = ""
+
+
+func _on_rename_confirmed() -> void:
+	rename_deck_from_library(_menu_deck_file, rename_deck_input.text)
+
+
+func _on_rename_submitted(_new_name: String) -> void:
+	_on_rename_confirmed()
+
+
+func rename_deck_from_library(deck_file: String, new_display_name: String) -> bool:
+	if not DeckStorage.deck_exists(deck_file):
+		_show_rename_error(RENAME_DECK_NOT_FOUND_MESSAGE)
+		return false
+
+	var trimmed_name := new_display_name.strip_edges()
+	if trimmed_name.is_empty():
+		_show_rename_error(RENAME_EMPTY_MESSAGE)
+		return false
+	if not DeckNaming.is_valid_display_name(trimmed_name):
+		_show_rename_error(RENAME_INVALID_MESSAGE)
+		return false
+
+	var new_file := DeckNaming.deck_file_name(trimmed_name)
+	if new_file.to_lower() == deck_file.to_lower():
+		rename_deck_overlay.hide()
+		_menu_deck_file = ""
+		_show_library_status("이름이 변경되지 않았습니다.")
+		return true
+
+	for existing_file in DeckStorage.list_deck_files():
+		if existing_file.to_lower() == new_file.to_lower():
+			_show_rename_error(RENAME_DUPLICATE_MESSAGE)
+			return false
+
+	var old_display_name := DeckNaming.display_name(deck_file)
+	if not DeckStorage.rename_deck(deck_file, new_file):
+		push_warning("Deck rename failed (source=%s, target=%s)" % [deck_file, new_file])
+		_show_rename_error(RENAME_FAILED_MESSAGE)
+		return false
+
+	rename_deck_overlay.hide()
+	_menu_deck_file = ""
+	_refresh_deck_list()
+	_show_library_status("'%s' → '%s' 이름 변경 완료" % [old_display_name, trimmed_name])
+	return true
+
+
+func _show_rename_error(message: String) -> void:
+	rename_error_label.text = message
+	rename_error_label.show()
 
 
 func _on_delete_pressed() -> void:

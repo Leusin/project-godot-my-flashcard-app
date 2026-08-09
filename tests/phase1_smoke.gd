@@ -8,6 +8,7 @@ func run_tests() -> void:
 	_test_is_deck_file()
 	_test_unique_file_name()
 	_test_progress_file_name()
+	_test_editable_display_name()
 
 
 func _test_display_name() -> void:
@@ -42,4 +43,15 @@ func _test_progress_file_name() -> void:
 	check(
 		DeckNaming.progress_file_name("영어단어.md") == "영어단어.json",
 		"진행도 이름: .md를 .json으로 변경"
+	)
+
+
+func _test_editable_display_name() -> void:
+	check(DeckNaming.is_valid_display_name("영어 단어"), "편집 이름: 일반 이름 허용")
+	check(not DeckNaming.is_valid_display_name(""), "편집 이름: 빈 이름 거부")
+	check(not DeckNaming.is_valid_display_name("잘못된/이름"), "편집 이름: 경로 문자 거부")
+	check(not DeckNaming.is_valid_display_name("끝."), "편집 이름: 끝 마침표 거부")
+	check(
+		DeckNaming.deck_file_name(" 영어 단어 ") == "영어 단어.md",
+		"편집 이름: 공백 제거 후 Markdown 확장자 추가"
 	)

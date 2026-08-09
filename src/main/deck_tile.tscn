@@ -1,7 +1,7 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene format=3 uid="uid://bil5lbdkhdh02"]
 
-[ext_resource type="Script" path="res://src/main/deck_tile.gd" id="1_script"]
-[ext_resource type="Theme" path="res://src/main/main_theme.tres" id="2_theme"]
+[ext_resource type="Script" uid="uid://c8y0godulqtq4" path="res://src/main/deck_tile.gd" id="1_script"]
+[ext_resource type="Theme" uid="uid://cqshs8ofnmh0w" path="res://src/main/main_theme.tres" id="2_theme"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxStackCard"]
 bg_color = Color(1, 1, 1, 1)
@@ -17,14 +17,14 @@ corner_radius_bottom_left = 8
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxMenuButton"]
 
-[node name="DeckTile" type="Control"]
+[node name="DeckTile" type="Control" unique_id=1595245552]
 custom_minimum_size = Vector2(300, 220)
 layout_mode = 3
 anchors_preset = 0
 theme = ExtResource("2_theme")
 script = ExtResource("1_script")
 
-[node name="BackCardFar" type="PanelContainer" parent="."]
+[node name="BackCardFar" type="PanelContainer" parent="." unique_id=999584049]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -36,7 +36,7 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxStackCard")
 
-[node name="BackCardNear" type="PanelContainer" parent="."]
+[node name="BackCardNear" type="PanelContainer" parent="." unique_id=1536366792]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -50,7 +50,7 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxStackCard")
 
-[node name="DeckButton" type="Button" parent="."]
+[node name="DeckButton" type="Button" parent="." unique_id=1629499697]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -61,7 +61,7 @@ offset_right = -14.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Info" type="VBoxContainer" parent="DeckButton"]
+[node name="Info" type="VBoxContainer" parent="DeckButton" unique_id=1890999900]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -76,40 +76,38 @@ mouse_filter = 2
 theme_override_constants/separation = 12
 alignment = 1
 
-[node name="DeckNameLabel" type="Label" parent="DeckButton/Info"]
+[node name="DeckNameLabel" type="Label" parent="DeckButton/Info" unique_id=1901250899]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 text = "덱 이름"
 horizontal_alignment = 1
 autowrap_mode = 3
-mouse_filter = 2
 
-[node name="DeckCountLabel" type="Label" parent="DeckButton/Info"]
+[node name="DeckCountLabel" type="Label" parent="DeckButton/Info" unique_id=1408624246]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "0장"
 horizontal_alignment = 1
-mouse_filter = 2
 
-[node name="DeckMenuButton" type="Button" parent="."]
+[node name="DeckMenuButton" type="Button" parent="." unique_id=1580618447]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -82.0
-offset_top = 26.0
-offset_right = -18.0
-offset_bottom = 90.0
+offset_left = -80.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 80.0
 grow_horizontal = 0
+tooltip_text = "덱 관리"
 theme_override_font_sizes/font_size = 32
 theme_override_styles/normal = SubResource("StyleBoxMenuButton")
-theme_override_styles/hover = SubResource("StyleBoxMenuButton")
 theme_override_styles/pressed = SubResource("StyleBoxMenuButton")
-theme_override_styles/focus = SubResource("StyleBoxMenuButton")
+theme_override_styles/hover = SubResource("StyleBoxMenuButton")
 theme_override_styles/disabled = SubResource("StyleBoxMenuButton")
+theme_override_styles/focus = SubResource("StyleBoxMenuButton")
 text = "⋮"
-tooltip_text = "덱 관리"

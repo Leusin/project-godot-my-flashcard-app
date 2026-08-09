@@ -10,6 +10,8 @@ const BROKEN_IMPORT_SOURCE := "user://__gd_main_broken.md"
 const EMPTY_DECK := "__gd_main_empty_saved.md"
 const BROKEN_DECK := "__gd_main_broken_saved.md"
 const DELETE_DECK := "__gd_main_delete.md"
+const RENAME_DECK := "__gd_main_rename.md"
+const RENAMED_DECK := "__gd_main_renamed.md"
 const EXPORT_TARGET_WITHOUT_EXTENSION := "user://__gd_main_export"
 const EXPORTED_PATH := "user://__gd_main_export.md"
 
@@ -116,11 +118,32 @@ func run_tests() -> void:
 		"Main Deck Actions: context list 실제 layout 크기로 위치 계산"
 	)
 	check(
-		_view(app, "DeckContextMenuPanel").custom_minimum_size == Vector2(200, 176)
-		and _view(app, "ExportDeckButton").custom_minimum_size.y == 60.0
-		and _view(app, "DeleteDeckButton").custom_minimum_size.y == 60.0,
-		"Main Deck Actions: 이름표 없는 200px compact context list 표시"
+		_view(app, "DeckContextMenuPanel").custom_minimum_size == Vector2(200, 200)
+		and _view(app, "RenameDeckButton").custom_minimum_size.y == 56.0
+		and _view(app, "ExportDeckButton").custom_minimum_size.y == 56.0
+		and _view(app, "DeleteDeckButton").custom_minimum_size.y == 56.0,
+		"Main Deck Actions: 세 가지 작업을 담은 200px context list 표시"
 	)
+	_view(app, "RenameDeckButton").pressed.emit()
+	var rename_overlay := _view(app, "RenameDeckOverlay") as Control
+	check(
+		not deck_context_menu.visible and rename_overlay.visible,
+		"Main Rename: context list에서 이름 변경창으로 전환"
+	)
+	check(
+		_view(app, "RenameDeckInput").text == "__gd_main",
+		"Main Rename: 현재 덱 이름을 입력창에 표시"
+	)
+	_view(app, "RenameDeckInput").text = ""
+	_view(app, "ConfirmRenameButton").pressed.emit()
+	check(
+		_view(app, "RenameErrorLabel").visible
+		and _view(app, "RenameErrorLabel").text == MainApp.RENAME_EMPTY_MESSAGE,
+		"Main Rename: 빈 이름 오류를 입력창 안에 표시"
+	)
+	_view(app, "CancelRenameButton").pressed.emit()
+	check(not rename_overlay.visible, "Main Rename: 취소하면 이름 변경창 닫기")
+	_view(deck_buttons[0], "DeckMenuButton").pressed.emit()
 	_view(app, "DeleteDeckButton").pressed.emit()
 	var delete_overlay := _view(app, "DeleteConfirmationOverlay") as Control
 	check(
@@ -311,17 +334,43 @@ func run_tests() -> void:
 		"MVP: 앱 소개 샘플 덱의 첫 질문 표시"
 	)
 
+	DeckStorage.write_deck(RENAME_DECK, TEST_TEXT)
+	var rename_progress := Progress.new()
+	rename_progress.add_wrong("A")
+	DeckStorage.save_progress(RENAME_DECK, rename_progress)
+	app.show_library()
+	var rename_tile := _find_deck_tile(app, "__gd_main_rename")
+	check(rename_tile != null, "Main Rename: 이름을 바꿀 덱 타일 표시")
+	if rename_tile != null:
+		_view(rename_tile, "DeckMenuButton").pressed.emit()
+		_view(app, "RenameDeckButton").pressed.emit()
+		_view(app, "RenameDeckInput").text = "__gd_main"
+		_view(app, "ConfirmRenameButton").pressed.emit()
+		check(
+			_view(app, "RenameErrorLabel").text == MainApp.RENAME_DUPLICATE_MESSAGE
+			and DeckStorage.deck_exists(RENAME_DECK),
+			"Main Rename: 중복 이름을 거부하고 원본 유지"
+		)
+		_view(app, "RenameDeckInput").text = "__gd_main_renamed"
+		_view(app, "ConfirmRenameButton").pressed.emit()
+	check(not DeckStorage.deck_exists(RENAME_DECK), "Main Rename: 이전 덱 파일 제거")
+	check(DeckStorage.deck_exists(RENAMED_DECK), "Main Rename: 새 덱 파일 생성")
+	check(
+		DeckStorage.load_progress(RENAMED_DECK).get_wrong_count("A") == 1,
+		"Main Rename: 학습 기록도 새 이름으로 이동"
+	)
+	check(
+		_view(app, "LibraryStatusLabel").text
+		== "'__gd_main_rename' → '__gd_main_renamed' 이름 변경 완료",
+		"Main Rename: 목록 아래 완료 메시지 표시"
+	)
+
 	DeckStorage.write_deck(DELETE_DECK, TEST_TEXT)
 	var delete_progress := Progress.new()
 	delete_progress.add_wrong("A")
 	DeckStorage.save_progress(DELETE_DECK, delete_progress)
 	app.show_library()
-	var delete_tile: Node = null
-	for tile in _view(app, "DeckList").get_children():
-		var tile_name := _view(tile, "DeckNameLabel") as Label
-		if tile_name != null and tile_name.text == "__gd_main_delete":
-			delete_tile = tile
-			break
+	var delete_tile := _find_deck_tile(app, "__gd_main_delete")
 	check(delete_tile != null, "Main Delete: 삭제할 덱 타일 표시")
 	if delete_tile != null:
 		_view(delete_tile, "DeckMenuButton").pressed.emit()
@@ -351,6 +400,14 @@ func _view(app: Node, node_name: String) -> Node:
 	return app.find_child(node_name, true, false)
 
 
+func _find_deck_tile(app: Node, display_name: String) -> Node:
+	for tile in _view(app, "DeckList").get_children():
+		var tile_name := _view(tile, "DeckNameLabel") as Label
+		if tile_name != null and tile_name.text == display_name:
+			return tile
+	return null
+
+
 func _cleanup() -> void:
 	if DirAccess.dir_exists_absolute(TEST_DECKS_DIR):
 		for file_name in DirAccess.get_files_at(TEST_DECKS_DIR):
@@ -363,6 +420,10 @@ func _cleanup() -> void:
 	var delete_progress_path := DeckStorage.progress_path(DELETE_DECK)
 	if FileAccess.file_exists(delete_progress_path):
 		DirAccess.remove_absolute(delete_progress_path)
+	for rename_file in [RENAME_DECK, RENAMED_DECK]:
+		var rename_progress_path := DeckStorage.progress_path(rename_file)
+		if FileAccess.file_exists(rename_progress_path):
+			DirAccess.remove_absolute(rename_progress_path)
 
 	if FileAccess.file_exists(BROKEN_IMPORT_SOURCE):
 		DirAccess.remove_absolute(BROKEN_IMPORT_SOURCE)

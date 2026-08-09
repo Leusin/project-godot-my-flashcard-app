@@ -1,6 +1,7 @@
 class_name DeckNaming
 
 const EXTENSION := ".md"
+const INVALID_DISPLAY_NAME_CHARACTERS := '<>:"/\\|?*'
 
 # 확장자를 제거하고 표시할 이름
 static func display_name(file_name: String) -> String:
@@ -13,6 +14,22 @@ static func display_name(file_name: String) -> String:
 static func is_deck_file(file_name: String) -> bool:
 	return (file_name.to_lower().ends_with(EXTENSION) 
 		&& display_name(file_name).length() > 0)
+
+
+static func is_valid_display_name(display: String) -> bool:
+	var trimmed := display.strip_edges()
+	if trimmed.is_empty() or trimmed == "." or trimmed == ".." or trimmed.ends_with("."):
+		return false
+
+	for character in INVALID_DISPLAY_NAME_CHARACTERS:
+		if trimmed.contains(character):
+			return false
+
+	return true
+
+
+static func deck_file_name(display: String) -> String:
+	return "%s%s" % [display.strip_edges(), EXTENSION]
 
 # 기존 이름과 겹치는 경우  (2), (3) ... 붙이기
 static func unique_file_name(file_name: String, existing: Array) -> String:
