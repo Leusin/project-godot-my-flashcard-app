@@ -60,3 +60,4 @@ input_right={
 [rendering]
 
 environment/defaults/default_clear_color=Color(0.969, 0.965, 0.949, 1)
+textures/vram_compression/import_etc2_astc=true
