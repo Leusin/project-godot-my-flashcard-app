@@ -1,11 +1,16 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene format=3 uid="uid://bdds61ydptmja"]
 
-[ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
+[ext_resource type="Theme" uid="uid://cqshs8ofnmh0w" path="res://src/main/main_theme.tres" id="1_theme"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxBackdrop"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxContextMenu"]
 bg_color = Color(1, 1, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
@@ -15,30 +20,30 @@ shadow_size = 6
 shadow_offset = Vector2(0, 3)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxMenuItem"]
+content_margin_left = 16.0
 bg_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
-content_margin_left = 16.0
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxMenuItemHover"]
-bg_color = Color(0.93, 0.93, 0.93, 1)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
-content_margin_left = 16.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxMenuItemPressed"]
+content_margin_left = 16.0
 bg_color = Color(0.84, 0.84, 0.84, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
-content_margin_left = 16.0
 
-[node name="DeckContextMenu" type="Control"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxMenuItemHover"]
+content_margin_left = 16.0
+bg_color = Color(0.93, 0.93, 0.93, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[node name="DeckContextMenu" type="Control" unique_id=736665682]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -47,7 +52,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_theme")
 
-[node name="DismissContextMenuButton" type="Button" parent="."]
+[node name="DismissContextMenuButton" type="Button" parent="." unique_id=1212293683]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -56,77 +61,94 @@ grow_horizontal = 2
 grow_vertical = 2
 focus_mode = 0
 theme_override_styles/normal = SubResource("StyleBoxBackdrop")
-theme_override_styles/hover = SubResource("StyleBoxBackdrop")
 theme_override_styles/pressed = SubResource("StyleBoxBackdrop")
+theme_override_styles/hover = SubResource("StyleBoxBackdrop")
 theme_override_styles/focus = SubResource("StyleBoxBackdrop")
 
-[node name="DeckContextMenuPanel" type="PanelContainer" parent="."]
-custom_minimum_size = Vector2(200, 200)
+[node name="DeckContextMenuPanel" type="PanelContainer" parent="." unique_id=1331468520]
+custom_minimum_size = Vector2(200, 230)
 layout_mode = 0
 offset_left = 190.0
 offset_top = 120.0
 offset_right = 390.0
-offset_bottom = 320.0
+offset_bottom = 350.0
 theme_override_styles/panel = SubResource("StyleBoxContextMenu")
 
-[node name="Margin" type="MarginContainer" parent="DeckContextMenuPanel"]
+[node name="Margin" type="MarginContainer" parent="DeckContextMenuPanel" unique_id=965396841]
 layout_mode = 2
 theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 10
 
-[node name="Content" type="VBoxContainer" parent="DeckContextMenuPanel/Margin"]
+[node name="Content" type="VBoxContainer" parent="DeckContextMenuPanel/Margin" unique_id=2081619200]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="RenameDeckButton" type="Button" parent="DeckContextMenuPanel/Margin/Content"]
+[node name="DuplicateDeckButton" type="Button" parent="DeckContextMenuPanel/Margin/Content" unique_id=1685094676]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
-theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("StyleBoxMenuItem")
-theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
 theme_override_styles/pressed = SubResource("StyleBoxMenuItemPressed")
+theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
+theme_override_styles/focus = SubResource("StyleBoxMenuItemHover")
+text = "덱 복제"
+alignment = 0
+
+[node name="RenameDeckButton" type="Button" parent="DeckContextMenuPanel/Margin/Content" unique_id=1918369660]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxMenuItem")
+theme_override_styles/pressed = SubResource("StyleBoxMenuItemPressed")
+theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
 theme_override_styles/focus = SubResource("StyleBoxMenuItemHover")
 text = "이름 변경"
 alignment = 0
 
-[node name="ExportDeckButton" type="Button" parent="DeckContextMenuPanel/Margin/Content"]
+[node name="ExportDeckButton" type="Button" parent="DeckContextMenuPanel/Margin/Content" unique_id=2038619403]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
-theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("StyleBoxMenuItem")
-theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
 theme_override_styles/pressed = SubResource("StyleBoxMenuItemPressed")
+theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
 theme_override_styles/focus = SubResource("StyleBoxMenuItemHover")
 text = "Markdown 내보내기"
 alignment = 0
 
-[node name="DeleteDeckButton" type="Button" parent="DeckContextMenuPanel/Margin/Content"]
+[node name="DeleteDeckButton" type="Button" parent="DeckContextMenuPanel/Margin/Content" unique_id=490262387]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
-theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("StyleBoxMenuItem")
-theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
 theme_override_styles/pressed = SubResource("StyleBoxMenuItemPressed")
+theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
 theme_override_styles/focus = SubResource("StyleBoxMenuItemHover")
 text = "덱 삭제"
 alignment = 0

@@ -12,6 +12,7 @@ const BROKEN_DECK := "__gd_main_broken_saved.md"
 const DELETE_DECK := "__gd_main_delete.md"
 const RENAME_DECK := "__gd_main_rename.md"
 const RENAMED_DECK := "__gd_main_renamed.md"
+const DUPLICATED_DECK := "__gd_main (2).md"
 const EXPORT_TARGET_WITHOUT_EXTENSION := "user://__gd_main_export"
 const EXPORTED_PATH := "user://__gd_main_export.md"
 
@@ -118,11 +119,12 @@ func run_tests() -> void:
 		"Main Deck Actions: context list 실제 layout 크기로 위치 계산"
 	)
 	check(
-		_view(app, "DeckContextMenuPanel").custom_minimum_size == Vector2(200, 200)
-		and _view(app, "RenameDeckButton").custom_minimum_size.y == 56.0
-		and _view(app, "ExportDeckButton").custom_minimum_size.y == 56.0
-		and _view(app, "DeleteDeckButton").custom_minimum_size.y == 56.0,
-		"Main Deck Actions: 세 가지 작업을 담은 200px context list 표시"
+		_view(app, "DeckContextMenuPanel").custom_minimum_size == Vector2(200, 230)
+		and _view(app, "RenameDeckButton").custom_minimum_size.y == 48.0
+		and _view(app, "DuplicateDeckButton").custom_minimum_size.y == 48.0
+		and _view(app, "ExportDeckButton").custom_minimum_size.y == 48.0
+		and _view(app, "DeleteDeckButton").custom_minimum_size.y == 48.0,
+		"Main Deck Actions: 네 가지 작업을 담은 200px context list 표시"
 	)
 	_view(app, "RenameDeckButton").pressed.emit()
 	var rename_overlay := _view(app, "RenameDeckOverlay") as Control
@@ -365,6 +367,32 @@ func run_tests() -> void:
 		"Main Rename: 목록 아래 완료 메시지 표시"
 	)
 
+	app.show_library()
+	var duplicate_tile := _find_deck_tile(app, "__gd_main")
+	check(duplicate_tile != null, "Main Duplicate: 복제할 덱 타일 표시")
+	if duplicate_tile != null:
+		_view(duplicate_tile, "DeckMenuButton").pressed.emit()
+		_view(app, "DuplicateDeckButton").pressed.emit()
+	check(DeckStorage.deck_exists(DUPLICATED_DECK), "Main Duplicate: 새 덱 파일 생성")
+	check(
+		DeckStorage.read_deck(DUPLICATED_DECK) == TEST_TEXT,
+		"Main Duplicate: Markdown 내용 복사"
+	)
+	check(
+		DeckStorage.load_progress(DUPLICATED_DECK).get_wrong_count("A") == 1,
+		"Main Duplicate: 학습 기록 복사"
+	)
+	check(
+		_view(app, "LibraryStatusLabel").text == "'__gd_main' → '__gd_main (2)' 복제 완료",
+		"Main Duplicate: 목록 아래 완료 메시지 표시"
+	)
+	check(
+		not app.duplicate_deck_from_library("__없는덱.md")
+		and _view(app, "LibraryStatusLabel").text
+		== MainApp.DUPLICATE_DECK_NOT_FOUND_MESSAGE,
+		"Main Duplicate: 사라진 덱 오류 안내"
+	)
+
 	DeckStorage.write_deck(DELETE_DECK, TEST_TEXT)
 	var delete_progress := Progress.new()
 	delete_progress.add_wrong("A")
@@ -424,6 +452,9 @@ func _cleanup() -> void:
 		var rename_progress_path := DeckStorage.progress_path(rename_file)
 		if FileAccess.file_exists(rename_progress_path):
 			DirAccess.remove_absolute(rename_progress_path)
+	var duplicated_progress_path := DeckStorage.progress_path(DUPLICATED_DECK)
+	if FileAccess.file_exists(duplicated_progress_path):
+		DirAccess.remove_absolute(duplicated_progress_path)
 
 	if FileAccess.file_exists(BROKEN_IMPORT_SOURCE):
 		DirAccess.remove_absolute(BROKEN_IMPORT_SOURCE)

@@ -15,6 +15,8 @@ const RENAME_INVALID_MESSAGE := "덱 이름에 < > : \" / \\ | ? * 문자나 끝
 const RENAME_DUPLICATE_MESSAGE := "같은 이름의 덱이 이미 있습니다."
 const RENAME_DECK_NOT_FOUND_MESSAGE := "이름을 변경할 덱 파일을 찾을 수 없습니다."
 const RENAME_FAILED_MESSAGE := "덱 이름을 변경하지 못했습니다. 다시 시도하세요."
+const DUPLICATE_DECK_NOT_FOUND_MESSAGE := "복제할 덱 파일을 찾을 수 없습니다."
+const DUPLICATE_DECK_FAILED_MESSAGE := "덱을 복제하지 못했습니다. 저장 공간을 확인하고 다시 시도하세요."
 const DECK_TILE_SCENE := preload("res://src/main/deck_tile.tscn")
 const ADD_DECK_TILE_SCENE := preload("res://src/main/add_deck_tile.tscn")
 
@@ -31,6 +33,9 @@ const ADD_DECK_TILE_SCENE := preload("res://src/main/add_deck_tile.tscn")
 @onready var deck_context_menu_panel: PanelContainer = $DeckContextMenu/DeckContextMenuPanel
 @onready var rename_deck_button := (
 	deck_context_menu.find_child("RenameDeckButton", true, false) as Button
+)
+@onready var duplicate_deck_button := (
+	deck_context_menu.find_child("DuplicateDeckButton", true, false) as Button
 )
 @onready var export_deck_button := (
 	deck_context_menu.find_child("ExportDeckButton", true, false) as Button
@@ -80,6 +85,7 @@ func _ready() -> void:
 	export_dialog.clear_filters()
 	export_dialog.add_filter("*.md", "Markdown", "text/markdown,text/plain")
 	rename_deck_button.pressed.connect(_on_rename_pressed)
+	duplicate_deck_button.pressed.connect(_on_duplicate_pressed)
 	export_deck_button.pressed.connect(_on_export_pressed)
 	delete_deck_button.pressed.connect(_on_delete_pressed)
 	$DeckContextMenu/DismissContextMenuButton.pressed.connect(_on_deck_context_dismissed)
@@ -324,6 +330,32 @@ func _on_export_file_selected(target_path: String) -> void:
 
 func _on_export_canceled() -> void:
 	_menu_deck_file = ""
+
+
+func _on_duplicate_pressed() -> void:
+	var deck_file := _menu_deck_file
+	deck_context_menu.hide()
+	_menu_deck_file = ""
+	duplicate_deck_from_library(deck_file)
+
+
+func duplicate_deck_from_library(deck_file: String) -> bool:
+	if not DeckStorage.deck_exists(deck_file):
+		_show_library_status(DUPLICATE_DECK_NOT_FOUND_MESSAGE)
+		return false
+
+	var duplicated: Variant = DeckStorage.duplicate_deck(deck_file)
+	if duplicated is not String:
+		push_warning("Deck duplicate failed (source=%s)" % deck_file)
+		_show_library_status(DUPLICATE_DECK_FAILED_MESSAGE)
+		return false
+
+	_refresh_deck_list()
+	_show_library_status(
+		"'%s' → '%s' 복제 완료"
+		% [DeckNaming.display_name(deck_file), DeckNaming.display_name(duplicated)]
+	)
+	return true
 
 
 func _on_rename_pressed() -> void:
