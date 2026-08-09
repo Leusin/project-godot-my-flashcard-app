@@ -12,7 +12,7 @@ config_version=5
 
 config/name="MyFlashCard"
 config/version="0.3.0"
-run/main_scene="res://src/app.tscn"
+run/main_scene="uid://bh17ip0fnu6v3"
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://icon.svg"
 
