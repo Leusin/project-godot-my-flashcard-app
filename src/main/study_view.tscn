@@ -12,11 +12,11 @@ theme_override_constants/separation = 18
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="BackToLibraryButton" type="Button" parent="Header"]
+[node name="BackToReadyButton" type="Button" parent="Header"]
 custom_minimum_size = Vector2(140, 56)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "← 덱 목록"
+text = "← 학습 준비"
 
 [node name="DeckLabel" type="Label" parent="Header"]
 layout_mode = 2

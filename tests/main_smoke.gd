@@ -41,6 +41,7 @@ func run_tests() -> void:
 	app.show_library()
 
 	check(_view(app, "LibraryContainer").visible, "MVP: 덱 목록 화면 표시")
+	check(not _view(app, "StudyReadyView").visible, "Main Ready: 덱 목록에서 준비 화면 숨김")
 	check(not _view(app, "StudyContainer").visible, "MVP: 덱 목록에서 학습 화면 숨김")
 	var deck_buttons := _view(app, "DeckList").get_children()
 	check(deck_buttons.size() == 2, "Main: 저장된 덱 뒤에 추가 타일 표시")
@@ -166,9 +167,81 @@ func run_tests() -> void:
 	check(DeckStorage.deck_exists(TEST_DECK), "Main Delete: 취소하면 덱 유지")
 	_view(deck_buttons[0], "DeckButton").pressed.emit()
 	check(not _view(app, "LibraryContainer").visible, "MVP: 덱 선택 후 목록 숨김")
-	check(_view(app, "StudyContainer").visible, "MVP: 덱 선택 후 학습 화면 표시")
+	check(_view(app, "StudyReadyView").visible, "Main Ready: 덱 선택 후 학습 준비 화면 표시")
+	check(not _view(app, "StudyContainer").visible, "Main Ready: 덱 선택만으로 학습을 시작하지 않음")
+	check(_view(app, "ReadyDeckNameLabel").text == "__gd_main", "Main Ready: 선택한 덱 이름 표시")
+	check(
+		_view(app, "ReadyTotalCountLabel").text == "2"
+		and _view(app, "ReadyNewCountLabel").text == "2"
+		and _view(app, "ReadyLearningCountLabel").text == "0"
+		and _view(app, "ReadyMasteredCountLabel").text == "0",
+		"Main Ready: 전체·새 카드·학습 중·완료 요약 표시"
+	)
+	check(
+		_view(app, "StudyScopeOption").item_count == 3
+		and _view(app, "StudyOrderOption").item_count == 2,
+		"Main Ready: 학습 범위와 카드 순서 설정 표시"
+	)
+	check(
+		_view(app, "DeckCover") != null
+		and _view(app, "BackCardFar") != null
+		and _view(app, "BackCardNear") != null,
+		"Main Ready: 카드 뭉치 위에 덱 커버를 씌운 프레임 표시"
+	)
+	check(
+		_view(app, "OverviewContent").visible
+		and not _view(app, "NewStudyContent").visible,
+		"Main Ready: 준비 단계에서는 덱 요약과 필요한 진입 버튼만 표시"
+	)
+	_view(app, "OpenStudySetupButton").pressed.emit()
+	check(
+		not _view(app, "OverviewContent").visible
+		and _view(app, "NewStudyContent").visible
+		and _view(app, "StartStudyButton").visible
+		and _view(app, "CancelStudySetupButton").visible,
+		"Main Ready: 새 학습 설정 면에는 설정·시작·취소만 표시"
+	)
+	_view(app, "StudyScopeOption").select(MainApp.StudyScope.WRONG)
+	_view(app, "StartStudyButton").pressed.emit()
+	check(
+		_view(app, "StudyReadyView").visible
+		and _view(app, "ReadyStatusLabel").text == "오답 카드가 없습니다.",
+		"Main Ready: 대상 카드가 없는 설정은 구체적으로 안내"
+	)
+	_view(app, "StudyScopeOption").select(MainApp.StudyScope.ALL)
+	_view(app, "StartStudyButton").pressed.emit()
+	check(_view(app, "StudyContainer").visible, "Main Ready: 학습 시작 버튼으로 학습 화면 표시")
+	check(
+		DeckStorage.load_study_resume(TEST_DECK).remaining_indices.size() == 2,
+		"Main Ready: 학습 시작 시 남은 카드 세션 저장"
+	)
 	check(app.handle_back_request(), "MVP Android Back: 학습 화면에서 요청 소비")
-	check(_view(app, "LibraryContainer").visible, "MVP Android Back: 덱 목록으로 복귀")
+	check(_view(app, "StudyReadyView").visible, "Main Ready: 학습 화면 뒤로가기는 준비 화면으로 복귀")
+	check(
+		_view(app, "ContinueStudyButton").visible
+		and _view(app, "ContinueStudyButton").text == "이어서 학습 · 2장 남음",
+		"Main Ready: 저장된 세션의 남은 카드 수 표시"
+	)
+	_view(app, "OpenStudySetupButton").pressed.emit()
+	check(
+		_view(app, "StartStudyButton").text == "진행 중 세션 교체하고 시작"
+		and _view(app, "SetupDescription").text.contains("세션은 교체"),
+		"Main Ready: 새 학습이 진행 중 세션을 교체한다고 명확히 안내"
+	)
+	_view(app, "CancelStudySetupButton").pressed.emit()
+	_view(app, "ContinueStudyButton").pressed.emit()
+	check(_view(app, "QuestionLabel").text == "A", "Main Ready: 저장된 첫 카드부터 이어서 학습")
+	_view(app, "GoodButton").pressed.emit()
+	check(app.handle_back_request(), "Main Ready: 한 카드 학습 후 뒤로가기 요청 소비")
+	check(
+		_view(app, "ContinueStudyButton").text == "이어서 학습 · 1장 남음",
+		"Main Ready: 진행 후 줄어든 남은 카드 수 표시"
+	)
+	_view(app, "ContinueStudyButton").pressed.emit()
+	check(_view(app, "QuestionLabel").text == "B", "Main Ready: 남은 카드부터 정확히 이어서 학습")
+	check(app.handle_back_request(), "Main Ready: 이어서 학습 화면에서 뒤로가기 요청 소비")
+	check(app.handle_back_request(), "Main Ready: 준비 화면에서 뒤로가기 요청 소비")
+	check(_view(app, "LibraryContainer").visible, "Main Ready: 준비 화면에서 덱 목록으로 복귀")
 	check(app.handle_back_request(), "MVP Android Back: 덱 목록에서 종료 요청 소비")
 	var exit_overlay := _view(app, "ExitConfirmationOverlay") as Control
 	check(exit_overlay.visible, "MVP Android Back: 덱 목록에서 종료 확인창 표시")
@@ -195,8 +268,9 @@ func run_tests() -> void:
 	check(app.handle_back_request(), "MVP Android Back: 확인창에서 뒤로가기 요청 소비")
 	check(not exit_overlay.visible, "MVP Android Back: 확인창에서 뒤로가면 취소")
 	app.start_deck(TEST_DECK)
-	_view(app, "BackToLibraryButton").pressed.emit()
-	check(_view(app, "LibraryContainer").visible, "MVP: 덱 목록 버튼으로도 복귀")
+	_view(app, "BackToReadyButton").pressed.emit()
+	check(_view(app, "StudyReadyView").visible, "Main Ready: 학습 화면 버튼으로도 준비 화면 복귀")
+	app.show_library()
 	check(
 		_view(app, "ImportDialog").access == FileDialog.ACCESS_FILESYSTEM,
 		"MVP Import: 파일시스템 접근 다이얼로그"
@@ -317,17 +391,30 @@ func run_tests() -> void:
 	check(_view(app, "QuestionLabel").text == "B", "MVP: Again 후 다음 질문")
 	check(_view(app, "RemainingLabel").text == "1장 남음", "MVP: Again 후 남은 수 감소")
 	check(
-		DeckStorage.load_progress(TEST_DECK).get_wrong_count("A") == 1,
-		"MVP: Again이 진행도를 저장"
+		DeckStorage.load_progress(TEST_DECK).get_wrong_count("A") == 1
+		and DeckStorage.load_progress(TEST_DECK).get_status("A")
+		== CardStatus.Value.LEARNING,
+		"Main Ready: Again이 오답 횟수와 학습 중 상태를 저장"
 	)
 
 	_view(app, "GoodButton").pressed.emit()
 	check(_view(app, "DoneContainer").visible, "MVP: 마지막 카드 후 완료 표시")
 	check(not _view(app, "StudyContainer").visible, "MVP: 완료 시 학습 화면 숨김")
-
+	check(
+		DeckStorage.load_progress(TEST_DECK).get_status("B")
+		== CardStatus.Value.MASTERED,
+		"Main Ready: Good이 완료 상태를 저장"
+	)
 	_view(app, "RestartButton").pressed.emit()
 	check(_view(app, "StudyContainer").visible, "MVP: 다시 시작으로 학습 화면 복귀")
 	check(_view(app, "QuestionLabel").text == "A", "MVP: 다시 시작하면 첫 카드")
+	_view(app, "BackToReadyButton").pressed.emit()
+	check(
+		_view(app, "ReadyNewCountLabel").text == "0"
+		and _view(app, "ReadyLearningCountLabel").text == "1"
+		and _view(app, "ReadyMasteredCountLabel").text == "1",
+		"Main Ready: 학습 결과를 진행상황 요약에 반영"
+	)
 
 	app.start_sample_deck()
 	check(_view(app, "StudyContainer").visible, "MVP: 샘플 덱으로 학습 시작")
@@ -455,6 +542,16 @@ func _cleanup() -> void:
 	var duplicated_progress_path := DeckStorage.progress_path(DUPLICATED_DECK)
 	if FileAccess.file_exists(duplicated_progress_path):
 		DirAccess.remove_absolute(duplicated_progress_path)
+	for deck_file in [
+		TEST_DECK,
+		DELETE_DECK,
+		RENAME_DECK,
+		RENAMED_DECK,
+		DUPLICATED_DECK,
+	]:
+		var resume_path := DeckStorage.study_resume_path(deck_file)
+		if FileAccess.file_exists(resume_path):
+			DirAccess.remove_absolute(resume_path)
 
 	if FileAccess.file_exists(BROKEN_IMPORT_SOURCE):
 		DirAccess.remove_absolute(BROKEN_IMPORT_SOURCE)

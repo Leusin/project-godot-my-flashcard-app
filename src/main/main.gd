@@ -1,6 +1,12 @@
 class_name MainApp
 extends Control
 
+enum StudyScope {
+	ALL,
+	INCOMPLETE,
+	WRONG,
+}
+
 const BASE_PAGE_MARGIN := 32.0
 const EMPTY_DECK_MESSAGE := "빈 덱입니다. '# 질문' 형식으로 카드를 추가하세요."
 const BROKEN_DECK_MESSAGE := "카드를 찾지 못했습니다. 각 질문을 '# 질문' 형식으로 작성하세요."
@@ -49,6 +55,22 @@ const ADD_DECK_TILE_SCENE := preload("res://src/main/add_deck_tile.tscn")
 @onready var delete_confirmation_overlay: Control = $DeleteConfirmationOverlay
 @onready var delete_confirmation_title: Label = $DeleteConfirmationOverlay/DeleteConfirmationPanel/Margin/Content/DeleteConfirmationTitle
 @onready var exit_confirmation_overlay: Control = $ExitConfirmationOverlay
+@onready var study_ready_view: VBoxContainer = $Margin/Page/StudyReadyView
+@onready var ready_overview: VBoxContainer = $Margin/Page/StudyReadyView/DeckStack/DeckCover/Margin/OverviewContent
+@onready var new_study_content: VBoxContainer = $Margin/Page/StudyReadyView/DeckStack/DeckCover/Margin/NewStudyContent
+@onready var ready_deck_name_label: Label = ready_overview.get_node("ReadyDeckNameLabel")
+@onready var setup_deck_name_label: Label = new_study_content.get_node("SetupDeckNameLabel")
+@onready var ready_total_count_label: Label = ready_overview.get_node("Stats/Total/ReadyTotalCountLabel")
+@onready var ready_new_count_label: Label = ready_overview.get_node("Stats/New/ReadyNewCountLabel")
+@onready var ready_learning_count_label: Label = ready_overview.get_node("Stats/Learning/ReadyLearningCountLabel")
+@onready var ready_mastered_count_label: Label = ready_overview.get_node("Stats/Mastered/ReadyMasteredCountLabel")
+@onready var mastery_progress: ProgressBar = ready_overview.get_node("MasteryProgress")
+@onready var study_scope_option: OptionButton = new_study_content.get_node("StudyScopeOption")
+@onready var study_order_option: OptionButton = new_study_content.get_node("StudyOrderOption")
+@onready var ready_status_label: Label = new_study_content.get_node("ReadyStatusLabel")
+@onready var setup_description: Label = new_study_content.get_node("SetupDescription")
+@onready var start_study_button: Button = new_study_content.get_node("StartStudyButton")
+@onready var continue_study_button: Button = ready_overview.get_node("ContinueStudyButton")
 @onready var study_flow: VBoxContainer = $Margin/Page/StudyFlow
 @onready var deck_label: Label = $Margin/Page/StudyFlow/Header/DeckLabel
 @onready var remaining_label: Label = $Margin/Page/StudyFlow/Header/RemainingLabel
@@ -66,6 +88,12 @@ var _session: StudySession
 var _progress := Progress.new()
 var _source_cards: Array[FlashCard] = []
 var _menu_deck_file := ""
+var _ready_deck_file := ""
+var _ready_cards: Array[FlashCard] = []
+var _ready_deck_hash: int
+var _active_card_indices: Array[int] = []
+var _active_order: DeckOrdering.StudyOrder = DeckOrdering.StudyOrder.SEQUENTIAL
+var _active_scope: StudyScope = StudyScope.ALL
 
 
 func _ready() -> void:
@@ -96,11 +124,21 @@ func _ready() -> void:
 	$DeleteConfirmationOverlay/DeleteConfirmationPanel/Margin/Content/Buttons/ConfirmDeleteButton.pressed.connect(_on_delete_confirmed)
 	$ExitConfirmationOverlay/ExitConfirmationPanel/Margin/Content/Buttons/CancelExitButton.pressed.connect(_on_exit_canceled)
 	$ExitConfirmationOverlay/ExitConfirmationPanel/Margin/Content/Buttons/ConfirmExitButton.pressed.connect(_on_exit_confirmed)
-	$Margin/Page/StudyFlow/Header/BackToLibraryButton.pressed.connect(show_library)
+	$Margin/Page/StudyReadyView/Header/BackToLibraryButton.pressed.connect(show_library)
+	(ready_overview.get_node("OpenStudySetupButton") as Button).pressed.connect(
+		_on_open_study_setup
+	)
+	continue_study_button.pressed.connect(_on_continue_study_pressed)
+	start_study_button.pressed.connect(_on_start_study_pressed)
+	(new_study_content.get_node("CancelStudySetupButton") as Button).pressed.connect(
+		_on_cancel_study_setup
+	)
+	$Margin/Page/StudyFlow/Header/BackToReadyButton.pressed.connect(_return_to_study_ready)
 	reveal_button.pressed.connect(_on_reveal_pressed)
 	$Margin/Page/StudyFlow/StudyContainer/Actions/AgainButton.pressed.connect(_on_again_pressed)
 	$Margin/Page/StudyFlow/StudyContainer/Actions/GoodButton.pressed.connect(_on_good_pressed)
 	restart_button.pressed.connect(_on_restart_pressed)
+	_setup_study_ready_options()
 
 	if auto_start:
 		show_library()
@@ -156,16 +194,47 @@ func show_library() -> void:
 	DeckStorage.seed_sample_if_empty()
 	_session = null
 	_deck_file = ""
+	_ready_deck_file = ""
+	_ready_cards.clear()
+	_ready_deck_hash = 0
+	_active_card_indices.clear()
 	_menu_deck_file = ""
 	deck_context_menu.hide()
 	rename_deck_overlay.hide()
 	delete_confirmation_overlay.hide()
 	library_status_label.visible = false
 	library_container.visible = true
+	study_ready_view.visible = false
 	study_flow.visible = false
 	study_container.visible = false
 	done_container.visible = false
 	_refresh_deck_list()
+
+
+func show_study_ready(deck_file: String) -> bool:
+	if not DeckStorage.deck_exists(deck_file):
+		_show_library_status("덱 파일을 읽지 못했습니다.")
+		return false
+
+	var deck_text := DeckStorage.read_deck(deck_file)
+	var error_message := deck_content_error(deck_text)
+	if not error_message.is_empty():
+		_show_library_status(error_message)
+		return false
+
+	_ready_deck_file = deck_file
+	_ready_cards = DeckParser.parse(deck_text)
+	_ready_deck_hash = deck_text.hash()
+	_menu_deck_file = ""
+	deck_context_menu.hide()
+	library_container.visible = false
+	study_flow.visible = false
+	study_ready_view.visible = true
+	ready_status_label.hide()
+	_update_study_ready_summary()
+	_update_continue_action()
+	_show_ready_overview()
+	return true
 
 
 func start_deck(
@@ -205,7 +274,9 @@ func _start_cards(
 	_order = order
 	_progress = DeckStorage.load_progress(deck_file)
 	_source_cards = cards.duplicate()
+	_active_card_indices.clear()
 	library_container.visible = false
+	study_ready_view.visible = false
 	study_flow.visible = true
 	_restart_session()
 
@@ -233,7 +304,223 @@ func _refresh_deck_list() -> void:
 
 func _on_deck_selected(deck_file: String) -> void:
 	deck_context_menu.hide()
-	start_deck(deck_file)
+	show_study_ready(deck_file)
+
+
+func _setup_study_ready_options() -> void:
+	study_scope_option.clear()
+	study_scope_option.add_item("전체 카드", StudyScope.ALL)
+	study_scope_option.add_item("미완료 카드", StudyScope.INCOMPLETE)
+	study_scope_option.add_item("오답 카드", StudyScope.WRONG)
+	study_order_option.clear()
+	study_order_option.add_item("순서대로", DeckOrdering.StudyOrder.SEQUENTIAL)
+	study_order_option.add_item("섞어서", DeckOrdering.StudyOrder.SHUFFLE)
+
+
+func _update_study_ready_summary() -> void:
+	var progress := DeckStorage.load_progress(_ready_deck_file)
+	var new_count := 0
+	var learning_count := 0
+	var mastered_count := 0
+	for card in _ready_cards:
+		match progress.get_status(card.question):
+			CardStatus.Value.LEARNING:
+				learning_count += 1
+			CardStatus.Value.MASTERED:
+				mastered_count += 1
+			_:
+				new_count += 1
+
+	ready_deck_name_label.text = DeckNaming.display_name(_ready_deck_file)
+	setup_deck_name_label.text = DeckNaming.display_name(_ready_deck_file)
+	ready_total_count_label.text = str(_ready_cards.size())
+	ready_new_count_label.text = str(new_count)
+	ready_learning_count_label.text = str(learning_count)
+	ready_mastered_count_label.text = str(mastered_count)
+	mastery_progress.max_value = maxi(_ready_cards.size(), 1)
+	mastery_progress.value = mastered_count
+
+
+func _show_ready_overview() -> void:
+	new_study_content.hide()
+	ready_overview.show()
+	ready_status_label.hide()
+
+
+func _on_open_study_setup() -> void:
+	var resume := DeckStorage.load_study_resume(_ready_deck_file)
+	var replacing_resume := _is_valid_resume(resume)
+	setup_description.text = (
+		"진행 중 세션은 교체되며 카드별 진행 기록은 유지됩니다."
+		if replacing_resume
+		else "진행 기록은 유지하고 새로운 학습 세션을 시작합니다."
+	)
+	start_study_button.text = (
+		"진행 중 세션 교체하고 시작"
+		if replacing_resume
+		else "새 학습 시작"
+	)
+	ready_status_label.hide()
+	ready_overview.hide()
+	new_study_content.show()
+
+
+func _on_cancel_study_setup() -> void:
+	_show_ready_overview()
+
+
+func _update_continue_action() -> void:
+	var resume := DeckStorage.load_study_resume(_ready_deck_file)
+	if not _is_valid_resume(resume):
+		continue_study_button.hide()
+		if resume != null:
+			DeckStorage.delete_study_resume(_ready_deck_file)
+		return
+
+	continue_study_button.text = "이어서 학습 · %d장 남음" % resume.remaining_indices.size()
+	continue_study_button.show()
+	study_scope_option.select(resume.scope)
+	study_order_option.select(resume.order)
+
+
+func _is_valid_resume(resume: StudyResume) -> bool:
+	if resume == null or resume.deck_hash != _ready_deck_hash:
+		return false
+	if resume.remaining_indices.is_empty():
+		return false
+	for index in resume.remaining_indices:
+		if index < 0 or index >= _ready_cards.size():
+			return false
+	return true
+
+
+static func filter_cards_for_scope(
+	cards: Array[FlashCard],
+	progress: Progress,
+	scope: StudyScope
+) -> Array[FlashCard]:
+	var filtered: Array[FlashCard] = []
+	for card in cards:
+		if scope == StudyScope.INCOMPLETE and (
+			progress.get_status(card.question) == CardStatus.Value.MASTERED
+		):
+			continue
+		if scope == StudyScope.WRONG and progress.get_wrong_count(card.question) <= 0:
+			continue
+		filtered.append(card)
+	return filtered
+
+
+static func card_indices_for_scope(
+	cards: Array[FlashCard],
+	progress: Progress,
+	scope: StudyScope
+) -> Array[int]:
+	var indices: Array[int] = []
+	for index in cards.size():
+		var card := cards[index]
+		if scope == StudyScope.INCOMPLETE and (
+			progress.get_status(card.question) == CardStatus.Value.MASTERED
+		):
+			continue
+		if scope == StudyScope.WRONG and progress.get_wrong_count(card.question) <= 0:
+			continue
+		indices.append(index)
+	return indices
+
+
+func _on_start_study_pressed() -> void:
+	if _ready_deck_file.is_empty() or not DeckStorage.deck_exists(_ready_deck_file):
+		show_library()
+		_show_library_status("덱 파일을 읽지 못했습니다.")
+		return
+
+	var scope: StudyScope = study_scope_option.get_selected_id()
+	var selected_indices := card_indices_for_scope(
+		_ready_cards,
+		DeckStorage.load_progress(_ready_deck_file),
+		scope
+	)
+	if selected_indices.is_empty():
+		ready_status_label.text = (
+			"오답 카드가 없습니다."
+			if scope == StudyScope.WRONG
+			else "학습할 미완료 카드가 없습니다."
+		)
+		ready_status_label.show()
+		return
+
+	ready_status_label.hide()
+	var order: DeckOrdering.StudyOrder = study_order_option.get_selected_id()
+	_begin_indexed_study(selected_indices, order, scope, true)
+
+
+func _on_continue_study_pressed() -> void:
+	var resume := DeckStorage.load_study_resume(_ready_deck_file)
+	if not _is_valid_resume(resume):
+		_update_continue_action()
+		ready_status_label.text = "이어서 학습할 기록이 없습니다."
+		ready_status_label.show()
+		return
+
+	var resume_scope: StudyScope = resume.scope
+	_begin_indexed_study(
+		resume.remaining_indices,
+		resume.order,
+		resume_scope,
+		false
+	)
+
+
+func _begin_indexed_study(
+	indices: Array[int],
+	order: DeckOrdering.StudyOrder,
+	scope: StudyScope,
+	apply_order: bool
+) -> void:
+	_active_card_indices = indices.duplicate()
+	if apply_order and order == DeckOrdering.StudyOrder.SHUFFLE:
+		_active_card_indices.shuffle()
+
+	var cards: Array[FlashCard] = []
+	for index in _active_card_indices:
+		cards.append(_ready_cards[index])
+
+	_deck_file = _ready_deck_file
+	_active_order = order
+	_active_scope = scope
+	_order = DeckOrdering.StudyOrder.SEQUENTIAL
+	_progress = DeckStorage.load_progress(_deck_file)
+	_source_cards = cards
+	library_container.visible = false
+	study_ready_view.visible = false
+	study_flow.visible = true
+	_restart_session()
+
+
+func _save_active_study_resume() -> void:
+	if _active_card_indices.is_empty() or _session == null or _deck_file.is_empty():
+		return
+
+	if _session.is_finished():
+		DeckStorage.delete_study_resume(_deck_file)
+		return
+
+	var resume := StudyResume.new()
+	resume.deck_hash = _ready_deck_hash
+	resume.order = _active_order
+	resume.scope = _active_scope
+	for index in range(_session.position(), _active_card_indices.size()):
+		resume.remaining_indices.append(_active_card_indices[index])
+	DeckStorage.save_study_resume(_deck_file, resume)
+
+
+func _return_to_study_ready() -> void:
+	_save_active_study_resume()
+	var deck_file := _deck_file
+	if deck_file.is_empty():
+		deck_file = _ready_deck_file
+	show_study_ready(deck_file)
 
 
 func _on_deck_menu_requested(deck_file: String, anchor: Control) -> void:
@@ -296,7 +583,14 @@ func handle_back_request() -> bool:
 		exit_confirmation_overlay.show()
 		return true
 
-	show_library()
+	if study_ready_view.visible:
+		if new_study_content.visible:
+			_on_cancel_study_setup()
+			return true
+		show_library()
+		return true
+
+	_return_to_study_ready()
 	return true
 
 
@@ -546,11 +840,14 @@ func _restart_session() -> void:
 	var ordered_cards := DeckOrdering.apply(_order, _source_cards)
 	_session = StudySession.new(ordered_cards)
 	deck_label.text = DeckNaming.display_name(_deck_file)
+	_save_active_study_resume()
 	_show_current()
 
 
 func _show_current() -> void:
 	if _session == null or _session.is_finished():
+		if not _deck_file.is_empty():
+			DeckStorage.delete_study_resume(_deck_file)
 		_show_message("학습 완료!", true)
 		return
 
@@ -585,8 +882,10 @@ func _on_again_pressed() -> void:
 		return
 
 	_progress.add_wrong(_session.current().question)
+	_progress.set_status(_session.current().question, CardStatus.Value.LEARNING)
 	DeckStorage.save_progress(_deck_file, _progress)
 	_session.next()
+	_save_active_study_resume()
 	_show_current()
 
 
@@ -594,7 +893,10 @@ func _on_good_pressed() -> void:
 	if _session == null or _session.is_finished():
 		return
 
+	_progress.set_status(_session.current().question, CardStatus.Value.MASTERED)
+	DeckStorage.save_progress(_deck_file, _progress)
 	_session.next()
+	_save_active_study_resume()
 	_show_current()
 
 

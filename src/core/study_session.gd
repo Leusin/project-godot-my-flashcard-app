@@ -23,6 +23,10 @@ func remaining() -> int:
 
 	return _cards.size() - _position
 
+
+func position() -> int:
+	return _position
+
 func next() -> void:
 	if is_finished():
 		return

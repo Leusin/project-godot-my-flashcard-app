@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://bh17ip0fnu6v3"]
+[gd_scene load_steps=10 format=3 uid="uid://bh17ip0fnu6v3"]
 
 [ext_resource type="Script" uid="uid://c6jw5vgiox3f5" path="res://src/main/main.gd" id="1_main"]
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="2_theme"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://src/main/deck_context_menu.tscn" id="6_context"]
 [ext_resource type="PackedScene" path="res://src/main/delete_confirmation.tscn" id="7_delete"]
 [ext_resource type="PackedScene" path="res://src/main/rename_deck_dialog.tscn" id="8_rename"]
+[ext_resource type="PackedScene" path="res://src/main/study_ready_view.tscn" id="9_ready"]
 
 [node name="Main" type="Control" unique_id=1978189679]
 layout_mode = 3
@@ -52,6 +53,10 @@ text = "MyFlashCard"
 horizontal_alignment = 1
 
 [node name="LibraryContainer" parent="Margin/Page" instance=ExtResource("3_library")]
+layout_mode = 2
+
+[node name="StudyReadyView" parent="Margin/Page" instance=ExtResource("9_ready")]
+visible = false
 layout_mode = 2
 
 [node name="StudyFlow" parent="Margin/Page" instance=ExtResource("4_study")]

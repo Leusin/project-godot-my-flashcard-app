@@ -10,6 +10,7 @@ enum ExportResult {
 
 const DEFAULT_DECKS_DIR := "user://decks"
 const PROGRESS_DIR := "user://progress"
+const STUDY_RESUME_DIR := "user://study_resume"
 const SETTINGS_PATH := "user://settings.json"
 const SAMPLE_DECK_PATH := "res://sample_deck.md"
 const SAMPLE_SEEDED_MARKER := "user://.sample_deck_seeded"
@@ -109,6 +110,10 @@ static func rename_deck(old_file: String, new_file: String) -> bool:
 	var old_progress := progress_path(old_file)
 	if FileAccess.file_exists(old_progress):
 		DirAccess.rename_absolute(old_progress, progress_path(new_file))
+
+	var old_resume := study_resume_path(old_file)
+	if FileAccess.file_exists(old_resume):
+		DirAccess.rename_absolute(old_resume, study_resume_path(new_file))
 	
 	return true
 
@@ -137,6 +142,8 @@ static func delete_deck(deck_file: String) -> bool:
 	var progress := progress_path(deck_file)
 	if FileAccess.file_exists(progress):
 		DirAccess.remove_absolute(progress)
+
+	delete_study_resume(deck_file)
 	
 	return true
 
@@ -176,6 +183,36 @@ static func save_progress(deck_file: String, progress: Progress) -> bool:
 	
 	file.store_string(progress.to_json())
 	return true
+
+
+static func study_resume_path(deck_file: String) -> String:
+	return "%s/%s" % [
+		STUDY_RESUME_DIR,
+		DeckNaming.progress_file_name(deck_file),
+	]
+
+
+static func load_study_resume(deck_file: String) -> StudyResume:
+	var path := study_resume_path(deck_file)
+	if not FileAccess.file_exists(path):
+		return null
+	return StudyResume.from_json(FileAccess.get_file_as_string(path))
+
+
+static func save_study_resume(deck_file: String, resume: StudyResume) -> bool:
+	_ensure_dir(STUDY_RESUME_DIR)
+	var file := FileAccess.open(study_resume_path(deck_file), FileAccess.WRITE)
+	if file == null:
+		return false
+	file.store_string(resume.to_json())
+	return true
+
+
+static func delete_study_resume(deck_file: String) -> bool:
+	var path := study_resume_path(deck_file)
+	if not FileAccess.file_exists(path):
+		return true
+	return DirAccess.remove_absolute(path) == OK
 
 
 static func load_settings() -> AppSettings:

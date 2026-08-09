@@ -16,6 +16,7 @@ func run_tests() -> void:
 
 	_test_paths_and_crud()
 	_test_progress_storage()
+	_test_study_resume_storage()
 	_test_import_and_export()
 	_test_rename_duplicate_delete()
 
@@ -89,6 +90,30 @@ func _test_import_and_export() -> void:
 		== DeckStorage.ExportResult.OK,
 		"저장소: Export 성공 원인을 구분"
 	)
+
+
+func _test_study_resume_storage() -> void:
+	var resume := StudyResume.new()
+	resume.deck_hash = 12345
+	resume.remaining_indices = [1, 0]
+	resume.order = DeckOrdering.StudyOrder.SHUFFLE
+	resume.scope = 2
+	check(DeckStorage.save_study_resume(TEST_DECK, resume), "저장소: 이어서 학습 세션 저장")
+	check(
+		DeckStorage.study_resume_path(TEST_DECK)
+		== "user://study_resume/__gd_phase4_a.json",
+		"저장소: 이어서 학습 세션은 덱별 user 경로 사용"
+	)
+	var restored := DeckStorage.load_study_resume(TEST_DECK)
+	check(
+		restored != null
+		and restored.deck_hash == 12345
+		and restored.remaining_indices == [1, 0]
+		and restored.order == DeckOrdering.StudyOrder.SHUFFLE
+		and restored.scope == 2,
+		"저장소: 이어서 학습 세션 왕복"
+	)
+	check(StudyResume.from_json("깨진 JSON") == null, "저장소: 깨진 이어서 학습 세션 거부")
 	check(
 		not DeckStorage.export_deck("__없는덱.md", EXPORTED_PATH),
 		"저장소: 없는 덱 Export는 false"
@@ -119,6 +144,11 @@ func _test_rename_duplicate_delete() -> void:
 		DeckStorage.load_progress(TEST_DECK).get_wrong_count("A") == 0,
 		"저장소: 이름 변경 후 옛 진행도 제거"
 	)
+	check(
+		DeckStorage.load_study_resume(RENAMED_DECK) != null
+		and DeckStorage.load_study_resume(TEST_DECK) == null,
+		"저장소: 이름 변경 시 이어서 학습 세션 이동"
+	)
 
 	var duplicated: Variant = DeckStorage.duplicate_deck(RENAMED_DECK)
 	check(duplicated == "__gd_phase4_renamed (2).md", "저장소: 덱 복제 이름 생성")
@@ -130,6 +160,10 @@ func _test_rename_duplicate_delete() -> void:
 		duplicated is String
 		and DeckStorage.load_progress(duplicated).get_wrong_count("A") == 2,
 		"저장소: 덱 복제 시 진행도 복사"
+	)
+	check(
+		duplicated is String and DeckStorage.load_study_resume(duplicated) == null,
+		"저장소: 덱 복제 시 진행 중 세션은 복사하지 않음"
 	)
 	check(DeckStorage.duplicate_deck("__없는덱.md") == null, "저장소: 없는 덱 복제는 null")
 
@@ -158,6 +192,9 @@ func _cleanup() -> void:
 		var path := DeckStorage.progress_path(deck_file)
 		if FileAccess.file_exists(path):
 			DirAccess.remove_absolute(path)
+		var resume_path := DeckStorage.study_resume_path(deck_file)
+		if FileAccess.file_exists(resume_path):
+			DirAccess.remove_absolute(resume_path)
 
 	if FileAccess.file_exists(EXPORTED_PATH):
 		DirAccess.remove_absolute(EXPORTED_PATH)
