@@ -14,6 +14,19 @@ func run_tests() -> void:
 	var app := MVP_SCENE.instantiate()
 	app.auto_start = false
 	add_child(app)
+	app.show_library()
+
+	check(app.get_node("%LibraryContainer").visible, "MVP: 덱 목록 화면 표시")
+	check(not app.get_node("%StudyContainer").visible, "MVP: 덱 목록에서 학습 화면 숨김")
+	var deck_buttons := app.get_node("%DeckList").get_children()
+	check(deck_buttons.size() == 1, "MVP: 저장된 덱 수만큼 목록 버튼 표시")
+	check(deck_buttons[0].text == "__gd_mvp", "MVP: 목록에 덱 표시 이름 사용")
+	deck_buttons[0].pressed.emit()
+	check(not app.get_node("%LibraryContainer").visible, "MVP: 덱 선택 후 목록 숨김")
+	check(app.get_node("%StudyContainer").visible, "MVP: 덱 선택 후 학습 화면 표시")
+	app.get_node("%BackToLibraryButton").pressed.emit()
+	check(app.get_node("%LibraryContainer").visible, "MVP: 덱 목록 버튼으로 복귀")
+
 	app.start_deck(TEST_DECK)
 
 	check(app.get_node("%DeckLabel").text == "__gd_mvp", "MVP: 덱 이름 표시")

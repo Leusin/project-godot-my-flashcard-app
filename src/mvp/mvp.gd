@@ -3,6 +3,10 @@ extends Control
 
 @export var auto_start := true
 
+@onready var library_container: VBoxContainer = %LibraryContainer
+@onready var deck_list: VBoxContainer = %DeckList
+@onready var empty_decks_label: Label = %EmptyDecksLabel
+@onready var header: HBoxContainer = %Header
 @onready var deck_label: Label = %DeckLabel
 @onready var remaining_label: Label = %RemainingLabel
 @onready var question_label: Label = %QuestionLabel
@@ -21,17 +25,29 @@ var _source_cards: Array[FlashCard] = []
 
 
 func _ready() -> void:
+	%BackToLibraryButton.pressed.connect(show_library)
 	reveal_button.pressed.connect(_on_reveal_pressed)
 	%AgainButton.pressed.connect(_on_again_pressed)
 	%GoodButton.pressed.connect(_on_good_pressed)
 	restart_button.pressed.connect(_on_restart_pressed)
 
 	if auto_start:
-		start_default_deck()
+		show_library()
 
 
 func start_default_deck() -> void:
-	start_sample_deck()
+	show_library()
+
+
+func show_library() -> void:
+	DeckStorage.seed_sample_if_empty()
+	_session = null
+	_deck_file = ""
+	library_container.visible = true
+	header.visible = false
+	study_container.visible = false
+	done_container.visible = false
+	_refresh_deck_list()
 
 
 func start_deck(
@@ -60,7 +76,31 @@ func _start_cards(
 	_order = order
 	_progress = DeckStorage.load_progress(deck_file)
 	_source_cards = cards.duplicate()
+	library_container.visible = false
+	header.visible = true
 	_restart_session()
+
+
+func _refresh_deck_list() -> void:
+	for child in deck_list.get_children():
+		child.free()
+
+	var deck_files := DeckStorage.list_deck_files()
+	empty_decks_label.visible = deck_files.is_empty()
+
+	for deck_file in deck_files:
+		var deck_button := Button.new()
+		deck_button.name = "Deck_%s" % deck_file.validate_node_name()
+		deck_button.text = DeckNaming.display_name(deck_file)
+		deck_button.custom_minimum_size = Vector2(0, 84)
+		deck_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		deck_button.add_theme_font_size_override("font_size", 22)
+		deck_button.pressed.connect(_on_deck_selected.bind(deck_file))
+		deck_list.add_child(deck_button)
+
+
+func _on_deck_selected(deck_file: String) -> void:
+	start_deck(deck_file)
 
 
 func _restart_session() -> void:
