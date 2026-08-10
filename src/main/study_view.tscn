@@ -1,7 +1,8 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
 [ext_resource type="Script" path="res://src/main/wrong_tally.gd" id="2_tally"]
+[ext_resource type="Script" path="res://src/main/study_gesture_surface.gd" id="3_gesture"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxStudyCard"]
 bg_color = Color(1, 1, 1, 1)
@@ -88,12 +89,14 @@ show_percentage = false
 [node name="StudyContainer" type="VBoxContainer" parent="."]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_constants/separation = 16
 
 [node name="CardFrame" type="PanelContainer" parent="StudyContainer"]
-custom_minimum_size = Vector2(0, 720)
+custom_minimum_size = Vector2(0, 540)
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxStudyCard")
+script = ExtResource("3_gesture")
 
 [node name="CardMargin" type="MarginContainer" parent="StudyContainer/CardFrame"]
 layout_mode = 2
@@ -169,24 +172,24 @@ horizontal_alignment = 0
 vertical_alignment = 0
 autowrap_mode = 2
 
-[node name="RevealButton" type="Button" parent="StudyContainer/CardFrame/CardMargin/CardContent"]
+[node name="RevealButton" type="Button" parent="StudyContainer"]
 custom_minimum_size = Vector2(0, 82)
 layout_mode = 2
 theme_override_font_sizes/font_size = 23
 text = "답 보기"
 
-[node name="Actions" type="HBoxContainer" parent="StudyContainer/CardFrame/CardMargin/CardContent"]
+[node name="Actions" type="HBoxContainer" parent="StudyContainer"]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="AgainButton" type="Button" parent="StudyContainer/CardFrame/CardMargin/CardContent/Actions"]
+[node name="AgainButton" type="Button" parent="StudyContainer/Actions"]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
 text = "다시 보기"
 
-[node name="GoodButton" type="Button" parent="StudyContainer/CardFrame/CardMargin/CardContent/Actions"]
+[node name="GoodButton" type="Button" parent="StudyContainer/Actions"]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3

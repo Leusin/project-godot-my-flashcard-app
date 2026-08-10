@@ -40,6 +40,7 @@ func run_tests() -> void:
 	var app := MAIN_SCENE.instantiate()
 	app.auto_start = false
 	add_child(app)
+	(_view(app, "CardFrame") as StudyGestureSurface).animations_enabled = false
 	app.show_library()
 
 	check(_view(app, "LibraryContainer").visible, "MVP: 덱 목록 화면 표시")
@@ -404,6 +405,22 @@ func run_tests() -> void:
 		"Main Study: 첫 카드에서 학습 진행 bar 표시"
 	)
 	check(
+		StudyGestureSurface.drag_direction(Vector2(120, 10))
+		== StudyGestureSurface.GOOD
+		and StudyGestureSurface.drag_direction(Vector2(-120, 10))
+		== StudyGestureSurface.AGAIN
+		and StudyGestureSurface.drag_direction(Vector2(40, 0)) == 0
+		and StudyGestureSurface.drag_direction(Vector2(100, 120)) == 0,
+		"Main Study: 좌우 drag만 판정하고 짧거나 세로인 drag는 취소"
+	)
+	check(
+		StudyGestureSurface.PREVIEW_FOLLOW_RATIO > 0.5
+		and StudyGestureSurface.EXIT_DURATION > 0.0
+		and StudyGestureSurface.ENTER_DURATION > 0.0
+		and StudyGestureSurface.FLIP_HALF_DURATION > 0.0,
+		"Main Study: drag 퇴장·다음 카드 안착·앞뒤 flip 연출 제공"
+	)
+	check(
 		app.get_node("Margin/Page/Title").get_theme_color("font_color") == Color.BLACK,
 		"MVP 스타일: 모든 Label 글자는 검은색"
 	)
@@ -419,8 +436,11 @@ func run_tests() -> void:
 	)
 	check(
 		_view(app, "CardStack") == null
-		and _view(app, "RevealButton").get_parent().name == "CardContent",
-		"Main Study: 카드 stack 없이 단일 frame 안에 답 보기 버튼 배치"
+		and _view(app, "RevealButton").get_parent().name == "StudyContainer"
+		and _view(app, "Actions").get_parent().name == "StudyContainer"
+		and not _view(app, "CardFrame").is_ancestor_of(_view(app, "RevealButton"))
+		and not _view(app, "CardFrame").is_ancestor_of(_view(app, "Actions")),
+		"Main Study: 단일 카드 frame 밖에 학습 버튼을 고정 배치"
 	)
 	var button_style := (
 		_view(app, "RevealButton").get_theme_stylebox("normal") as StyleBoxFlat
@@ -456,10 +476,20 @@ func run_tests() -> void:
 	)
 	check(
 		_view(app, "Actions").visible
-		and not _view(app, "RevealButton").visible
+		and _view(app, "RevealButton").visible
+		and _view(app, "RevealButton").text == "질문만 보기"
 		and _view(app, "AgainButton").text == "다시 보기"
 		and _view(app, "GoodButton").text == "알겠음",
-		"Main Study: 답 공개 후에도 자기평가 버튼 유지"
+		"Main Study: 답 공개 후 자기평가와 질문 복귀 버튼 유지"
+	)
+	_view(app, "RevealButton").pressed.emit()
+	check(
+		not _view(app, "AnswerScroll").visible
+		and _view(app, "RevealButton").text == "답 보기"
+		and _view(app, "QuestionScroll").size_flags_vertical
+		== Control.SIZE_EXPAND_FILL
+		and _view(app, "QuestionLabel").get_theme_color("font_color") == Color.BLACK,
+		"Main Study: 답을 본 뒤 질문만 보는 앞면으로 복귀"
 	)
 
 	_view(app, "AgainButton").pressed.emit()

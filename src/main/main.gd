@@ -93,16 +93,17 @@ const CARD_LIST_ROW_SCENE := preload("res://src/main/card_list_row.tscn")
 @onready var deck_label: Label = $Margin/Page/StudyFlow/Header/DeckLabel
 @onready var remaining_label: Label = $Margin/Page/StudyFlow/Header/RemainingLabel
 @onready var study_progress_bar: ProgressBar = $Margin/Page/StudyFlow/StudyProgressBar
+@onready var study_gesture_surface: StudyGestureSurface = $Margin/Page/StudyFlow/StudyContainer/CardFrame
 @onready var card_status_label: Label = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/CardProperties/StatusBadge/Margin/CardStatusLabel
 @onready var wrong_tally: WrongTallyView = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/CardProperties/WrongTally
 @onready var question_scroll: ScrollContainer = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/QuestionScroll
 @onready var question_label: Label = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/QuestionScroll/QuestionLabel
 @onready var answer_label: Label = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/AnswerScroll/AnswerLabel
 @onready var answer_scroll: ScrollContainer = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/AnswerScroll
-@onready var reveal_button: Button = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/RevealButton
-@onready var study_actions: HBoxContainer = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/Actions
-@onready var again_button: Button = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/Actions/AgainButton
-@onready var good_button: Button = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/Actions/GoodButton
+@onready var reveal_button: Button = $Margin/Page/StudyFlow/StudyContainer/RevealButton
+@onready var study_actions: HBoxContainer = $Margin/Page/StudyFlow/StudyContainer/Actions
+@onready var again_button: Button = $Margin/Page/StudyFlow/StudyContainer/Actions/AgainButton
+@onready var good_button: Button = $Margin/Page/StudyFlow/StudyContainer/Actions/GoodButton
 @onready var study_container: VBoxContainer = $Margin/Page/StudyFlow/StudyContainer
 @onready var done_container: VBoxContainer = $Margin/Page/StudyFlow/DoneContainer
 @onready var done_label: Label = $Margin/Page/StudyFlow/DoneContainer/DoneLabel
@@ -191,9 +192,10 @@ func _ready() -> void:
 		_on_discard_card_changes_confirmed
 	)
 	$Margin/Page/StudyFlow/Header/BackToReadyButton.pressed.connect(_return_to_study_ready)
+	study_gesture_surface.swiped.connect(_on_study_swiped)
 	reveal_button.pressed.connect(_on_reveal_pressed)
-	again_button.pressed.connect(_on_again_pressed)
-	good_button.pressed.connect(_on_good_pressed)
+	again_button.pressed.connect(_on_again_requested)
+	good_button.pressed.connect(_on_good_requested)
 	restart_button.pressed.connect(_on_restart_pressed)
 	_setup_study_ready_options()
 
@@ -1160,13 +1162,10 @@ func _show_current() -> void:
 	var wrong_count := _progress.get_wrong_count(card.question)
 	wrong_tally.set_count(wrong_count)
 	question_label.text = card.question
-	question_label.remove_theme_color_override("font_color")
 	answer_label.text = card.answer
-	question_scroll.custom_minimum_size.y = 0.0
-	question_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	answer_scroll.hide()
-	reveal_button.visible = true
-	study_actions.show()
+	question_scroll.scroll_vertical = 0
+	answer_scroll.scroll_vertical = 0
+	_set_answer_visible(false)
 	remaining_label.text = "%d장 남음" % _session.remaining()
 	study_progress_bar.max_value = maxi(_source_cards.size(), 1)
 	study_progress_bar.value = _source_cards.size() - _session.remaining()
@@ -1196,12 +1195,35 @@ func _on_reveal_pressed() -> void:
 	if _session == null or _session.is_finished():
 		return
 
-	answer_scroll.show()
-	question_scroll.custom_minimum_size.y = 150.0
-	question_scroll.size_flags_vertical = Control.SIZE_FILL
-	question_label.add_theme_color_override("font_color", Color(0.56, 0.56, 0.56, 1))
-	reveal_button.visible = false
+	var show_answer := not answer_scroll.visible
+	study_gesture_surface.flip(_set_answer_visible.bind(show_answer))
+
+
+func _set_answer_visible(visible: bool) -> void:
+	answer_scroll.visible = visible
+	if visible:
+		question_scroll.custom_minimum_size.y = 150.0
+		question_scroll.size_flags_vertical = Control.SIZE_FILL
+		question_label.add_theme_color_override(
+			"font_color",
+			Color(0.56, 0.56, 0.56, 1)
+		)
+		reveal_button.text = "질문만 보기"
+	else:
+		question_scroll.custom_minimum_size.y = 0.0
+		question_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		question_label.remove_theme_color_override("font_color")
+		reveal_button.text = "답 보기"
+	reveal_button.show()
 	study_actions.show()
+
+
+func _on_again_requested() -> void:
+	study_gesture_surface.commit(StudyGestureSurface.AGAIN)
+
+
+func _on_good_requested() -> void:
+	study_gesture_surface.commit(StudyGestureSurface.GOOD)
 
 
 func _on_again_pressed() -> void:
@@ -1227,6 +1249,13 @@ func _on_good_pressed() -> void:
 	_show_current()
 
 
+func _on_study_swiped(direction: int) -> void:
+	if direction == StudyGestureSurface.AGAIN:
+		_on_again_pressed()
+	elif direction == StudyGestureSurface.GOOD:
+		_on_good_pressed()
+
+
 func _try_lock_study_input() -> bool:
 	if _study_input_locked:
 		return false
@@ -1235,6 +1264,7 @@ func _try_lock_study_input() -> bool:
 	_study_input_lock_generation += 1
 	again_button.disabled = true
 	good_button.disabled = true
+	study_gesture_surface.input_enabled = false
 	var generation := _study_input_lock_generation
 	get_tree().create_timer(STUDY_INPUT_LOCK_SECONDS).timeout.connect(
 		_on_study_input_lock_timeout.bind(generation)
@@ -1253,6 +1283,7 @@ func _reset_study_input_lock() -> void:
 	_study_input_locked = false
 	again_button.disabled = false
 	good_button.disabled = false
+	study_gesture_surface.input_enabled = true
 
 
 func _on_restart_pressed() -> void:
