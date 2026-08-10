@@ -32,6 +32,13 @@ func next() -> void:
 		return
 	_position += 1
 
+
+func previous() -> bool:
+	if _position <= 0:
+		return false
+	_position -= 1
+	return true
+
 func replace_current(card: FlashCard) -> void:
 	assert(card != null, "교체할 카드가 null임")
 

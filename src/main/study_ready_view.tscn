@@ -59,13 +59,10 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "← 덱 목록"
 
-[node name="ReadyTitleLabel" type="Label" parent="Header"]
+[node name="HeaderSpacer" type="Control" parent="Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 24
-text = "학습 준비"
-horizontal_alignment = 1
-vertical_alignment = 1
+mouse_filter = 2
 
 [node name="HeaderBalance" type="Control" parent="Header"]
 custom_minimum_size = Vector2(132, 64)
@@ -124,12 +121,6 @@ theme_override_constants/margin_bottom = 32
 [node name="OverviewContent" type="VBoxContainer" parent="DeckStack/DeckCover/Margin"]
 layout_mode = 2
 theme_override_constants/separation = 20
-
-[node name="CoverCaption" type="Label" parent="DeckStack/DeckCover/Margin/OverviewContent"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 17
-text = "STUDY DECK"
-horizontal_alignment = 1
 
 [node name="ReadyDeckNameLabel" type="Label" parent="DeckStack/DeckCover/Margin/OverviewContent"]
 layout_mode = 2
@@ -256,12 +247,6 @@ text = "카드 관리"
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 16
-
-[node name="SetupCaption" type="Label" parent="DeckStack/DeckCover/Margin/NewStudyContent"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 17
-text = "NEW STUDY"
-horizontal_alignment = 1
 
 [node name="SetupDeckNameLabel" type="Label" parent="DeckStack/DeckCover/Margin/NewStudyContent"]
 layout_mode = 2

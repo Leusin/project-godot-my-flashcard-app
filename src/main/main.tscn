@@ -50,12 +50,6 @@ grow_vertical = 2
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="Title" type="Label" parent="Margin/Page" unique_id=1297376955]
-layout_mode = 2
-theme_override_font_sizes/font_size = 32
-text = "MyFlashCard"
-horizontal_alignment = 1
-
 [node name="LibraryContainer" parent="Margin/Page" instance=ExtResource("3_library")]
 layout_mode = 2
 

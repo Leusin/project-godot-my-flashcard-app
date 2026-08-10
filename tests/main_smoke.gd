@@ -46,6 +46,15 @@ func run_tests() -> void:
 	check(_view(app, "LibraryContainer").visible, "MVP: 덱 목록 화면 표시")
 	check(not _view(app, "StudyReadyView").visible, "Main Ready: 덱 목록에서 준비 화면 숨김")
 	check(not _view(app, "StudyContainer").visible, "MVP: 덱 목록에서 학습 화면 숨김")
+	check(
+		not app.has_node("Margin/Page/Title")
+		and _view(app, "LibraryHint") == null
+		and _view(app, "ReadyTitleLabel") == null
+		and _view(app, "CoverCaption") == null
+		and _view(app, "SetupCaption") == null
+		and _view(app, "CardListTitle") == null,
+		"Main UI: 기능 없는 장식 문구 제거"
+	)
 	var deck_buttons := _view(app, "DeckList").get_children()
 	check(deck_buttons.size() == 2, "Main: 저장된 덱 뒤에 추가 타일 표시")
 	check(
@@ -409,23 +418,48 @@ func run_tests() -> void:
 		== StudyGestureSurface.GOOD
 		and StudyGestureSurface.drag_direction(Vector2(-120, 10))
 		== StudyGestureSurface.AGAIN
+		and StudyGestureSurface.drag_direction(Vector2(10, -130))
+		== StudyGestureSurface.SKIP
+		and StudyGestureSurface.drag_direction(Vector2(10, 130))
+		== StudyGestureSurface.PREVIOUS
 		and StudyGestureSurface.drag_direction(Vector2(40, 0)) == 0
-		and StudyGestureSurface.drag_direction(Vector2(100, 120)) == 0,
-		"Main Study: 좌우 drag만 판정하고 짧거나 세로인 drag는 취소"
+		and StudyGestureSurface.drag_direction(Vector2(100, 100)) == 0,
+		"Main Study: 좌우 판정과 위 skip·아래 previous drag 구분"
 	)
 	check(
 		StudyGestureSurface.PREVIEW_FOLLOW_RATIO > 0.5
+		and StudyGestureSurface.TAP_MAX_DISTANCE > 0.0
 		and StudyGestureSurface.EXIT_DURATION > 0.0
 		and StudyGestureSurface.ENTER_DURATION > 0.0
 		and StudyGestureSurface.FLIP_HALF_DURATION > 0.0,
 		"Main Study: drag 퇴장·다음 카드 안착·앞뒤 flip 연출 제공"
 	)
 	check(
-		app.get_node("Margin/Page/Title").get_theme_color("font_color") == Color.BLACK,
+		_view(app, "AgainHint").text == "←  AGAIN"
+		and _view(app, "GoodHint").text == "GOOD  →"
+		and _view(app, "SkipHint").text == "↑  SKIP"
+		and _view(app, "PreviousHint").text == "↓  PREV"
+		and _view(app, "GestureHints").get_parent().name == "CardStage"
+		and _view(app, "GestureHints").show_behind_parent
+		and StudyGestureSurface.HINT_MIN_SCALE < 1.0
+		and StudyGestureSurface.HINT_MIN_ALPHA < 1.0
+		and StudyGestureSurface.HINT_PULL_PADDING > 0.0
+		and StudyGestureSurface.HINT_DRAG_DISTANCE_MULTIPLIER == 3.6
+		and StudyGestureSurface.HINT_COMPLETE_DURATION == 0.4
+		and _view(app, "AgainHint").get_theme_font_size("font_size") == 28
+		and not _view(app, "CardFrame").is_ancestor_of(_view(app, "GestureHints"))
+		and not _view(app, "AgainHint").visible
+		and not _view(app, "GoodHint").visible
+		and not _view(app, "SkipHint").visible
+		and not _view(app, "PreviousHint").visible,
+		"Main Study: 카드 뒤 빈 공간에만 drag 방향 도움말 준비"
+	)
+	check(
+		_view(app, "LibraryHeading").get_theme_color("font_color") == Color.BLACK,
 		"MVP 스타일: 모든 Label 글자는 검은색"
 	)
 	var card_style := (
-		app.get_node("Margin/Page/StudyFlow/StudyContainer/CardFrame").get_theme_stylebox("panel")
+		app.get_node("Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame").get_theme_stylebox("panel")
 		as StyleBoxFlat
 	)
 	check(
@@ -436,14 +470,13 @@ func run_tests() -> void:
 	)
 	check(
 		_view(app, "CardStack") == null
-		and _view(app, "RevealButton").get_parent().name == "StudyContainer"
+		and _view(app, "RevealButton") == null
 		and _view(app, "Actions").get_parent().name == "StudyContainer"
-		and not _view(app, "CardFrame").is_ancestor_of(_view(app, "RevealButton"))
 		and not _view(app, "CardFrame").is_ancestor_of(_view(app, "Actions")),
-		"Main Study: 단일 카드 frame 밖에 학습 버튼을 고정 배치"
+		"Main Study: 답 보기 버튼 없이 판정 버튼만 카드 밖에 고정 배치"
 	)
 	var button_style := (
-		_view(app, "RevealButton").get_theme_stylebox("normal") as StyleBoxFlat
+		_view(app, "AgainButton").get_theme_stylebox("normal") as StyleBoxFlat
 	)
 	check(
 		button_style != null
@@ -452,8 +485,8 @@ func run_tests() -> void:
 		"MVP 스타일: 버튼은 흰 바탕과 검은 테두리"
 	)
 
-	_view(app, "RevealButton").pressed.emit()
-	check(_view(app, "AnswerScroll").visible, "Main Study: 답 보기 버튼으로 답 영역 공개")
+	(_view(app, "CardFrame") as StudyGestureSurface).tapped.emit()
+	check(_view(app, "AnswerScroll").visible, "Main Study: 카드 tap으로 답 영역 공개")
 	check(
 		_view(app, "AnswerCaption") == null and _view(app, "Separator") == null,
 		"Main Study: ANSWER 문구와 질문·답 구분선 제거"
@@ -476,20 +509,17 @@ func run_tests() -> void:
 	)
 	check(
 		_view(app, "Actions").visible
-		and _view(app, "RevealButton").visible
-		and _view(app, "RevealButton").text == "질문만 보기"
 		and _view(app, "AgainButton").text == "다시 보기"
 		and _view(app, "GoodButton").text == "알겠음",
-		"Main Study: 답 공개 후 자기평가와 질문 복귀 버튼 유지"
+		"Main Study: 답 공개 후 자기평가 버튼 유지"
 	)
-	_view(app, "RevealButton").pressed.emit()
+	(_view(app, "CardFrame") as StudyGestureSurface).tapped.emit()
 	check(
 		not _view(app, "AnswerScroll").visible
-		and _view(app, "RevealButton").text == "답 보기"
 		and _view(app, "QuestionScroll").size_flags_vertical
 		== Control.SIZE_EXPAND_FILL
 		and _view(app, "QuestionLabel").get_theme_color("font_color") == Color.BLACK,
-		"Main Study: 답을 본 뒤 질문만 보는 앞면으로 복귀"
+		"Main Study: 카드를 다시 tap하면 질문만 보는 앞면으로 복귀"
 	)
 
 	_view(app, "AgainButton").pressed.emit()

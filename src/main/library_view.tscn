@@ -13,11 +13,6 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "내 덱"
 
-[node name="LibraryHint" type="Label" parent="."]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "학습할 덱을 선택하세요."
-
 [node name="DeckListScroll" type="ScrollContainer" parent="."]
 layout_mode = 2
 size_flags_vertical = 3

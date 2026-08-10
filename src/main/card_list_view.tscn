@@ -32,11 +32,6 @@ custom_minimum_size = Vector2(132, 64)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="CardListTitle" type="Label" parent="."]
-layout_mode = 2
-theme_override_font_sizes/font_size = 30
-text = "카드 관리"
-
 [node name="CardListStatusLabel" type="Label" parent="."]
 visible = false
 layout_mode = 2

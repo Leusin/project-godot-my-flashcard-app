@@ -91,62 +91,70 @@ layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 16
 
-[node name="CardFrame" type="PanelContainer" parent="StudyContainer"]
+[node name="CardStage" type="Control" parent="StudyContainer"]
 custom_minimum_size = Vector2(0, 540)
 layout_mode = 2
 size_flags_vertical = 3
+
+[node name="CardFrame" type="PanelContainer" parent="StudyContainer/CardStage"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxStudyCard")
 script = ExtResource("3_gesture")
 
-[node name="CardMargin" type="MarginContainer" parent="StudyContainer/CardFrame"]
+[node name="CardMargin" type="MarginContainer" parent="StudyContainer/CardStage/CardFrame"]
 layout_mode = 2
 theme_override_constants/margin_left = 32
 theme_override_constants/margin_top = 30
 theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 30
 
-[node name="CardContent" type="VBoxContainer" parent="StudyContainer/CardFrame/CardMargin"]
+[node name="CardContent" type="VBoxContainer" parent="StudyContainer/CardStage/CardFrame/CardMargin"]
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="CardProperties" type="HBoxContainer" parent="StudyContainer/CardFrame/CardMargin/CardContent"]
+[node name="CardProperties" type="HBoxContainer" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="WrongTally" type="Control" parent="StudyContainer/CardFrame/CardMargin/CardContent/CardProperties"]
+[node name="WrongTally" type="Control" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties"]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 script = ExtResource("2_tally")
 
-[node name="Spacer" type="Control" parent="StudyContainer/CardFrame/CardMargin/CardContent/CardProperties"]
+[node name="Spacer" type="Control" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties"]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 
-[node name="StatusBadge" type="PanelContainer" parent="StudyContainer/CardFrame/CardMargin/CardContent/CardProperties"]
+[node name="StatusBadge" type="PanelContainer" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties"]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxCardProperty")
 
-[node name="Margin" type="MarginContainer" parent="StudyContainer/CardFrame/CardMargin/CardContent/CardProperties/StatusBadge"]
+[node name="Margin" type="MarginContainer" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties/StatusBadge"]
 layout_mode = 2
 theme_override_constants/margin_left = 14
 theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 14
 theme_override_constants/margin_bottom = 6
 
-[node name="CardStatusLabel" type="Label" parent="StudyContainer/CardFrame/CardMargin/CardContent/CardProperties/StatusBadge/Margin"]
+[node name="CardStatusLabel" type="Label" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties/StatusBadge/Margin"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "NEW"
 vertical_alignment = 1
 
-[node name="QuestionScroll" type="ScrollContainer" parent="StudyContainer/CardFrame/CardMargin/CardContent"]
+[node name="QuestionScroll" type="ScrollContainer" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent"]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="QuestionLabel" type="Label" parent="StudyContainer/CardFrame/CardMargin/CardContent/QuestionScroll"]
+[node name="QuestionLabel" type="Label" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent/QuestionScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -156,13 +164,13 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 
-[node name="AnswerScroll" type="ScrollContainer" parent="StudyContainer/CardFrame/CardMargin/CardContent"]
+[node name="AnswerScroll" type="ScrollContainer" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent"]
 visible = false
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="AnswerLabel" type="Label" parent="StudyContainer/CardFrame/CardMargin/CardContent/AnswerScroll"]
+[node name="AnswerLabel" type="Label" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent/AnswerScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -172,11 +180,86 @@ horizontal_alignment = 0
 vertical_alignment = 0
 autowrap_mode = 2
 
-[node name="RevealButton" type="Button" parent="StudyContainer"]
-custom_minimum_size = Vector2(0, 82)
-layout_mode = 2
-theme_override_font_sizes/font_size = 23
-text = "답 보기"
+[node name="GestureHints" type="Control" parent="StudyContainer/CardStage"]
+show_behind_parent = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="SkipHint" type="Label" parent="StudyContainer/CardStage/GestureHints"]
+visible = false
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -110.0
+offset_top = -52.0
+offset_right = 110.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0, 0, 0, 0.78)
+theme_override_font_sizes/font_size = 28
+text = "↑  SKIP"
+horizontal_alignment = 1
+
+[node name="PreviousHint" type="Label" parent="StudyContainer/CardStage/GestureHints"]
+visible = false
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -110.0
+offset_top = 14.0
+offset_right = 110.0
+offset_bottom = 52.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0, 0, 0, 0.78)
+theme_override_font_sizes/font_size = 28
+text = "↓  PREV"
+horizontal_alignment = 1
+
+[node name="AgainHint" type="Label" parent="StudyContainer/CardStage/GestureHints"]
+visible = false
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -24.0
+offset_right = -12.0
+offset_bottom = 24.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 0.78)
+theme_override_font_sizes/font_size = 28
+text = "←  AGAIN"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="GoodHint" type="Label" parent="StudyContainer/CardStage/GestureHints"]
+visible = false
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 12.0
+offset_top = -24.0
+offset_right = 160.0
+offset_bottom = 24.0
+grow_vertical = 2
+theme_override_colors/font_color = Color(0, 0, 0, 0.78)
+theme_override_font_sizes/font_size = 28
+text = "GOOD  →"
+vertical_alignment = 1
 
 [node name="Actions" type="HBoxContainer" parent="StudyContainer"]
 layout_mode = 2

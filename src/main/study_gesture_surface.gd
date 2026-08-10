@@ -2,28 +2,38 @@ class_name StudyGestureSurface
 extends PanelContainer
 
 signal swiped(direction: int)
+signal tapped
 
 @export var animations_enabled := true
 
 enum DragAxis {
 	UNDECIDED,
 	HORIZONTAL,
-	VERTICAL,
+	VERTICAL_NAVIGATION,
+	VERTICAL_SCROLL,
 }
 
 const AGAIN := -1
 const GOOD := 1
+const PREVIOUS := -2
+const SKIP := 2
+const TAP_MAX_DISTANCE := 12.0
 const DRAG_THRESHOLD := 90.0
+const VERTICAL_DRAG_THRESHOLD := 110.0
 const DIRECTION_LOCK_DISTANCE := 14.0
 const HORIZONTAL_DOMINANCE := 1.15
+const VERTICAL_DOMINANCE := 1.15
 const PREVIEW_FOLLOW_RATIO := 0.65
 const PREVIEW_MAX_OFFSET_RATIO := 0.42
 const PREVIEW_MAX_ROTATION_DEGREES := 8.0
+const VERTICAL_PREVIEW_FOLLOW_RATIO := 0.35
+const VERTICAL_PREVIEW_MAX_OFFSET_RATIO := 0.16
 const EXIT_ROTATION_DEGREES := 15.0
 const EXIT_DURATION := 0.2
-const ENTER_OFFSET := 54.0
-const ENTER_ROTATION_DEGREES := 3.0
-const ENTER_DURATION := 0.14
+const ENTER_OVERSHOOT_DISTANCE := 12.0
+const ENTER_ROTATION_DEGREES := 4.0
+const ENTER_DURATION := 0.28
+const ENTER_SETTLE_DURATION := 0.08
 const FLIP_LIFT_DURATION := 0.08
 const FLIP_HALF_DURATION := 0.18
 const FLIP_OPEN_DURATION := 0.21
@@ -32,16 +42,31 @@ const FLIP_LIFT_OFFSET := 7.0
 const FLIP_EDGE_SCALE_X := 0.035
 const FLIP_PEAK_SCALE_Y := 1.035
 const FLIP_OVERSHOOT_SCALE_X := 1.025
+const HINT_ACTIVE_COLOR := Color(0.0, 0.0, 0.0, 0.9)
+const HINT_MIN_SCALE := 0.88
+const HINT_MIN_ALPHA := 0.32
+const HINT_PULL_PADDING := 24.0
+const HINT_DRAG_DISTANCE_MULTIPLIER := 3.6
+const HINT_PULL_EXPONENT := 1.6
+const HINT_REVEAL_START := 0.12
+const HINT_COMPLETE_DURATION := 0.4
 
-@onready var reveal_button: Button = $"../RevealButton"
-@onready var again_button: Button = $"../Actions/AgainButton"
-@onready var good_button: Button = $"../Actions/GoodButton"
+@onready var again_button: Button = $"../../Actions/AgainButton"
+@onready var good_button: Button = $"../../Actions/GoodButton"
+@onready var question_scroll: ScrollContainer = $CardMargin/CardContent/QuestionScroll
+@onready var answer_scroll: ScrollContainer = $CardMargin/CardContent/AnswerScroll
+@onready var again_hint: Label = $"../GestureHints/AgainHint"
+@onready var good_hint: Label = $"../GestureHints/GoodHint"
+@onready var skip_hint: Label = $"../GestureHints/SkipHint"
+@onready var previous_hint: Label = $"../GestureHints/PreviousHint"
 
 var input_enabled := true:
 	set(value):
 		input_enabled = value
-		if not value:
+		if not value and _dragging:
 			cancel_drag()
+		_set_animation_controls_disabled(_animating)
+var previous_enabled := false
 
 var _dragging := false
 var _pointer_id := -1
@@ -51,10 +76,15 @@ var _drag_position := Vector2.ZERO
 var _rest_position := Vector2.ZERO
 var _animating := false
 var _motion_tween: Tween
+var _active_hint_action := 0
+var _hint_rest_positions: Dictionary = {}
+var _hint_motion_tween: Tween
 
 
 func _ready() -> void:
 	visibility_changed.connect(_on_visibility_changed)
+	(get_parent() as Control).resized.connect(_on_hint_stage_resized)
+	_set_active_hint(0)
 
 
 func _input(event: InputEvent) -> void:
@@ -72,18 +102,38 @@ func _input(event: InputEvent) -> void:
 
 
 static func drag_direction(delta: Vector2) -> int:
-	if absf(delta.x) < DRAG_THRESHOLD:
-		return 0
-	if absf(delta.x) <= absf(delta.y) * HORIZONTAL_DOMINANCE:
-		return 0
-	return GOOD if delta.x > 0.0 else AGAIN
+	if (
+		absf(delta.x) >= DRAG_THRESHOLD
+		and absf(delta.x) > absf(delta.y) * HORIZONTAL_DOMINANCE
+	):
+		return GOOD if delta.x > 0.0 else AGAIN
+	if (
+		absf(delta.y) >= VERTICAL_DRAG_THRESHOLD
+		and absf(delta.y) > absf(delta.x) * VERTICAL_DOMINANCE
+	):
+		return PREVIOUS if delta.y > 0.0 else SKIP
+	return 0
+
+
+static func action_vector(action: int) -> Vector2:
+	match action:
+		AGAIN:
+			return Vector2.LEFT
+		GOOD:
+			return Vector2.RIGHT
+		PREVIOUS:
+			return Vector2.DOWN
+		SKIP:
+			return Vector2.UP
+		_:
+			return Vector2.ZERO
 
 
 func commit(direction: int) -> void:
 	if (
 		not input_enabled
 		or _animating
-		or (direction != AGAIN and direction != GOOD)
+		or action_vector(direction) == Vector2.ZERO
 	):
 		return
 
@@ -123,12 +173,6 @@ func flip(midpoint: Callable) -> void:
 		self,
 		"scale",
 		Vector2(FLIP_EDGE_SCALE_X, FLIP_PEAK_SCALE_Y),
-		FLIP_HALF_DURATION
-	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	_motion_tween.parallel().tween_property(
-		self,
-		"modulate",
-		Color(0.76, 0.76, 0.76, 1.0),
 		FLIP_HALF_DURATION
 	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	_motion_tween.finished.connect(_on_flip_midpoint.bind(midpoint))
@@ -197,25 +241,45 @@ func _update_drag(at_position: Vector2) -> void:
 	_drag_position = at_position
 	var delta := _drag_position - _drag_start
 	if _drag_axis == DragAxis.UNDECIDED and delta.length() >= DIRECTION_LOCK_DISTANCE:
-		_drag_axis = (
-			DragAxis.HORIZONTAL
-			if absf(delta.x) > absf(delta.y) * HORIZONTAL_DOMINANCE
-			else DragAxis.VERTICAL
-		)
+		if absf(delta.x) > absf(delta.y) * HORIZONTAL_DOMINANCE:
+			_drag_axis = DragAxis.HORIZONTAL
+		elif absf(delta.y) > absf(delta.x) * VERTICAL_DOMINANCE:
+			_drag_axis = (
+				DragAxis.VERTICAL_SCROLL
+				if _scroll_can_consume_vertical_drag(delta.y)
+				else DragAxis.VERTICAL_NAVIGATION
+			)
 
 	if _drag_axis == DragAxis.HORIZONTAL:
 		_show_horizontal_preview(delta.x)
-	elif _drag_axis == DragAxis.VERTICAL:
+	elif _drag_axis == DragAxis.VERTICAL_NAVIGATION:
+		_show_vertical_preview(delta.y)
+	elif _drag_axis == DragAxis.VERTICAL_SCROLL:
 		_reset_visual()
 
 
 func _finish_drag(at_position: Vector2) -> void:
 	_drag_position = at_position
 	var delta := _drag_position - _drag_start
-	var direction := drag_direction(delta) if _drag_axis == DragAxis.HORIZONTAL else 0
+	var direction := (
+		drag_direction(delta)
+		if _drag_axis == DragAxis.HORIZONTAL
+		or _drag_axis == DragAxis.VERTICAL_NAVIGATION
+		else 0
+	)
+	var is_tap := (
+		_drag_axis == DragAxis.UNDECIDED
+		and delta.length() <= TAP_MAX_DISTANCE
+	)
+	if direction == PREVIOUS and not previous_enabled:
+		direction = 0
 	_dragging = false
 	_pointer_id = -1
 	_drag_axis = DragAxis.UNDECIDED
+	if is_tap:
+		_reset_visual()
+		tapped.emit()
+		return
 	if direction == 0:
 		_reset_visual()
 		return
@@ -241,21 +305,55 @@ func _show_horizontal_preview(horizontal_delta: float) -> void:
 		PREVIEW_MAX_ROTATION_DEGREES
 	)
 	rotation = deg_to_rad(rotation_degrees)
+	_set_active_hint(
+		GOOD if horizontal_delta > 0.0 else AGAIN,
+		absf(horizontal_delta) / (DRAG_THRESHOLD * HINT_DRAG_DISTANCE_MULTIPLIER)
+	)
+
+
+func _show_vertical_preview(vertical_delta: float) -> void:
+	var max_offset := size.y * VERTICAL_PREVIEW_MAX_OFFSET_RATIO
+	var preview_offset := clampf(
+		vertical_delta * VERTICAL_PREVIEW_FOLLOW_RATIO,
+		-max_offset,
+		max_offset
+	)
+	position = _rest_position + Vector2(0.0, preview_offset)
+	rotation = 0.0
+	_set_active_hint(
+		PREVIOUS if vertical_delta > 0.0 else SKIP,
+		absf(vertical_delta)
+		/ (VERTICAL_DRAG_THRESHOLD * HINT_DRAG_DISTANCE_MULTIPLIER)
+	)
+
+
+func _scroll_can_consume_vertical_drag(vertical_delta: float) -> bool:
+	var scrolls: Array[ScrollContainer] = [question_scroll, answer_scroll]
+	for scroll in scrolls:
+		if not scroll.visible or not scroll.get_global_rect().has_point(_drag_start):
+			continue
+		var scroll_bar: VScrollBar = scroll.get_v_scroll_bar()
+		if vertical_delta < 0.0:
+			return scroll_bar.value < scroll_bar.max_value - scroll_bar.page - 0.5
+		if vertical_delta > 0.0:
+			return scroll_bar.value > scroll_bar.min_value + 0.5
+	return false
 
 
 func _play_swipe_exit(direction: int) -> void:
 	_animating = true
 	_set_animation_controls_disabled(true)
-	var viewport_width := get_viewport_rect().size.x
-	var exit_distance := maxf(size.x, viewport_width) + size.x * 0.25
-	var target_position := _rest_position + Vector2(direction * exit_distance, 0.0)
+	_complete_active_hint(direction)
+	var direction_vector := action_vector(direction)
+	var exit_distance := _travel_distance(direction_vector)
+	var target_position := _rest_position + direction_vector * exit_distance
 	_motion_tween = create_tween()
 	_motion_tween.set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	_motion_tween.tween_property(self, "position", target_position, EXIT_DURATION)
 	_motion_tween.tween_property(
 		self,
 		"rotation",
-		deg_to_rad(direction * EXIT_ROTATION_DEGREES),
+		deg_to_rad(direction_vector.x * EXIT_ROTATION_DEGREES),
 		EXIT_DURATION
 	)
 	_motion_tween.tween_property(self, "modulate:a", 0.15, EXIT_DURATION)
@@ -271,22 +369,60 @@ func _on_swipe_exit_finished(direction: int) -> void:
 		_animating = false
 		return
 
-	position = _rest_position + Vector2(-direction * ENTER_OFFSET, 0.0)
-	rotation = deg_to_rad(-direction * ENTER_ROTATION_DEGREES)
-	scale = Vector2(0.985, 0.985)
-	modulate.a = 0.55
+	var direction_vector := action_vector(direction)
+	var enter_distance := _travel_distance(direction_vector)
+	position = _rest_position - direction_vector * enter_distance
+	rotation = deg_to_rad(-direction_vector.x * ENTER_ROTATION_DEGREES)
+	scale = Vector2(0.97, 0.97)
+	modulate.a = 0.25
+	var overshoot_position := (
+		_rest_position + direction_vector * ENTER_OVERSHOOT_DISTANCE
+	)
 	_motion_tween = create_tween()
-	_motion_tween.set_parallel(true).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	_motion_tween.tween_property(self, "position", _rest_position, ENTER_DURATION)
-	_motion_tween.tween_property(self, "rotation", 0.0, ENTER_DURATION)
-	_motion_tween.tween_property(self, "scale", Vector2.ONE, ENTER_DURATION)
-	_motion_tween.tween_property(self, "modulate:a", 1.0, ENTER_DURATION)
+	_motion_tween.tween_property(
+		self,
+		"position",
+		overshoot_position,
+		ENTER_DURATION
+	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_motion_tween.parallel().tween_property(
+		self,
+		"rotation",
+		0.0,
+		ENTER_DURATION
+	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_motion_tween.parallel().tween_property(
+		self,
+		"scale",
+		Vector2(1.01, 1.01),
+		ENTER_DURATION
+	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_motion_tween.parallel().tween_property(
+		self,
+		"modulate:a",
+		1.0,
+		ENTER_DURATION
+	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_motion_tween.tween_property(
+		self,
+		"position",
+		_rest_position,
+		ENTER_SETTLE_DURATION
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_motion_tween.parallel().tween_property(
+		self,
+		"scale",
+		Vector2.ONE,
+		ENTER_SETTLE_DURATION
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_motion_tween.finished.connect(_on_swipe_enter_finished)
 
 
 func _on_swipe_enter_finished() -> void:
 	_motion_tween = null
 	_animating = false
+	_set_active_hint(0)
+	_set_animation_controls_disabled(false)
 
 
 func _on_flip_midpoint(midpoint: Callable) -> void:
@@ -305,12 +441,6 @@ func _on_flip_midpoint(midpoint: Callable) -> void:
 		_rest_position,
 		FLIP_OPEN_DURATION
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	_motion_tween.parallel().tween_property(
-		self,
-		"modulate",
-		Color.WHITE,
-		FLIP_OPEN_DURATION
-	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_motion_tween.tween_property(
 		self,
 		"scale",
@@ -328,13 +458,145 @@ func _on_flip_finished() -> void:
 
 
 func _set_animation_controls_disabled(disabled: bool) -> void:
-	reveal_button.disabled = disabled
-	if disabled:
-		again_button.disabled = true
-		good_button.disabled = true
-	elif input_enabled:
-		again_button.disabled = false
-		good_button.disabled = false
+	var controls_disabled := disabled or _animating or not input_enabled
+	again_button.disabled = controls_disabled
+	good_button.disabled = controls_disabled
+
+
+func _travel_distance(direction: Vector2) -> float:
+	var viewport_size := get_viewport_rect().size
+	if direction.x != 0.0:
+		return maxf(size.x, viewport_size.x) + size.x * 0.25
+	return maxf(size.y, viewport_size.y) + size.y * 0.25
+
+
+func _set_active_hint(action: int, drag_strength: float = 0.0) -> void:
+	if action != _active_hint_action:
+		if _hint_motion_tween != null:
+			_hint_motion_tween.kill()
+			_hint_motion_tween = null
+		_remember_hint_rest_positions()
+		_active_hint_action = action
+		var hints: Array[Label] = [again_hint, good_hint, skip_hint, previous_hint]
+		for hint in hints:
+			hint.hide()
+			if _hint_rest_positions.has(hint):
+				hint.position = _hint_rest_positions[hint] as Vector2
+			hint.scale = Vector2.ONE
+			hint.modulate.a = 1.0
+
+	var active_hint: Label = _hint_for_action(action)
+	if active_hint == null:
+		return
+
+	var reveal_strength := smoothstep(
+		HINT_REVEAL_START,
+		1.0,
+		clampf(drag_strength, 0.0, 1.0)
+	)
+	var pull_strength := pow(reveal_strength, HINT_PULL_EXPONENT)
+	var hint_scale := lerpf(HINT_MIN_SCALE, 1.0, reveal_strength)
+	var rest_position := _hint_rest_positions[active_hint] as Vector2
+	var entry_offset := _hint_entry_offset(action, active_hint, rest_position)
+	active_hint.add_theme_color_override("font_color", HINT_ACTIVE_COLOR)
+	active_hint.pivot_offset = active_hint.size * 0.5
+	active_hint.position = rest_position + entry_offset * (1.0 - pull_strength)
+	active_hint.scale = Vector2(hint_scale, hint_scale)
+	active_hint.modulate.a = lerpf(HINT_MIN_ALPHA, 1.0, reveal_strength)
+	active_hint.show()
+
+
+func _complete_active_hint(action: int) -> void:
+	if action != _active_hint_action:
+		_set_active_hint(action, 0.0)
+	var active_hint: Label = _hint_for_action(action)
+	if active_hint == null:
+		return
+	if _hint_motion_tween != null:
+		_hint_motion_tween.kill()
+	_hint_motion_tween = create_tween()
+	_hint_motion_tween.set_parallel(true)
+	_hint_motion_tween.tween_property(
+		active_hint,
+		"position",
+		_hint_rest_positions[active_hint] as Vector2,
+		HINT_COMPLETE_DURATION
+	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_hint_motion_tween.tween_property(
+		active_hint,
+		"scale",
+		Vector2.ONE,
+		HINT_COMPLETE_DURATION
+	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_hint_motion_tween.tween_property(
+		active_hint,
+		"modulate:a",
+		1.0,
+		HINT_COMPLETE_DURATION
+	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_hint_motion_tween.finished.connect(_on_hint_motion_finished)
+
+
+func _hint_for_action(action: int) -> Label:
+	match action:
+		AGAIN:
+			return again_hint
+		GOOD:
+			return good_hint
+		SKIP:
+			return skip_hint
+		PREVIOUS:
+			return previous_hint
+		_:
+			return null
+
+
+func _remember_hint_rest_positions() -> void:
+	if not _hint_rest_positions.is_empty():
+		return
+	var hints: Array[Label] = [again_hint, good_hint, skip_hint, previous_hint]
+	for hint in hints:
+		_hint_rest_positions[hint] = hint.position
+
+
+func _hint_entry_offset(
+	action: int,
+	hint: Label,
+	rest_position: Vector2
+) -> Vector2:
+	var stage_size := (get_parent() as Control).size
+	match action:
+		GOOD:
+			return Vector2(
+				-(rest_position.x + hint.size.x + HINT_PULL_PADDING),
+				0.0
+			)
+		AGAIN:
+			return Vector2(
+				stage_size.x - rest_position.x + HINT_PULL_PADDING,
+				0.0
+			)
+		SKIP:
+			return Vector2(
+				0.0,
+				stage_size.y - rest_position.y + HINT_PULL_PADDING
+			)
+		PREVIOUS:
+			return Vector2(
+				0.0,
+				-(rest_position.y + hint.size.y + HINT_PULL_PADDING)
+			)
+		_:
+			return Vector2.ZERO
+
+
+func _on_hint_stage_resized() -> void:
+	if _active_hint_action == 0:
+		_hint_rest_positions.clear()
+
+
+func _on_hint_motion_finished() -> void:
+	_hint_motion_tween = null
 
 
 func _reset_visual() -> void:
@@ -342,6 +604,7 @@ func _reset_visual() -> void:
 	rotation = 0.0
 	scale = Vector2.ONE
 	modulate = Color.WHITE
+	_set_active_hint(0)
 
 
 func _on_visibility_changed() -> void:

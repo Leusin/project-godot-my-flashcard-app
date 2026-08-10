@@ -30,11 +30,18 @@ func _test_queue_progression() -> void:
 	check(session.current().question == "A", "세션: 첫 카드는 입력 순서의 첫 카드")
 	check(session.remaining() == 3, "세션: 시작 시 남은 카드 수")
 	check(not session.is_finished(), "세션: 카드가 남아 있으면 진행 중")
+	check(not session.previous(), "세션: 첫 카드에서는 이전으로 이동하지 않음")
 
 	session.next()
 	check(session.current().question == "B", "세션: next 후 다음 카드로 이동")
 	check(session.remaining() == 2, "세션: next 후 남은 카드 수 감소")
+	check(session.previous(), "세션: 진행한 뒤 이전 카드로 이동 가능")
+	check(
+		session.current().question == "A" and session.remaining() == 3,
+		"세션: previous 후 이전 카드와 남은 수 복구"
+	)
 
+	session.next()
 	session.next()
 	session.next()
 	check(session.is_finished(), "세션: 모든 카드를 넘기면 종료")

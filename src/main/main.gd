@@ -93,14 +93,13 @@ const CARD_LIST_ROW_SCENE := preload("res://src/main/card_list_row.tscn")
 @onready var deck_label: Label = $Margin/Page/StudyFlow/Header/DeckLabel
 @onready var remaining_label: Label = $Margin/Page/StudyFlow/Header/RemainingLabel
 @onready var study_progress_bar: ProgressBar = $Margin/Page/StudyFlow/StudyProgressBar
-@onready var study_gesture_surface: StudyGestureSurface = $Margin/Page/StudyFlow/StudyContainer/CardFrame
-@onready var card_status_label: Label = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/CardProperties/StatusBadge/Margin/CardStatusLabel
-@onready var wrong_tally: WrongTallyView = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/CardProperties/WrongTally
-@onready var question_scroll: ScrollContainer = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/QuestionScroll
-@onready var question_label: Label = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/QuestionScroll/QuestionLabel
-@onready var answer_label: Label = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/AnswerScroll/AnswerLabel
-@onready var answer_scroll: ScrollContainer = $Margin/Page/StudyFlow/StudyContainer/CardFrame/CardMargin/CardContent/AnswerScroll
-@onready var reveal_button: Button = $Margin/Page/StudyFlow/StudyContainer/RevealButton
+@onready var study_gesture_surface: StudyGestureSurface = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame
+@onready var card_status_label: Label = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties/StatusBadge/Margin/CardStatusLabel
+@onready var wrong_tally: WrongTallyView = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties/WrongTally
+@onready var question_scroll: ScrollContainer = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/QuestionScroll
+@onready var question_label: Label = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/QuestionScroll/QuestionLabel
+@onready var answer_label: Label = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/AnswerScroll/AnswerLabel
+@onready var answer_scroll: ScrollContainer = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/AnswerScroll
 @onready var study_actions: HBoxContainer = $Margin/Page/StudyFlow/StudyContainer/Actions
 @onready var again_button: Button = $Margin/Page/StudyFlow/StudyContainer/Actions/AgainButton
 @onready var good_button: Button = $Margin/Page/StudyFlow/StudyContainer/Actions/GoodButton
@@ -193,7 +192,7 @@ func _ready() -> void:
 	)
 	$Margin/Page/StudyFlow/Header/BackToReadyButton.pressed.connect(_return_to_study_ready)
 	study_gesture_surface.swiped.connect(_on_study_swiped)
-	reveal_button.pressed.connect(_on_reveal_pressed)
+	study_gesture_surface.tapped.connect(_on_card_tapped)
 	again_button.pressed.connect(_on_again_requested)
 	good_button.pressed.connect(_on_good_requested)
 	restart_button.pressed.connect(_on_restart_pressed)
@@ -1166,6 +1165,7 @@ func _show_current() -> void:
 	question_scroll.scroll_vertical = 0
 	answer_scroll.scroll_vertical = 0
 	_set_answer_visible(false)
+	study_gesture_surface.previous_enabled = _session.position() > 0
 	remaining_label.text = "%d장 남음" % _session.remaining()
 	study_progress_bar.max_value = maxi(_source_cards.size(), 1)
 	study_progress_bar.value = _source_cards.size() - _session.remaining()
@@ -1191,7 +1191,7 @@ func _show_message(message: String, can_restart: bool) -> void:
 	study_progress_bar.value = _source_cards.size()
 
 
-func _on_reveal_pressed() -> void:
+func _on_card_tapped() -> void:
 	if _session == null or _session.is_finished():
 		return
 
@@ -1208,13 +1208,10 @@ func _set_answer_visible(visible: bool) -> void:
 			"font_color",
 			Color(0.56, 0.56, 0.56, 1)
 		)
-		reveal_button.text = "질문만 보기"
 	else:
 		question_scroll.custom_minimum_size.y = 0.0
 		question_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		question_label.remove_theme_color_override("font_color")
-		reveal_button.text = "답 보기"
-	reveal_button.show()
 	study_actions.show()
 
 
@@ -1254,6 +1251,33 @@ func _on_study_swiped(direction: int) -> void:
 		_on_again_pressed()
 	elif direction == StudyGestureSurface.GOOD:
 		_on_good_pressed()
+	elif direction == StudyGestureSurface.SKIP:
+		_on_skip_requested()
+	elif direction == StudyGestureSurface.PREVIOUS:
+		_on_previous_requested()
+
+
+func _on_skip_requested() -> void:
+	if _session == null or _session.is_finished() or not _try_lock_study_input():
+		return
+
+	_session.next()
+	_save_active_study_resume()
+	_show_current()
+
+
+func _on_previous_requested() -> void:
+	if (
+		_session == null
+		or _session.is_finished()
+		or _session.position() <= 0
+		or not _try_lock_study_input()
+	):
+		return
+
+	_session.previous()
+	_save_active_study_resume()
+	_show_current()
 
 
 func _try_lock_study_input() -> bool:
