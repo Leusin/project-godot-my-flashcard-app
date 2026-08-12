@@ -2,15 +2,12 @@ extends SceneTree
 
 ## 프로젝트 설정을 project.godot에 일괄 적용한다. `./apply_settings.ps1`로 실행.
 ## project.godot을 손으로 편집하는 대신 여기에 선언한다 — 값의 근거가 주석으로 남고, 깨져도 복구된다.
-##
-## 관리하지 않는 것: config/features의 "C#". 비-.NET 에디터(Steam 표준 빌드)로 프로젝트를 열면
-## 이 항목이 지워지는데, 그때는 project.godot을 직접 되돌려야 한다.
 
 # ── 애플리케이션 / 윈도우 ────────────────────────────────────────────
 const PROJECT_SETTINGS: Dictionary = {
 	"application/config/name": "MyFlashCard",
 	"application/config/version": "0.3.0",
-	# 진입점은 화면 전환을 맡는 App. study.tscn은 App이 띄우는 화면 중 하나다.
+	# 진입점은 화면 전환과 앱 상태를 조정하는 Main이다.
 	"application/run/main_scene": "res://src/main/main.tscn",
 
 	# 최종 타깃이 Android라 모바일 세로 해상도를 기준으로 잡는다
@@ -30,8 +27,8 @@ const PROJECT_SETTINGS: Dictionary = {
 	# 카드 내용이 대부분 한글이라 기본 폰트로는 렌더링이 아쉽다
 	"gui/theme/custom_font": "res://assets/fonts/PretendardVariable.ttf",
 
-	# 창 배경. 나머지 색은 AppTheme(코드)가 정하고, 이 배경만 프로젝트 설정에 둔다
-	# (컨트롤이 안 덮는 뒤 배경이라 Theme로는 못 칠한다). AppTheme.Canvas(#F7F6F2)와 같은 값.
+	# 창 배경. 나머지 색은 main_theme.tres와 각 씬의 style override가 정한다.
+	# 컨트롤이 덮지 않는 영역이라 프로젝트 설정에 둔다.
 	"rendering/environment/defaults/default_clear_color": Color(0.969, 0.965, 0.949, 1.0),
 }
 

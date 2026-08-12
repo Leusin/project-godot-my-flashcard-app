@@ -27,10 +27,6 @@ window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=1
 
-[dotnet]
-
-project/assembly_name="MyFlashCard"
-
 [gui]
 
 theme/custom_font="res://assets/fonts/PretendardVariable.ttf"

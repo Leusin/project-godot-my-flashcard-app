@@ -10,8 +10,8 @@
 ## v0.1 - 최소 루프
 목표: 하드코딩된 md 파일 하나를 읽어서, 데스크톱에서 복습이 한 바퀴 도는 것.
 
-- [x] Godot 4 (.NET) 프로젝트 생성, 데스크톱 실행 확인
-- [x] Markdown 파서: `# 질문` + 다음 줄들 = 답 → `List<Card>` (파일 경로는 하드코딩)
+- [x] Godot 4 GDScript 프로젝트 구성, 데스크톱 실행 확인
+- [x] Markdown 파서: `# 질문` + 다음 줄들 = 답 → `Array[FlashCard]`
 - [x] Study 화면: 질문 표시 → 탭하면 답 공개
 - [x] `Again` / `Got it` 버튼 2개 (스와이프 아님, 그냥 버튼)
   - Again: WrongCount +1 후 다음 카드로
@@ -44,24 +44,19 @@
 
 목표: "폰에서 스와이프로 복습한다." 가 완성되는 버전.
 
-- [ ] 스와이프 제스처 (← Again / → Good부터, Pass/Previous는 그 다음)
-- [ ] 카드 전환 애니메이션
-- [ ] Android 내보내기, 실기기 테스트
-  - 준비물 (2026-07-22 확인 — **전부 미설치**, 합계 2~3GB):
-	- [ ] Godot 4.7.1 **mono용** 익스포트 템플릿 (버전이 정확히 맞아야 함)
-	- [ ] OpenJDK 17 (`java` 명령 자체가 없는 상태)
-	- [ ] Android SDK — 에디터 설정에 경로는 적혀 있으나 폴더가 실재하지 않음. adb도 여기 포함
-	- [ ] 프로젝트 `export_presets.cfg` 생성
-  - 미지수: C# 안드로이드 빌드에 .NET 안드로이드 워크로드가 필요한지 (`dotnet workload`가 비어 있음). **이 프로젝트 최대 리스크라 v1.0 착수 시 가장 먼저 확인할 것.**
-  - 실기기는 있고 USB 연결 가능. 앱 쪽은 조건을 갖췄다 — 세로 고정이고 진행도·설정은 `user://`라 경로 문제 없음.
-  - **덱 폴더 접근**: desktop은 임의 폴더(Drive 동기화 폴더 등) 지정이 되지만, Android는 샌드박스라 그대로 안 된다. 시스템 파일 선택기(SAF)로 폴더 URI 권한을 받아야 하고 Godot 기본 FileAccess로는 안 된다 — 플러그인/네이티브 필요. Android는 기본 `user://decks`로 시작하고, 커스텀 폴더는 이 문제를 푼 뒤에. 클라우드 동기화는 앱에 넣지 않는다(폴더 위치로 해결 — 해석 B).
+- [x] 네 방향 스와이프 제스처 (← AGAIN / → GOOD / ↑ SKIP / ↓ PREV)
+- [x] 카드 퇴장·등장·앞뒤 플립 애니메이션
+- [x] Safe Area와 Android 뒤로가기 처리
+- [x] Android APK export, 실제 기기 설치·실행 확인
+- [x] GDScript 전환과 .NET 의존성 제거
+- [ ] Release 서명과 스토어 배포 자료 준비
+  - Android는 기본 `user://decks`를 사용한다.
+  - 시스템 폴더를 덱 폴더로 직접 지정하려면 SAF 플러그인 또는 네이티브 연동이 필요하다.
 
 ## 보류
 
 v1.0 이후, 실제로 써보면서 필요한 것만 꺼내온다.
 
-- Pass / Previous / Long Press 편집
-- Study 순서 토글 (Shuffle / Sequential — v0.1은 고정 순서로 시작)
 - 덱/카드 드래그 순서 변경, 검색
-- **Deck Menu (Rename/Export/Duplicate/Delete)** — 덱 목록(DeckListView) 타일의 `:` 로 진입, DESIGN 원래 목업과 동일한 자리(별도 Deck 상세 허브는 안 만듦). "최종 디자인대로 재구성" 작업 때 한 번에 구현하기로 결정(2026-07-22). Card List의 `:` → Card Menu(Duplicate/Delete)도 같은 패턴이라 그때 같이 볼 것.
 - 카드 상태 자동 전이, MASTERED Study 제외
+- 덱별 UI 테마와 유료 스킨 가능성 검토

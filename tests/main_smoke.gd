@@ -121,13 +121,13 @@ func run_tests() -> void:
 		"Main: 덱 타일을 세 장의 카드 뭉치로 표시"
 	)
 	check(
-		_view(deck_buttons[-1], "BackCardFar") != null
-		and _view(deck_buttons[-1], "BackCardNear") != null
+		_view(deck_buttons[-1], "BackCardFar") == null
+		and _view(deck_buttons[-1], "BackCardNear") == null
 		and _view(deck_buttons[-1], "FrontCard") != null
 		and _view(deck_buttons[-1], "AddDeckButton").text == "+"
 		and _view(deck_buttons[-1], "AddDeckButton").custom_minimum_size
-		== Vector2(64, 64),
-		"Main Create: 추가 타일도 카드 뭉치와 우상단 + 버튼으로 표시"
+		== Vector2(64, 32),
+		"Main Create: 추가 타일을 단일 카드와 우상단 + 버튼으로 표시"
 	)
 	check(
 		_view(deck_buttons[0], "DeckMenuButton").custom_minimum_size == Vector2(64, 64),
@@ -712,8 +712,8 @@ func run_tests() -> void:
 		card_style != null
 		and card_style.bg_color == Color.WHITE
 		and card_style.border_color == Color.BLACK
-		and card_style.shadow_size == 0,
-		"MVP 스타일: 카드는 그림자 없이 흰 바탕과 검은 테두리"
+		and card_style.shadow_size == 7,
+		"MVP 스타일: Study 카드는 흰 바탕과 검은 테두리·가벼운 그림자"
 	)
 	check(
 		_view(app, "CardStack") == null

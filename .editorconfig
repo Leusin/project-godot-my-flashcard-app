@@ -9,14 +9,6 @@ end_of_line = crlf
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.cs]
-indent_style = tab
-indent_size = 4
-
-# docs/CONVENTIONS.md 8번: 중괄호는 생략하지 않는다
-csharp_prefer_braces = true:warning
-csharp_new_line_before_open_brace = all
-
 [*.gd]
 indent_style = tab
 indent_size = 4

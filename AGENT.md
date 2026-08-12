@@ -1,56 +1,50 @@
 # MyFlashCard App
 
-Markdown으로 카드를 작성하고 Reigns 스타일 스와이프로 복습하는 플래시카드 앱 (Godot 4 .NET, C#). 기획은 [docs/DESIGN.md](docs/DESIGN.md), 이정표는 [docs/ROADMAP.md](docs/ROADMAP.md) 참고.
+Markdown 덱을 앱에서 만들고 편집하며, 스와이프와 버튼으로 복습하는 Godot 4.7.1 GDScript 앱이다. 기획은 [docs/DESIGN.md](docs/DESIGN.md), 현재 구조는 [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md), 이정표는 [docs/ROADMAP.md](docs/ROADMAP.md)를 참고한다.
 
 ## 개발 환경
 
-- **반드시 .NET 에디터로 열 것**: `../tools/Godot_v4.7.1-stable_mono_win64/` (바탕화면 바로가기 "Godot 4.7.1 (.NET)"). Steam의 표준 빌드는 C#을 지원하지 않아 씬이 열리지 않고, 여는 것만으로 `project.godot`의 `config/features`에서 `"C#"`이 지워진다.
-- **프로젝트 설정의 출처는 [src/debug/apply_project_settings.gd](src/debug/apply_project_settings.gd)**. `project.godot`을 손으로 고치지 말고 이 스크립트를 고친 뒤 `& $godot --headless --path . --script res://src/debug/apply_project_settings.gd`로 반영한다. 선언에서 뺀 설정은 지워지지 않으니, 뺄 때는 `project.godot`도 함께 확인한다.
-- 들여쓰기는 탭 ([.editorconfig](.editorconfig)). 내장 에디터가 어차피 탭으로 되돌려놓기 때문.
-- **에디터를 열어둔 채 파일을 편집하면 실행(F5/F6) 시 에디터가 오래된 버퍼로 덮어쓴다.** 에디터 설정 `run/auto_save/save_before_running`이 기본 `true`라, 실행할 때마다 열린 씬이 전부 저장되기 때문. 실제로 리팩터한 `StudyView.cs`가 되돌아가 앱이 깨진 적이 있다. AI가 파일을 고치는 동안에는 에디터를 닫아두고, 작업 후 아래 테스트 명령으로 확인한다.
-- **에디터에서 실행한 화면과 에디터 밖에서 직접 실행한 화면이 다를 수 있다.** Godot 4.4+는 게임을 에디터 안의 Game 탭에 끼워 실행하는 게 기본(`run/window_placement/game_embed_mode`)이라 창 크기가 `window_*_override` 대신 패널 크기를 따른다. 창 크기·비율을 확인할 때는 에디터 밖에서 실행할 것.
+- 일반 Godot 4.7.1 에디터를 사용한다. .NET/Mono 에디터와 .NET SDK는 필요 없다.
+- Main Scene은 `src/main/main.tscn`이다.
+- 프로젝트 설정의 출처는 [src/debug/apply_project_settings.gd](src/debug/apply_project_settings.gd)다. 설정을 바꿀 때 스크립트와 `project.godot`이 일치하는지 함께 확인한다.
+- 들여쓰기는 탭이며 [.editorconfig](.editorconfig)를 따른다.
+- 외부에서 씬을 편집할 때 같은 씬을 Godot 에디터에 열어 두면 F5/F6 시 오래된 에디터 버퍼가 파일을 덮어쓸 수 있다. 작업 중에는 해당 씬 탭을 닫거나 외부 변경을 다시 불러온다.
+- 창 크기와 모바일 비율은 에디터 내 Game 탭뿐 아니라 별도 실행 창에서도 확인한다.
 
 ## 설계 규칙
 
-[docs/CONVENTIONS.md](docs/CONVENTIONS.md)가 규칙의 기준이다. 특히:
+[docs/CONVENTIONS.md](docs/CONVENTIONS.md)가 기준이다.
 
-- **의존 방향**: 하위(카드·파서·입력)는 상위(세션 규칙·저장 관리)를 호출하지 않는다. 상위가 하위를 구독한다.
-- **사실 vs 해석**: 하위는 사실(스와이프 방향, 파싱 결과)만 노출하고, Again/Good 처리나 진행도 갱신 같은 해석은 세션 관리자가 한다.
-- **뷰는 읽기만**: 카드 UI·목록 UI는 상태를 읽어 표시만 한다.
-- 새 시스템을 시작할 때는 패턴 이름만으로 구조를 잡지 말 것. **참조 가능/불가 대상과 의존 방향을 먼저 확인**하고 시작한다.
+- 하위 데이터·입력 컴포넌트는 상위 화면 전환과 저장 흐름을 직접 호출하지 않는다.
+- 하위는 탭, 드래그 방향, 파싱 결과 같은 사실을 노출하고 `main.gd`가 의미를 해석한다.
+- `src/core/`의 순수 로직은 `RefCounted`로 유지하고 Scene Tree와 파일 IO에 의존하지 않는다.
+- 저장 경로와 파일 IO는 `src/storage/deck_storage.gd`에 모은다.
+- 조작감에 영향을 주는 임계값과 애니메이션 시간은 자동 테스트뿐 아니라 실제 마우스·터치로 확인한다.
 
 ## 협업 규칙
 
-- 조작감에 영향 주는 값(스와이프 임계값, 애니메이션 시간)은 구조 개선이 목적이라도 **사람의 사용 확인 전에는 확정하지 않는다.**
-- 검증 분담: AI는 헤드리스 실행(빌드·테스트, 파서/런타임 에러 확인)을 맡고, 화면에 보이는 것의 최종 판정은 사람이 한다.
-- 아트는 시안부터 사람이 판정한다.
-- 기능 묶음이 끝나면 정리 리뷰 → MINOR 버전 올리고 `git tag vX.Y.Z` → 사이클이 끝나면 회고(docs/MEMORY.md).
-
-## 문서 체계
-
-- [docs/DESIGN.md](docs/DESIGN.md) — 기획서. 데이터 규칙(카드 식별, 학습 규칙, Import)의 기준.
-- [docs/ROADMAP.md](docs/ROADMAP.md) — 버전별 목표와 완료/예정 항목.
-- [docs/DEVLOG.md](docs/DEVLOG.md) — 결정·교훈을 그날 기록. 세션 시작 시 최근 엔트리를 읽으면 맥락이 잡힌다.
-- [docs/MEMORY.md](docs/MEMORY.md) — 프로젝트 목표·가설·회고.
-- [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md) — 코드 읽는 순서와 데이터 흐름. 코드를 처음 볼 때 여기부터.
-- ARCHITECTURE / TESTING 문서는 구조가 커지면 분리한다. 지금은 CODE_GUIDE로 충분.
+- AI는 파서·런타임 오류, 헤드리스 테스트, export 검증을 맡고 화면의 최종 감각은 사람이 판단한다.
+- 씬 노드 이름을 바꾸거나 제거하면 `main.gd`의 노드 경로와 `tests/main_smoke.gd`를 같은 변경에서 갱신한다.
+- 기능 묶음이 끝나면 관련 코드와 테스트를 함께 커밋한다.
+- 역사적 결정은 [docs/DEVLOG.md](docs/DEVLOG.md), 현재 구조는 [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md)에 기록한다.
 
 ## 테스트
 
 ```powershell
-$godot = "..\tools\Godot_v4.7.1-stable_mono_win64\Godot_v4.7.1-stable_mono_win64_console.exe"
-dotnet build
-& $godot --headless --path . res://tests/tests.tscn   # 실패 개수 = 종료 코드
+$godot = "C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe"
+& $godot --headless --path . --log-file .godot/latest-test.log res://tests/tests.tscn
 ```
 
-`_console.exe` 쪽을 써야 출력이 콘솔에 보인다. C# 코드를 고쳤으면 `dotnet build`를 먼저 해야 반영된다.
+- 중앙 실행기는 `tests/test_runner.gd`다.
+- 새 검증은 책임에 따라 `phase*_smoke.gd` 또는 `main_smoke.gd`에 추가한다.
+- core 테스트는 씬 없이 검증하고, UI 배선은 실제 버튼 signal과 pointer input 경로를 우선 검증한다.
+- 테스트가 멈추면 재시도만 하지 말고 로그의 parse error, 잘못된 노드 경로, 실패 전에 발생한 예외부터 확인한다.
 
-새 테스트는 `tests/TestRunner.cs`의 `_Ready()`에 함수로 등록한다. 순수 로직(`src/core/`의 파서·세션 큐·진행도)이 단위 테스트 1순위 대상이고, 이들은 `Node`를 상속하지 않아 씬 없이 검증된다. 씬 배선은 `SceneSmokeTest()`가 시그널을 직접 발신해 확인한다.
+## 문서 체계
 
-**헤드리스 실행이 멈추면(hang)** — 출력이 안 나오고 타임아웃되는 증상은 원인이 둘이다. 재시도 전에 먼저 출력에 `ERROR: ... Exception`이 있는지 본다.
-
-1. **씬을 옮기거나 크게 고친 직후 첫 실행** — Godot이 재스캔하며 멈출 수 있다. 프로세스를 정리하고 한 번 더 실행하면 보통 풀린다.
-   ```powershell
-   Get-Process | Where-Object { $_.ProcessName -like "*Godot*" } | Stop-Process -Force
-   ```
-2. **테스트가 옛 노드 타입으로 캐스트** — 씬의 노드 타입을 바꿨는데(`GridContainer`→`HFlowContainer` 등) 테스트의 `GetNode<옛타입>`이 안 바뀌면, `_Ready()`에서 캐스트 예외가 나고 잡히지 않아 `Quit()`에 못 도달해 영원히 대기한다. **재시도로 안 풀린다** — 출력에 `InvalidCastException`이 보이면 씬을 바꾼 뒤 안 고친 테스트의 `GetNode<T>` 타입부터 찾는다.
+- [docs/DESIGN.md](docs/DESIGN.md) — 제품과 데이터 규칙
+- [docs/ROADMAP.md](docs/ROADMAP.md) — 완료 항목과 다음 목표
+- [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md) — 현재 코드 구조와 데이터 흐름
+- [docs/CONVENTIONS.md](docs/CONVENTIONS.md) — 설계·GDScript 규칙
+- [docs/DEVLOG.md](docs/DEVLOG.md) — 변경 이력과 결정 이유
+- [docs/MIGRATION_GDSCRIPT.md](docs/MIGRATION_GDSCRIPT.md) — 완료된 C# → GDScript 전환 기록

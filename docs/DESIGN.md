@@ -53,8 +53,8 @@ MVP에서는 빠른 카드 작성과 복습 경험에 집중한다.
 
 | 항목 | 선택 |
 | --- | --- |
-| Engine | Godot 4 (.NET) |
-| Language | C# |
+| Engine | Godot 4.7.1 |
+| Language | GDScript |
 | Data | Markdown (.md) |
 | Progress | JSON |
 | Version Control | Git |
