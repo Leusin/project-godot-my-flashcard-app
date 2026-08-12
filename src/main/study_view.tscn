@@ -70,6 +70,13 @@ horizontal_alignment = 1
 vertical_alignment = 1
 text_overrun_behavior = 3
 
+[node name="EditStudyCardButton" type="Button" parent="Header"]
+custom_minimum_size = Vector2(88, 60)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "편집"
+tooltip_text = "현재 카드 편집"
+
 [node name="RemainingLabel" type="Label" parent="Header"]
 custom_minimum_size = Vector2(140, 60)
 layout_mode = 2

@@ -7,6 +7,11 @@ enum StudyScope {
 	WRONG,
 }
 
+enum CardEditorOrigin {
+	CARD_LIST,
+	STUDY,
+}
+
 const BASE_PAGE_MARGIN := 32.0
 const EMPTY_DECK_MESSAGE := "빈 덱입니다. '# 질문' 형식으로 카드를 추가하세요."
 const BROKEN_DECK_MESSAGE := "카드를 찾지 못했습니다. 각 질문을 '# 질문' 형식으로 작성하세요."
@@ -84,6 +89,11 @@ const CARD_LIST_ROW_SCENE := preload("res://src/main/card_list_row.tscn")
 @onready var card_editor_view: VBoxContainer = $Margin/Page/CardEditorView
 @onready var card_editor_title: Label = $Margin/Page/CardEditorView/Header/CardEditorTitle
 @onready var delete_card_button: Button = $Margin/Page/CardEditorView/Header/DeleteCardButton
+@onready var wrong_minus_button: Button = $Margin/Page/CardEditorView/CardEditorProperties/WrongCountControls/WrongMinusButton
+@onready var editor_wrong_count_label: Label = $Margin/Page/CardEditorView/CardEditorProperties/WrongCountControls/EditorWrongCountLabel
+@onready var wrong_plus_button: Button = $Margin/Page/CardEditorView/CardEditorProperties/WrongCountControls/WrongPlusButton
+@onready var reset_card_progress_button: Button = $Margin/Page/CardEditorView/CardEditorProperties/ResetCardProgressButton
+@onready var card_status_option: OptionButton = $Margin/Page/CardEditorView/CardEditorProperties/CardStatusOption
 @onready var card_question_input: LineEdit = $Margin/Page/CardEditorView/CardQuestionInput
 @onready var card_answer_input: TextEdit = $Margin/Page/CardEditorView/CardAnswerInput
 @onready var card_editor_error_label: Label = $Margin/Page/CardEditorView/CardEditorErrorLabel
@@ -91,9 +101,11 @@ const CARD_LIST_ROW_SCENE := preload("res://src/main/card_list_row.tscn")
 @onready var discard_card_changes_overlay: Control = $DiscardCardChangesOverlay
 @onready var study_flow: VBoxContainer = $Margin/Page/StudyFlow
 @onready var deck_label: Label = $Margin/Page/StudyFlow/Header/DeckLabel
+@onready var edit_study_card_button: Button = $Margin/Page/StudyFlow/Header/EditStudyCardButton
 @onready var remaining_label: Label = $Margin/Page/StudyFlow/Header/RemainingLabel
 @onready var study_progress_bar: ProgressBar = $Margin/Page/StudyFlow/StudyProgressBar
 @onready var study_gesture_surface: StudyGestureSurface = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame
+@onready var card_properties: HBoxContainer = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties
 @onready var card_status_label: Label = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties/StatusBadge/Margin/CardStatusLabel
 @onready var wrong_tally: WrongTallyView = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties/WrongTally
 @onready var question_scroll: ScrollContainer = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/QuestionScroll
@@ -125,6 +137,12 @@ var _editing_cards: Array[FlashCard] = []
 var _editing_card_index := -1
 var _editing_original_question := ""
 var _editing_original_answer := ""
+var _editing_original_wrong_count := 0
+var _editing_original_status: CardStatus.Value = CardStatus.Value.NEW
+var _editing_wrong_count := 0
+var _card_editor_origin: CardEditorOrigin = CardEditorOrigin.CARD_LIST
+var _study_edit_source_index := -1
+var _study_edit_return_show_answer := false
 var _study_input_locked := false
 var _study_input_lock_generation := 0
 
@@ -177,6 +195,10 @@ func _ready() -> void:
 		_request_close_card_editor
 	)
 	delete_card_button.pressed.connect(_on_delete_card_pressed)
+	wrong_minus_button.pressed.connect(_on_wrong_minus_pressed)
+	wrong_plus_button.pressed.connect(_on_wrong_plus_pressed)
+	reset_card_progress_button.pressed.connect(_on_reset_card_progress_pressed)
+	card_status_option.item_selected.connect(_on_card_status_selected)
 	$Margin/Page/CardEditorView/SaveCardButton.pressed.connect(_on_save_card_pressed)
 	$CardDeleteConfirmationOverlay/Panel/Margin/Content/Buttons/CancelCardDeleteButton.pressed.connect(
 		_on_card_delete_canceled
@@ -191,12 +213,14 @@ func _ready() -> void:
 		_on_discard_card_changes_confirmed
 	)
 	$Margin/Page/StudyFlow/Header/BackToReadyButton.pressed.connect(_return_to_study_ready)
+	edit_study_card_button.pressed.connect(_on_edit_study_card_pressed)
 	study_gesture_surface.swiped.connect(_on_study_swiped)
 	study_gesture_surface.tapped.connect(_on_card_tapped)
 	again_button.pressed.connect(_on_again_requested)
 	good_button.pressed.connect(_on_good_requested)
 	restart_button.pressed.connect(_on_restart_pressed)
 	_setup_study_ready_options()
+	_setup_card_editor_status_options()
 
 	if auto_start:
 		show_library()
@@ -258,6 +282,9 @@ func show_library() -> void:
 	_active_card_indices.clear()
 	_editing_deck_file = ""
 	_editing_cards.clear()
+	_card_editor_origin = CardEditorOrigin.CARD_LIST
+	_study_edit_source_index = -1
+	_study_edit_return_show_answer = false
 	_menu_deck_file = ""
 	deck_context_menu.hide()
 	rename_deck_overlay.hide()
@@ -385,6 +412,13 @@ func _setup_study_ready_options() -> void:
 	study_order_option.add_item("섞어서", DeckOrdering.StudyOrder.SHUFFLE)
 
 
+func _setup_card_editor_status_options() -> void:
+	card_status_option.clear()
+	card_status_option.add_item("NEW", CardStatus.Value.NEW)
+	card_status_option.add_item("LEARNING", CardStatus.Value.LEARNING)
+	card_status_option.add_item("MASTERED", CardStatus.Value.MASTERED)
+
+
 func _update_study_ready_summary() -> void:
 	var progress := DeckStorage.load_progress(_ready_deck_file)
 	var new_count := 0
@@ -448,6 +482,9 @@ func _open_card_list(deck_file: String) -> bool:
 
 	_editing_deck_file = deck_file
 	_editing_cards = _copy_cards(DeckParser.parse(DeckStorage.read_deck(deck_file)))
+	_card_editor_origin = CardEditorOrigin.CARD_LIST
+	_study_edit_source_index = -1
+	_study_edit_return_show_answer = false
 	card_list_deck_label.text = DeckNaming.display_name(deck_file)
 	card_list_status_label.hide()
 	var source := DeckStorage.read_deck(deck_file).replace("\r\n", "\n")
@@ -488,7 +525,75 @@ func _on_card_row_selected(index: int) -> void:
 
 
 func _on_add_card_pressed() -> void:
+	_card_editor_origin = CardEditorOrigin.CARD_LIST
 	_open_card_editor(-1)
+
+
+func _on_edit_study_card_pressed() -> void:
+	if (
+		_session == null
+		or _session.is_finished()
+		or not DeckStorage.deck_exists(_deck_file)
+	):
+		return
+
+	var current_card := _session.current()
+	var deck_cards := DeckParser.parse(DeckStorage.read_deck(_deck_file))
+	var deck_index := _current_study_deck_index(deck_cards, current_card)
+	if deck_index < 0:
+		return
+
+	study_gesture_surface.cancel_drag()
+	_reset_study_input_lock()
+	_save_active_study_resume()
+	_editing_deck_file = _deck_file
+	_editing_cards = _copy_cards(deck_cards)
+	_card_editor_origin = CardEditorOrigin.STUDY
+	_study_edit_source_index = _source_cards.find(current_card)
+	_study_edit_return_show_answer = answer_scroll.visible
+	study_flow.hide()
+	card_list_view.hide()
+	_open_card_editor(deck_index)
+
+
+func _current_study_deck_index(
+	deck_cards: Array[FlashCard],
+	current_card: FlashCard
+) -> int:
+	if (
+		not _active_card_indices.is_empty()
+		and _session.position() < _active_card_indices.size()
+	):
+		var active_index := _active_card_indices[_session.position()]
+		if active_index >= 0 and active_index < deck_cards.size():
+			var indexed_card := deck_cards[active_index]
+			if (
+				indexed_card.question == current_card.question
+				and indexed_card.answer == current_card.answer
+			):
+				return active_index
+
+	var source_index := _source_cards.find(current_card)
+	if (
+		_active_card_indices.is_empty()
+		and source_index >= 0
+		and source_index < deck_cards.size()
+	):
+		var source_card := deck_cards[source_index]
+		if (
+			source_card.question == current_card.question
+			and source_card.answer == current_card.answer
+		):
+			return source_index
+
+	for index in deck_cards.size():
+		var card := deck_cards[index]
+		if (
+			card.question == current_card.question
+			and card.answer == current_card.answer
+		):
+			return index
+	return -1
 
 
 func _open_card_editor(index: int) -> void:
@@ -496,17 +601,29 @@ func _open_card_editor(index: int) -> void:
 	card_editor_error_label.hide()
 	card_delete_confirmation_overlay.hide()
 	discard_card_changes_overlay.hide()
+	var progress := DeckStorage.load_progress(_editing_deck_file)
 	if index < 0:
 		_editing_original_question = ""
 		_editing_original_answer = ""
+		_editing_original_wrong_count = 0
+		_editing_original_status = CardStatus.Value.NEW
 		card_editor_title.text = "카드 추가"
 		delete_card_button.hide()
 	else:
 		var card := _editing_cards[index]
 		_editing_original_question = card.question
 		_editing_original_answer = card.answer
-		card_editor_title.text = "카드 편집"
-		delete_card_button.show()
+		_editing_original_wrong_count = progress.get_wrong_count(card.question)
+		_editing_original_status = progress.get_status(card.question)
+		card_editor_title.text = (
+			"학습 중 카드 편집"
+			if _card_editor_origin == CardEditorOrigin.STUDY
+			else "카드 편집"
+		)
+		delete_card_button.visible = _card_editor_origin == CardEditorOrigin.CARD_LIST
+	_editing_wrong_count = _editing_original_wrong_count
+	_select_card_editor_status(_editing_original_status)
+	_update_card_editor_learning_fields()
 	card_question_input.text = _editing_original_question
 	card_answer_input.text = _editing_original_answer
 	card_list_view.hide()
@@ -525,6 +642,48 @@ func _card_editor_has_changes() -> bool:
 	return (
 		card_question_input.text != _editing_original_question
 		or card_answer_input.text != _editing_original_answer
+		or _editing_wrong_count != _editing_original_wrong_count
+		or _card_editor_status() != _editing_original_status
+	)
+
+
+func _on_wrong_minus_pressed() -> void:
+	_editing_wrong_count = maxi(_editing_wrong_count - 1, 0)
+	_update_card_editor_learning_fields()
+
+
+func _on_wrong_plus_pressed() -> void:
+	_editing_wrong_count += 1
+	_update_card_editor_learning_fields()
+
+
+func _on_reset_card_progress_pressed() -> void:
+	_editing_wrong_count = 0
+	_select_card_editor_status(CardStatus.Value.NEW)
+	_update_card_editor_learning_fields()
+
+
+func _on_card_status_selected(_index: int) -> void:
+	_update_card_editor_learning_fields()
+
+
+func _select_card_editor_status(status: CardStatus.Value) -> void:
+	var item_index := card_status_option.get_item_index(status)
+	if item_index >= 0:
+		card_status_option.select(item_index)
+
+
+func _card_editor_status() -> CardStatus.Value:
+	return card_status_option.get_selected_id()
+
+
+func _update_card_editor_learning_fields() -> void:
+	editor_wrong_count_label.text = str(_editing_wrong_count)
+	editor_wrong_count_label.tooltip_text = "오답 %d회" % _editing_wrong_count
+	wrong_minus_button.disabled = _editing_wrong_count == 0
+	reset_card_progress_button.disabled = (
+		_editing_wrong_count == 0
+		and _card_editor_status() == CardStatus.Value.NEW
 	)
 
 
@@ -538,11 +697,24 @@ func _on_discard_card_changes_confirmed() -> void:
 
 
 func _close_card_editor_without_save() -> void:
+	var return_to_study := _card_editor_origin == CardEditorOrigin.STUDY
+	var restore_answer := _study_edit_return_show_answer
 	card_delete_confirmation_overlay.hide()
 	discard_card_changes_overlay.hide()
 	card_editor_view.hide()
-	card_list_view.show()
+	if return_to_study:
+		card_list_view.hide()
+		study_flow.show()
+		if _session != null and not _session.is_finished():
+			_show_current()
+			if restore_answer:
+				_set_answer_visible(true)
+	else:
+		card_list_view.show()
 	_editing_card_index = -1
+	_card_editor_origin = CardEditorOrigin.CARD_LIST
+	_study_edit_source_index = -1
+	_study_edit_return_show_answer = false
 
 
 func _on_save_card_pressed() -> void:
@@ -561,7 +733,8 @@ func _on_save_card_pressed() -> void:
 	else:
 		updated[_editing_card_index] = FlashCard.new(question, answer)
 
-	if not DeckStorage.write_deck(_editing_deck_file, DeckWriter.to_markdown(updated)):
+	var updated_markdown := DeckWriter.to_markdown(updated)
+	if not DeckStorage.write_deck(_editing_deck_file, updated_markdown):
 		_show_card_editor_error(CARD_SAVE_FAILED_MESSAGE)
 		return
 
@@ -576,7 +749,28 @@ func _on_save_card_pressed() -> void:
 				break
 		if not old_question_still_exists:
 			progress.rename(_editing_original_question, question)
+	progress.set_wrong_count(question, _editing_wrong_count)
+	progress.set_status(question, _card_editor_status())
 	var progress_saved := DeckStorage.save_progress(_editing_deck_file, progress)
+	if _card_editor_origin == CardEditorOrigin.STUDY:
+		var updated_card := updated[_editing_card_index]
+		_progress = progress
+		_session.replace_current(updated_card)
+		if (
+			_study_edit_source_index >= 0
+			and _study_edit_source_index < _source_cards.size()
+		):
+			_source_cards[_study_edit_source_index] = updated_card
+		_ready_deck_file = _editing_deck_file
+		_ready_cards = _copy_cards(updated)
+		_ready_deck_hash = updated_markdown.hash()
+		_save_active_study_resume()
+		_editing_cards = updated
+		if not progress_saved:
+			push_warning("Card progress save failed during study edit")
+		_close_card_editor_without_save()
+		return
+
 	DeckStorage.delete_study_resume(_editing_deck_file)
 	_editing_cards = updated
 	_close_card_editor_without_save()
@@ -1155,6 +1349,7 @@ func _show_current() -> void:
 		return
 
 	var card := _session.current()
+	edit_study_card_button.visible = DeckStorage.deck_exists(_deck_file)
 	study_container.visible = true
 	done_container.visible = false
 	card_status_label.text = card_status_text(_progress.get_status(card.question))
@@ -1182,6 +1377,7 @@ static func card_status_text(status: CardStatus.Value) -> String:
 
 
 func _show_message(message: String, can_restart: bool) -> void:
+	edit_study_card_button.hide()
 	study_container.visible = false
 	done_container.visible = true
 	done_label.text = message
@@ -1201,6 +1397,7 @@ func _on_card_tapped() -> void:
 
 func _set_answer_visible(visible: bool) -> void:
 	answer_scroll.visible = visible
+	card_properties.visible = visible
 	if visible:
 		question_scroll.custom_minimum_size.y = 150.0
 		question_scroll.size_flags_vertical = Control.SIZE_FILL
