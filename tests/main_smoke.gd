@@ -122,18 +122,6 @@ func run_tests() -> void:
 		"Main: 카드 뭉치 타일에 카드 수 표시"
 	)
 	check(
-		_view(deck_buttons[0], "ReorderHandle") != null
-		and _view(deck_buttons[-1], "ReorderHandle") == null,
-		"Main Deck Order: 실제 덱에만 전용 reorder handle 표시"
-	)
-	check(
-		MainApp.ordered_deck_files(
-			["A.md", "B.md", "C.md"],
-			["b.MD", "missing.md", "A.md"]
-		) == ["B.md", "A.md", "C.md"],
-		"Main Deck Order: 저장 순서를 우선하고 새 덱은 뒤에 추가"
-	)
-	check(
 		_view(deck_buttons[0], "BackCardFar") != null
 		and _view(deck_buttons[0], "BackCardNear") != null,
 		"Main: 덱 타일을 세 장의 카드 뭉치로 표시"
@@ -1119,13 +1107,6 @@ func run_tests() -> void:
 		"Main Card List: 틸리·상태 딱지를 빼고 질문·답만 강조"
 	)
 	check(
-		_view(app, "ListMargin").get_theme_constant("margin_left") == 16
-		and _view(app, "ListMargin").get_theme_constant("margin_top") == 18
-		and _view(app, "ListMargin").get_theme_constant("margin_right") == 16
-		and _view(first_card_row, "ReorderHandle") != null,
-		"Main Card List: 상단·좌우 여백과 독립 reorder handle 확보"
-	)
-	check(
 		first_card_row.get_class() == "PanelContainer"
 		and first_card_row.mouse_filter == Control.MOUSE_FILTER_PASS
 		and (_view(app, "CardListScroll") as ScrollContainer).vertical_scroll_mode
@@ -1240,15 +1221,6 @@ func run_tests() -> void:
 		and card_editor_style.bg_color == Color.WHITE
 		and card_editor_style.border_color == Color.BLACK,
 		"Main Card Edit: 질문·답·학습 정보를 카드 프레임 안에 배치"
-	)
-	check(
-		_view(app, "CardEditorProperties") is VBoxContainer
-		and _view(app, "StatusRow") is HBoxContainer
-		and _view(app, "ProgressRow") is HBoxContainer
-		and _view(app, "CardQuestionInput") is TextEdit
-		and _view(app, "CardQuestionInput").custom_minimum_size.y == 140.0
-		and _view(app, "CardAnswerInput").custom_minimum_size.y == 260.0,
-		"Main Card Edit: 상태·오답 행을 분리하고 질문도 여러 줄 편집"
 	)
 	_view(app, "WrongPlusButton").pressed.emit()
 	_view(app, "CardStatusOption").select(
@@ -1491,63 +1463,6 @@ func run_tests() -> void:
 		created_tile != null
 		and _view(created_tile, "DeckCountLabel").text == "1장",
 		"Main Create: 덱 목록에 새 카드 뭉치 즉시 표시"
-	)
-
-	var reorder_test_tile := _find_deck_tile(app, "__gd_main")
-	_view(reorder_test_tile, "DeckButton").pressed.emit()
-	_view(app, "ManageCardsButton").pressed.emit()
-	var reorder_first_row := _view(app, "CardRows").get_child(0) as CardListRow
-	var reorder_second_row := _view(app, "CardRows").get_child(1) as CardListRow
-	var reorder_resume := StudyResume.new()
-	reorder_resume.deck_hash = DeckStorage.read_deck(TEST_DECK).hash()
-	reorder_resume.remaining_indices = [0, 1]
-	DeckStorage.save_study_resume(TEST_DECK, reorder_resume)
-	_view(reorder_first_row, "ReorderHandle").emit_signal("drag_started")
-	_view(reorder_first_row, "ReorderHandle").emit_signal(
-		"drag_moved",
-		reorder_second_row.get_global_rect().get_center()
-	)
-	_view(reorder_first_row, "ReorderHandle").emit_signal("drag_finished")
-	var reordered_cards := DeckParser.parse(DeckStorage.read_deck(TEST_DECK))
-	check(
-		reordered_cards[0].question == "B"
-		and reordered_cards[1].question == "A",
-		"Main Card Order: handle drag 순서를 Markdown에 저장"
-	)
-	check(
-		_view(app, "CardListStatusLabel").text == "카드 순서 저장 완료",
-		"Main Card Order: 순서 저장 완료 안내"
-	)
-	check(
-		DeckStorage.load_study_resume(TEST_DECK) == null,
-		"Main Card Order: 순서가 바뀌면 진행 중 세션 폐기"
-	)
-	_view(app, "BackFromCardListButton").pressed.emit()
-	_view(app, "BackToLibraryButton").pressed.emit()
-
-	created_tile = _find_deck_tile(app, "__gd_main_created")
-	reorder_test_tile = _find_deck_tile(app, "__gd_main")
-	_view(created_tile, "ReorderHandle").emit_signal("drag_started")
-	_view(created_tile, "ReorderHandle").emit_signal(
-		"drag_moved",
-		reorder_test_tile.get_global_rect().get_center()
-	)
-	_view(created_tile, "ReorderHandle").emit_signal("drag_finished")
-	var saved_deck_order := DeckStorage.load_settings().deck_order
-	check(
-		saved_deck_order.find(CREATED_DECK) < saved_deck_order.find(TEST_DECK)
-		and _view(app, "LibraryStatusLabel").text == "덱 순서 저장 완료",
-		"Main Deck Order: handle drag 순서를 설정에 저장"
-	)
-	app.show_library()
-	var visible_deck_order: Array[String] = []
-	for child in _view(app, "DeckList").get_children():
-		if child is DeckTileView:
-			visible_deck_order.append((child as DeckTileView).deck_file())
-	check(
-		visible_deck_order == DeckStorage.load_settings().deck_order
-		and _view(app, "DeckList").get_children()[-1] is AddDeckTileView,
-		"Main Deck Order: 다시 열어도 저장 순서를 유지하고 추가 타일은 마지막"
 	)
 
 	app.queue_free()

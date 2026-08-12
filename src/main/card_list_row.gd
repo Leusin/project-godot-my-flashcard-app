@@ -2,9 +2,6 @@ class_name CardListRow
 extends PanelContainer
 
 signal selected(index: int)
-signal reorder_started
-signal reorder_moved(viewport_position: Vector2)
-signal reorder_finished
 
 const FALLBACK_DRAG_THRESHOLD := 12.0
 
@@ -18,7 +15,6 @@ var _scroll_container: ScrollContainer
 
 @onready var question_label: Label = $Margin/Content/QuestionLabel
 @onready var answer_label: Label = $Margin/Content/AnswerLabel
-@onready var reorder_handle: Node = %ReorderHandle
 
 
 func _ready() -> void:
@@ -26,9 +22,6 @@ func _ready() -> void:
 	if _scroll_container != null:
 		_scroll_container.scroll_started.connect(_on_scroll_started)
 		_scroll_container.scroll_ended.connect(_on_scroll_ended)
-	reorder_handle.connect("drag_started", _on_reorder_started)
-	reorder_handle.connect("drag_moved", _on_reorder_moved)
-	reorder_handle.connect("drag_finished", _on_reorder_finished)
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -42,11 +35,6 @@ func _gui_input(event: InputEvent) -> void:
 
 func activate() -> void:
 	selected.emit(card_index)
-
-
-func set_reordering(active: bool) -> void:
-	z_index = 5 if active else 0
-	self_modulate = Color(0.9, 0.9, 0.9, 1.0) if active else Color.WHITE
 
 
 func setup(index: int, card: FlashCard) -> void:
@@ -113,17 +101,3 @@ func _on_scroll_started() -> void:
 
 func _on_scroll_ended() -> void:
 	_scrolling = false
-
-
-func _on_reorder_started() -> void:
-	set_reordering(true)
-	reorder_started.emit()
-
-
-func _on_reorder_moved(viewport_position: Vector2) -> void:
-	reorder_moved.emit(viewport_position)
-
-
-func _on_reorder_finished() -> void:
-	set_reordering(false)
-	reorder_finished.emit()

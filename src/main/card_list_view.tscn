@@ -45,15 +45,7 @@ size_flags_vertical = 3
 horizontal_scroll_mode = 0
 scroll_deadzone = 12
 
-[node name="ListMargin" type="MarginContainer" parent="CardListScroll"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 18
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 24
-
-[node name="CardRows" type="VBoxContainer" parent="CardListScroll/ListMargin"]
+[node name="CardRows" type="VBoxContainer" parent="CardListScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 12

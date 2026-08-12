@@ -48,8 +48,6 @@ const CREATE_DECK_DUPLICATE_MESSAGE := "같은 이름의 덱이 이미 있습니
 const CARD_QUESTION_EMPTY_MESSAGE := "질문을 입력하세요."
 const CARD_ANSWER_HEADING_MESSAGE := "답의 줄 시작에는 '# '를 사용할 수 없습니다."
 const CARD_SAVE_FAILED_MESSAGE := "카드를 저장하지 못했습니다. 저장 공간을 확인하세요."
-const CARD_ORDER_SAVE_FAILED_MESSAGE := "카드 순서를 저장하지 못했습니다. 다시 시도하세요."
-const DECK_ORDER_SAVE_FAILED_MESSAGE := "덱 순서를 저장하지 못했습니다. 다시 시도하세요."
 const LAST_CARD_DELETE_MESSAGE := "덱에는 카드가 최소 1장 필요합니다."
 const STUDY_INPUT_LOCK_SECONDS := 0.22
 const DECK_TILE_SCENE := preload("res://src/main/deck_tile.tscn")
@@ -124,7 +122,7 @@ const STUDY_RESULT_ROW_SCENE := preload("res://src/main/study_result_row.tscn")
 @onready var card_list_view: VBoxContainer = $Margin/Page/CardListView
 @onready var card_list_deck_label: Label = $Margin/Page/CardListView/Header/CardListDeckLabel
 @onready var card_list_status_label: Label = $Margin/Page/CardListView/CardListStatusLabel
-@onready var card_rows: VBoxContainer = $Margin/Page/CardListView/CardListScroll/ListMargin/CardRows
+@onready var card_rows: VBoxContainer = $Margin/Page/CardListView/CardListScroll/CardRows
 @onready var card_detail_view: VBoxContainer = $Margin/Page/CardDetailView
 @onready var card_detail_surface: PanelContainer = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame
 @onready var card_detail_deck_label: Label = $Margin/Page/CardDetailView/Header/CardDetailDeckLabel
@@ -139,12 +137,12 @@ const STUDY_RESULT_ROW_SCENE := preload("res://src/main/study_result_row.tscn")
 @onready var card_editor_view: VBoxContainer = $Margin/Page/CardEditorView
 @onready var card_editor_title: Label = $Margin/Page/CardEditorView/Header/CardEditorTitle
 @onready var delete_card_button: Button = $Margin/Page/CardEditorView/Header/DeleteCardButton
-@onready var wrong_minus_button: Button = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/ProgressRow/WrongCountControls/WrongMinusButton
-@onready var editor_wrong_count_label: Label = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/ProgressRow/WrongCountControls/EditorWrongCountLabel
-@onready var wrong_plus_button: Button = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/ProgressRow/WrongCountControls/WrongPlusButton
-@onready var reset_card_progress_button: Button = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/ProgressRow/ResetCardProgressButton
-@onready var card_status_option: OptionButton = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/StatusRow/CardStatusOption
-@onready var card_question_input: TextEdit = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardQuestionInput
+@onready var wrong_minus_button: Button = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls/WrongMinusButton
+@onready var editor_wrong_count_label: Label = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls/EditorWrongCountLabel
+@onready var wrong_plus_button: Button = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls/WrongPlusButton
+@onready var reset_card_progress_button: Button = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/ResetCardProgressButton
+@onready var card_status_option: OptionButton = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/CardStatusOption
+@onready var card_question_input: LineEdit = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardQuestionInput
 @onready var card_answer_input: TextEdit = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardAnswerInput
 @onready var card_editor_error_label: Label = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorErrorLabel
 @onready var card_delete_confirmation_overlay: Control = $CardDeleteConfirmationOverlay
@@ -204,8 +202,6 @@ var _study_edit_source_index := -1
 var _study_edit_return_show_answer := false
 var _study_input_locked := false
 var _study_input_lock_generation := 0
-var _dragged_card_row: CardListRow
-var _dragged_deck_tile: DeckTileView
 
 
 func _ready() -> void:
@@ -517,14 +513,7 @@ func _refresh_deck_list() -> void:
 	for child in deck_list.get_children():
 		child.free()
 
-	var settings := DeckStorage.load_settings()
-	var deck_files := ordered_deck_files(
-		DeckStorage.list_deck_files(),
-		settings.deck_order
-	)
-	if settings.deck_order != deck_files:
-		settings.deck_order = deck_files
-		_save_settings_or_warn(settings)
+	var deck_files := DeckStorage.list_deck_files()
 	empty_decks_label.visible = deck_files.is_empty()
 
 	for deck_file in deck_files:
@@ -535,108 +524,16 @@ func _refresh_deck_list() -> void:
 		deck_tile.setup(deck_file, DeckNaming.display_name(deck_file), card_count)
 		deck_tile.selected.connect(_on_deck_selected)
 		deck_tile.menu_requested.connect(_on_deck_menu_requested)
-		deck_tile.reorder_started.connect(_on_deck_reorder_started.bind(deck_tile))
-		deck_tile.reorder_moved.connect(_on_deck_reorder_moved.bind(deck_tile))
-		deck_tile.reorder_finished.connect(_on_deck_reorder_finished.bind(deck_tile))
 
 	var add_deck_tile := ADD_DECK_TILE_SCENE.instantiate() as AddDeckTileView
 	deck_list.add_child(add_deck_tile)
 	add_deck_tile.pressed.connect(_on_add_deck_requested)
 
 
-static func ordered_deck_files(
-	available: Array[String],
-	preferred: Array[String]
-) -> Array[String]:
-	var available_by_key := {}
-	for deck_file in available:
-		available_by_key[deck_file.to_lower()] = deck_file
-
-	var ordered: Array[String] = []
-	var used := {}
-	for saved_file in preferred:
-		var key := saved_file.to_lower()
-		if not available_by_key.has(key) or used.has(key):
-			continue
-		ordered.append(available_by_key[key])
-		used[key] = true
-
-	for deck_file in available:
-		var key := deck_file.to_lower()
-		if used.has(key):
-			continue
-		ordered.append(deck_file)
-		used[key] = true
-	return ordered
-
-
 func _on_deck_selected(deck_file: String) -> void:
 	add_deck_menu.hide()
 	deck_context_menu.hide()
 	show_study_ready(deck_file)
-
-
-func _on_deck_reorder_started(tile: DeckTileView) -> void:
-	if not library_container.visible or tile.get_parent() != deck_list:
-		return
-	_dragged_deck_tile = tile
-	add_deck_menu.hide()
-	deck_context_menu.hide()
-	library_status_label.hide()
-
-
-func _on_deck_reorder_moved(
-	viewport_position: Vector2,
-	tile: DeckTileView
-) -> void:
-	if tile != _dragged_deck_tile or tile.get_parent() != deck_list:
-		return
-	var target_index := _nearest_deck_tile_index(viewport_position)
-	if target_index >= 0 and target_index != tile.get_index():
-		deck_list.move_child(tile, target_index)
-
-
-func _nearest_deck_tile_index(viewport_position: Vector2) -> int:
-	var nearest_index := -1
-	var nearest_distance := INF
-	for child in deck_list.get_children():
-		if child is not DeckTileView:
-			continue
-		var tile := child as DeckTileView
-		if tile == _dragged_deck_tile:
-			continue
-		var distance := viewport_position.distance_squared_to(
-			tile.get_global_rect().get_center()
-		)
-		if distance < nearest_distance:
-			nearest_distance = distance
-			nearest_index = tile.get_index()
-	return nearest_index
-
-
-func _on_deck_reorder_finished(tile: DeckTileView) -> void:
-	if tile != _dragged_deck_tile:
-		return
-	_dragged_deck_tile = null
-	_persist_deck_tile_order()
-
-
-func _persist_deck_tile_order() -> bool:
-	var ordered: Array[String] = []
-	for child in deck_list.get_children():
-		if child is DeckTileView:
-			ordered.append((child as DeckTileView).deck_file())
-
-	var settings := DeckStorage.load_settings()
-	if settings.deck_order == ordered:
-		return true
-	settings.deck_order = ordered
-	if not DeckStorage.save_settings(settings):
-		_show_library_status(DECK_ORDER_SAVE_FAILED_MESSAGE)
-		call_deferred("_refresh_deck_list")
-		return false
-	_show_library_status("덱 순서 저장 완료")
-	return true
 
 
 func _setup_study_ready_options() -> void:
@@ -756,79 +653,6 @@ func _refresh_card_rows() -> void:
 		var card := _editing_cards[index]
 		row.setup(index, card)
 		row.selected.connect(_on_card_row_selected)
-		row.reorder_started.connect(_on_card_reorder_started.bind(row))
-		row.reorder_moved.connect(_on_card_reorder_moved.bind(row))
-		row.reorder_finished.connect(_on_card_reorder_finished.bind(row))
-
-
-func _on_card_reorder_started(row: CardListRow) -> void:
-	if not card_list_view.visible or row.get_parent() != card_rows:
-		return
-	_dragged_card_row = row
-	card_list_status_label.hide()
-
-
-func _on_card_reorder_moved(
-	viewport_position: Vector2,
-	row: CardListRow
-) -> void:
-	if row != _dragged_card_row or row.get_parent() != card_rows:
-		return
-	var target_index := _nearest_card_row_index(viewport_position)
-	if target_index >= 0 and target_index != row.get_index():
-		card_rows.move_child(row, target_index)
-
-
-func _nearest_card_row_index(viewport_position: Vector2) -> int:
-	var nearest_index := -1
-	var nearest_distance := INF
-	for child in card_rows.get_children():
-		if child is not CardListRow:
-			continue
-		var row := child as CardListRow
-		if row == _dragged_card_row:
-			continue
-		var distance := absf(
-			viewport_position.y - row.get_global_rect().get_center().y
-		)
-		if distance < nearest_distance:
-			nearest_distance = distance
-			nearest_index = row.get_index()
-	return nearest_index
-
-
-func _on_card_reorder_finished(row: CardListRow) -> void:
-	if row != _dragged_card_row:
-		return
-	_dragged_card_row = null
-	_persist_card_row_order()
-
-
-func _persist_card_row_order() -> bool:
-	if card_rows.get_child_count() != _editing_cards.size():
-		return false
-	var reordered: Array[FlashCard] = []
-	var changed := false
-	for index in card_rows.get_child_count():
-		var row := card_rows.get_child(index) as CardListRow
-		if row == null or row.card_index < 0 or row.card_index >= _editing_cards.size():
-			return false
-		reordered.append(_editing_cards[row.card_index])
-		changed = changed or row.card_index != index
-	if not changed:
-		return true
-
-	if not DeckStorage.write_deck(_editing_deck_file, DeckWriter.to_markdown(reordered)):
-		_refresh_card_rows()
-		_show_card_list_status(CARD_ORDER_SAVE_FAILED_MESSAGE)
-		return false
-
-	_editing_cards = reordered
-	for index in card_rows.get_child_count():
-		(card_rows.get_child(index) as CardListRow).card_index = index
-	DeckStorage.delete_study_resume(_editing_deck_file)
-	_show_card_list_status("카드 순서 저장 완료")
-	return true
 
 
 func _on_card_row_selected(index: int) -> void:
@@ -1900,25 +1724,12 @@ func rename_deck_from_library(deck_file: String, new_display_name: String) -> bo
 		_show_rename_error(RENAME_FAILED_MESSAGE)
 		return false
 
-	_replace_deck_in_saved_order(deck_file, new_file)
 	_replace_last_study_deck(deck_file, new_file)
 	rename_deck_overlay.hide()
 	_menu_deck_file = ""
 	_refresh_deck_list()
 	_show_library_status("'%s' → '%s' 이름 변경 완료" % [old_display_name, trimmed_name])
 	return true
-
-
-func _replace_deck_in_saved_order(old_file: String, new_file: String) -> void:
-	var settings := DeckStorage.load_settings()
-	var changed := false
-	for index in settings.deck_order.size():
-		if settings.deck_order[index].to_lower() != old_file.to_lower():
-			continue
-		settings.deck_order[index] = new_file
-		changed = true
-	if changed:
-		_save_settings_or_warn(settings)
 
 
 func _show_rename_error(message: String) -> void:
