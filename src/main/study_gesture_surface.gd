@@ -50,6 +50,7 @@ const HINT_DRAG_DISTANCE_MULTIPLIER := 3.6
 const HINT_PULL_EXPONENT := 1.6
 const HINT_REVEAL_START := 0.12
 const HINT_COMPLETE_DURATION := 0.4
+const CARD_ASPECT_RATIO := 2.0 / 3.0
 
 @onready var again_button: Button = $"../../Actions/AgainButton"
 @onready var good_button: Button = $"../../Actions/GoodButton"
@@ -83,7 +84,8 @@ var _hint_motion_tween: Tween
 
 func _ready() -> void:
 	visibility_changed.connect(_on_visibility_changed)
-	(get_parent() as Control).resized.connect(_on_hint_stage_resized)
+	(get_parent() as Control).resized.connect(_on_stage_resized)
+	_fit_to_stage()
 	_set_active_hint(0)
 
 
@@ -127,6 +129,19 @@ static func action_vector(action: int) -> Vector2:
 			return Vector2.UP
 		_:
 			return Vector2.ZERO
+
+
+static func fitted_card_rect(
+	available_size: Vector2,
+	aspect_ratio: float = CARD_ASPECT_RATIO
+) -> Rect2:
+	if available_size.x <= 0.0 or available_size.y <= 0.0 or aspect_ratio <= 0.0:
+		return Rect2()
+
+	var card_size := Vector2(available_size.x, available_size.x / aspect_ratio)
+	if card_size.y > available_size.y:
+		card_size = Vector2(available_size.y * aspect_ratio, available_size.y)
+	return Rect2((available_size - card_size) * 0.5, card_size)
 
 
 func commit(direction: int) -> void:
@@ -590,9 +605,19 @@ func _hint_entry_offset(
 			return Vector2.ZERO
 
 
-func _on_hint_stage_resized() -> void:
+func _on_stage_resized() -> void:
+	_fit_to_stage()
 	if _active_hint_action == 0:
 		_hint_rest_positions.clear()
+
+
+func _fit_to_stage() -> void:
+	var stage := get_parent() as Control
+	var card_rect := fitted_card_rect(stage.size)
+	position = card_rect.position
+	size = card_rect.size
+	_rest_position = position
+	pivot_offset = size * 0.5
 
 
 func _on_hint_motion_finished() -> void:

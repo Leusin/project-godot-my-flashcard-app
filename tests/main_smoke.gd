@@ -39,6 +39,13 @@ func run_tests() -> void:
 		== Vector4.ZERO,
 		"MVP Safe Area: 창 크기가 없으면 추가 여백 없음"
 	)
+	var tall_card_rect := StudyGestureSurface.fitted_card_rect(Vector2(600, 1200))
+	var wide_card_rect := StudyGestureSurface.fitted_card_rect(Vector2(900, 900))
+	check(
+		tall_card_rect == Rect2(0, 150, 600, 900)
+		and wide_card_rect == Rect2(150, 0, 600, 900),
+		"Main Study: 화면 비율과 무관하게 카드를 2:3으로 맞춰 중앙 배치"
+	)
 
 	var app := MAIN_SCENE.instantiate()
 	app.auto_start = false
@@ -65,7 +72,9 @@ func run_tests() -> void:
 		"Main: 덱 목록을 왼쪽부터 정렬"
 	)
 	check(
-		_view(deck_buttons[-1], "AddDeckLabel").text == "덱 추가 / 가져오기",
+		_view(deck_buttons[-1], "AddDeckLabel").text == "덱 추가"
+		and _view(deck_buttons[-1], "AddDeckHintLabel").text
+		== "만들기 또는 가져오기",
 		"Main Import: 덱 목록의 마지막에 추가·가져오기 표시"
 	)
 	check(
@@ -80,6 +89,15 @@ func run_tests() -> void:
 		_view(deck_buttons[0], "BackCardFar") != null
 		and _view(deck_buttons[0], "BackCardNear") != null,
 		"Main: 덱 타일을 세 장의 카드 뭉치로 표시"
+	)
+	check(
+		_view(deck_buttons[-1], "BackCardFar") != null
+		and _view(deck_buttons[-1], "BackCardNear") != null
+		and _view(deck_buttons[-1], "FrontCard") != null
+		and _view(deck_buttons[-1], "AddDeckButton").text == "+"
+		and _view(deck_buttons[-1], "AddDeckButton").custom_minimum_size
+		== Vector2(64, 64),
+		"Main Create: 추가 타일도 카드 뭉치와 우상단 + 버튼으로 표시"
 	)
 	check(
 		_view(deck_buttons[0], "DeckMenuButton").custom_minimum_size == Vector2(64, 64),
@@ -114,10 +132,9 @@ func run_tests() -> void:
 		add_deck_button
 	)
 	check(
-		add_deck_menu_panel.get_rect().get_center().is_equal_approx(
-			add_anchor_rect.get_center()
-		),
-		"Main Create: 추가 선택 context list를 타일 중앙에 정렬"
+		is_equal_approx(add_deck_menu_panel.get_rect().end.x, add_anchor_rect.end.x)
+		and add_deck_menu_panel.position.y <= add_anchor_rect.end.y,
+		"Main Create: 추가 선택 context list를 + 버튼에 맞춰 표시"
 	)
 	check(app.handle_back_request(), "Main Create: 추가 선택창에서 뒤로가기 요청 소비")
 	check(not add_deck_menu.visible, "Main Create: 뒤로가기로 추가 선택창 닫기")
@@ -170,6 +187,41 @@ func run_tests() -> void:
 		and _view(app, "ExportDeckButton").custom_minimum_size.y == 48.0
 		and _view(app, "DeleteDeckButton").custom_minimum_size.y == 48.0,
 		"Main Deck Actions: 네 가지 작업을 담은 200px context list 표시"
+	)
+	var dialog_panels: Array[PanelContainer] = [
+		_view(app, "CreateDeckPanel") as PanelContainer,
+		_view(app, "RenameDeckPanel") as PanelContainer,
+		_view(app, "DeleteConfirmationPanel") as PanelContainer,
+		_view(app, "ExitConfirmationPanel") as PanelContainer,
+		app.get_node("CardDeleteConfirmationOverlay/Panel") as PanelContainer,
+		app.get_node("DiscardCardChangesOverlay/Panel") as PanelContainer,
+	]
+	var dialogs_unified := true
+	for dialog_panel in dialog_panels:
+		var dialog_style := dialog_panel.get_theme_stylebox("panel") as StyleBoxFlat
+		dialogs_unified = (
+			dialogs_unified
+			and dialog_style != null
+			and dialog_style.bg_color == Color.WHITE
+			and dialog_style.border_width_left == 2
+			and dialog_style.border_color == Color.BLACK
+			and dialog_style.corner_radius_top_left == 18
+			and dialog_style.shadow_size == 8
+		)
+	var modal_shades: Array[ColorRect] = [
+		_view(app, "CreateDeckOverlay") as ColorRect,
+		_view(app, "RenameDeckOverlay") as ColorRect,
+		_view(app, "DeleteConfirmationOverlay") as ColorRect,
+		_view(app, "ExitConfirmationOverlay") as ColorRect,
+		app.get_node("CardDeleteConfirmationOverlay/Shade") as ColorRect,
+		app.get_node("DiscardCardChangesOverlay/Shade") as ColorRect,
+	]
+	var shades_unified := true
+	for modal_shade in modal_shades:
+		shades_unified = shades_unified and modal_shade.color == Color(0, 0, 0, 0.18)
+	check(
+		dialogs_unified and shades_unified,
+		"Main UI: 모든 다이얼로그의 표면과 배경 dim 규격 통일"
 	)
 	_view(app, "RenameDeckButton").pressed.emit()
 	var rename_overlay := _view(app, "RenameDeckOverlay") as Control
@@ -324,8 +376,8 @@ func run_tests() -> void:
 		"MVP Android Back: 종료 확인창은 흰 배경과 검은 테두리"
 	)
 	check(
-		_view(app, "ConfirmExitButton").custom_minimum_size.y == 96.0
-		and _view(app, "CancelExitButton").custom_minimum_size.y == 96.0,
+		_view(app, "ConfirmExitButton").custom_minimum_size.y == 88.0
+		and _view(app, "CancelExitButton").custom_minimum_size.y == 88.0,
 		"MVP Android Back: 종료 확인 버튼을 모바일 크기로 표시"
 	)
 	check(app.handle_back_request(), "MVP Android Back: 확인창에서 뒤로가기 요청 소비")

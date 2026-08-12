@@ -1084,8 +1084,13 @@ func _position_add_deck_menu(anchor: Control) -> void:
 	add_deck_menu_panel.size = menu_size
 	var viewport_size := add_deck_menu.size
 	var margin := 12.0
-	var position := anchor_rect.position + (anchor_rect.size - menu_size) * 0.5
+	var position := Vector2(
+		anchor_rect.end.x - menu_size.x,
+		anchor_rect.position.y
+	)
 	position.x = clampf(position.x, margin, viewport_size.x - menu_size.x - margin)
+	if position.y + menu_size.y > viewport_size.y - margin:
+		position.y = anchor_rect.end.y - menu_size.y
 	position.y = clampf(position.y, margin, viewport_size.y - menu_size.y - margin)
 	add_deck_menu_panel.position = position
 
