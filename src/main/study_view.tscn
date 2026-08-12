@@ -32,6 +32,22 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxStatusBadge"]
+content_margin_left = 14.0
+content_margin_top = 5.0
+content_margin_right = 14.0
+content_margin_bottom = 5.0
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
 [node name="StudyFlow" type="VBoxContainer" unique_id=1949007233]
 size_flags_vertical = 3
 theme = ExtResource("1_theme")
@@ -107,6 +123,18 @@ script = ExtResource("2_tally")
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
+
+[node name="StatusBadge" type="Label" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxStatusBadge")
+text = "NEW"
+horizontal_alignment = 1
+vertical_alignment = 1
+tooltip_text = "카드 상태"
 
 [node name="QuestionScroll" type="ScrollContainer" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent" unique_id=1980546292]
 layout_mode = 2
@@ -192,6 +220,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
 text = "AGAIN"
+tooltip_text = "왼쪽 방향키"
 
 [node name="GoodButton" type="Button" parent="StudyContainer/Actions" unique_id=1868244667]
 custom_minimum_size = Vector2(0, 88)
@@ -199,6 +228,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
 text = "GOOD"
+tooltip_text = "오른쪽 방향키"
 
 [node name="StudyResultView" parent="." unique_id=1976919345 instance=ExtResource("4_result")]
 visible = false

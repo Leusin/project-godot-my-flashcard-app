@@ -3,9 +3,12 @@
 [ext_resource type="Script" path="res://src/main/card_list_row.gd" id="1_script"]
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="2_theme"]
 
-[node name="CardListRow" type="Button"]
+[node name="CardListRow" type="PanelContainer"]
 custom_minimum_size = Vector2(0, 132)
 layout_mode = 2
+focus_mode = 2
+mouse_filter = 1
+mouse_default_cursor_shape = 2
 theme = ExtResource("2_theme")
 script = ExtResource("1_script")
 

@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
 [ext_resource type="Script" path="res://src/main/card_detail_surface.gd" id="2_surface"]
@@ -17,6 +17,22 @@ corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxStatusBadge"]
+content_margin_left = 14.0
+content_margin_top = 5.0
+content_margin_right = 14.0
+content_margin_bottom = 5.0
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [node name="CardDetailView" type="VBoxContainer"]
 layout_mode = 2
@@ -49,7 +65,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 focus_mode = 0
-action_mode = 0
+action_mode = 1
 mouse_filter = 0
 theme_override_font_sizes/font_size = 42
 theme_override_colors/font_color = Color(0, 0, 0, 1)
@@ -104,6 +120,18 @@ script = ExtResource("3_tally")
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
+
+[node name="DetailStatusBadge" type="Label" parent="CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailCardProperties"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxStatusBadge")
+text = "NEW"
+horizontal_alignment = 1
+vertical_alignment = 1
+tooltip_text = "카드 상태"
 
 [node name="DetailQuestionScroll" type="ScrollContainer" parent="CardDetailStage/CardDetailFrame/CardMargin/CardContent"]
 unique_name_in_owner = true

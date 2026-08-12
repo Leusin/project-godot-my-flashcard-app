@@ -108,6 +108,8 @@ func _input(event: InputEvent) -> void:
 		_handle_mouse_button(event as InputEventMouseButton)
 	elif event is InputEventMouseMotion:
 		_handle_mouse_motion(event as InputEventMouseMotion)
+	elif event is InputEventKey:
+		_handle_key(event as InputEventKey)
 
 
 static func drag_direction(delta: Vector2) -> int:
@@ -138,6 +140,20 @@ static func action_vector(action: int) -> Vector2:
 			return Vector2.ZERO
 
 
+static func key_direction(keycode: int) -> int:
+	match keycode:
+		KEY_LEFT:
+			return AGAIN
+		KEY_RIGHT:
+			return GOOD
+		KEY_UP:
+			return SKIP
+		KEY_DOWN:
+			return PREVIOUS
+		_:
+			return 0
+
+
 static func fitted_card_rect(
 	available_size: Vector2,
 	aspect_ratio: float = CARD_ASPECT_RATIO
@@ -165,6 +181,20 @@ func commit(direction: int) -> void:
 		swiped.emit(direction)
 		return
 	_play_swipe_exit(direction)
+
+
+func _handle_key(event: InputEventKey) -> void:
+	if not event.pressed or event.echo:
+		return
+	var direction := key_direction(event.keycode)
+	if direction == 0:
+		direction = key_direction(event.physical_keycode)
+	if direction == 0:
+		return
+	get_viewport().set_input_as_handled()
+	if direction == PREVIOUS and not previous_enabled:
+		return
+	commit(direction)
 
 
 func flip(midpoint: Callable, finished: Callable = Callable()) -> void:

@@ -128,6 +128,7 @@ const STUDY_RESULT_ROW_SCENE := preload("res://src/main/study_result_row.tscn")
 @onready var card_detail_deck_label: Label = $Margin/Page/CardDetailView/Header/CardDetailDeckLabel
 @onready var detail_card_properties: HBoxContainer = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailCardProperties
 @onready var detail_wrong_tally: WrongTallyView = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailCardProperties/DetailWrongTally
+@onready var detail_status_badge: Label = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailCardProperties/DetailStatusBadge
 @onready var detail_question_scroll: ScrollContainer = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailQuestionScroll
 @onready var detail_question_label: Label = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailQuestionScroll/DetailQuestionLabel
 @onready var detail_answer_scroll: ScrollContainer = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailAnswerScroll
@@ -153,6 +154,7 @@ const STUDY_RESULT_ROW_SCENE := preload("res://src/main/study_result_row.tscn")
 @onready var study_gesture_surface: StudyGestureSurface = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame
 @onready var card_properties: HBoxContainer = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties
 @onready var wrong_tally: WrongTallyView = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties/WrongTally
+@onready var card_status_badge: Label = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties/StatusBadge
 @onready var question_scroll: ScrollContainer = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/QuestionScroll
 @onready var question_label: Label = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/QuestionScroll/QuestionLabel
 @onready var answer_label: Label = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/AnswerScroll/AnswerLabel
@@ -702,6 +704,7 @@ func _render_card_detail(card: FlashCard, progress: Progress) -> void:
 	detail_question_label.text = card.question
 	detail_answer_label.text = card.answer
 	detail_wrong_tally.set_count(progress.get_wrong_count(card.question))
+	detail_status_badge.text = card_status_text(progress.get_status(card.question))
 	detail_question_scroll.scroll_vertical = 0
 	detail_answer_scroll.scroll_vertical = 0
 	_set_card_detail_answer_visible(false)
@@ -1874,6 +1877,7 @@ func _show_current() -> void:
 	study_progress_bar.show()
 	var wrong_count := _progress.get_wrong_count(card.question)
 	wrong_tally.set_count(wrong_count)
+	card_status_badge.text = card_status_text(_progress.get_status(card.question))
 	question_label.text = card.question
 	answer_label.text = card.answer
 	question_scroll.scroll_vertical = 0

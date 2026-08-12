@@ -611,8 +611,10 @@ func run_tests() -> void:
 		_view(study_card_properties, "WrongTally").get_index()
 		< _view(study_card_properties, "Spacer").get_index()
 		and _view(app, "CardStatusLabel") == null
-		and _view(study_card_properties, "StatusBadge") == null,
-		"Main Study: 오답 tally만 좌상단에 두고 상태 딱지 제거"
+		and _view(study_card_properties, "StatusBadge").get_index()
+		> _view(study_card_properties, "Spacer").get_index()
+		and _view(study_card_properties, "StatusBadge").text == "MASTERED",
+		"Main Study: 뒷면용 오답 tally와 상태 딱지 배치"
 	)
 	check(
 		_view(app, "WrongTally").get_parent() is HBoxContainer
@@ -648,6 +650,13 @@ func run_tests() -> void:
 		and StudyGestureSurface.drag_direction(Vector2(40, 0)) == 0
 		and StudyGestureSurface.drag_direction(Vector2(100, 100)) == 0,
 		"Main Study: 좌우 판정과 위 skip·아래 previous drag 구분"
+	)
+	check(
+		StudyGestureSurface.key_direction(KEY_LEFT) == StudyGestureSurface.AGAIN
+		and StudyGestureSurface.key_direction(KEY_RIGHT) == StudyGestureSurface.GOOD
+		and StudyGestureSurface.key_direction(KEY_UP) == StudyGestureSurface.SKIP
+		and StudyGestureSurface.key_direction(KEY_DOWN) == StudyGestureSurface.PREVIOUS,
+		"Main Study: 방향키를 swipe 방향과 같은 네 동작에 mapping"
 	)
 	check(
 		StudyGestureSurface.PREVIEW_FOLLOW_RATIO > 0.5
@@ -783,8 +792,8 @@ func run_tests() -> void:
 	check(
 		_view(app, "AnswerScroll").visible
 		and _view(app, "CardProperties").visible
-		and _view(app, "CardStatusLabel") == null,
-		"Main Study: 카드 tap으로 답과 tally를 함께 공개"
+		and _view(app, "StatusBadge").text == "MASTERED",
+		"Main Study: 카드 tap으로 답·tally·상태 딱지를 함께 공개"
 	)
 	check(
 		gesture_surface._can_start_drag(
@@ -1087,7 +1096,7 @@ func run_tests() -> void:
 		and _view(app, "CardRows").get_child_count() == 2,
 		"Main Card Edit: Study Ready에서 카드 목록 진입"
 	)
-	var first_card_row := _view(app, "CardRows").get_child(0) as Button
+	var first_card_row := _view(app, "CardRows").get_child(0) as CardListRow
 	check(
 		_view(first_card_row, "ListWrongTally") == null
 		and _view(first_card_row, "ListStatusLabel") == null
@@ -1097,7 +1106,36 @@ func run_tests() -> void:
 		and first_card_row.custom_minimum_size.y == 132.0,
 		"Main Card List: 틸리·상태 딱지를 빼고 질문·답만 강조"
 	)
-	first_card_row.pressed.emit()
+	check(
+		first_card_row.get_class() == "PanelContainer"
+		and first_card_row.mouse_filter == Control.MOUSE_FILTER_PASS
+		and (_view(app, "CardListScroll") as ScrollContainer).vertical_scroll_mode
+		== ScrollContainer.SCROLL_MODE_AUTO
+		and (_view(app, "CardListScroll") as ScrollContainer).scroll_deadzone == 12,
+		"Main Card List: 버튼 대신 pass-through 카드 행과 touch drag deadzone 사용"
+	)
+	var row_selection_count := [0]
+	first_card_row.selected.connect(
+		func(_index: int) -> void: row_selection_count[0] += 1
+	)
+	var row_press := InputEventMouseButton.new()
+	row_press.button_index = MOUSE_BUTTON_LEFT
+	row_press.pressed = true
+	first_card_row._gui_input(row_press)
+	var row_drag := InputEventMouseMotion.new()
+	row_drag.button_mask = MOUSE_BUTTON_MASK_LEFT
+	row_drag.relative = Vector2(0, -24)
+	first_card_row._gui_input(row_drag)
+	var row_release := InputEventMouseButton.new()
+	row_release.button_index = MOUSE_BUTTON_LEFT
+	first_card_row._gui_input(row_release)
+	check(
+		row_selection_count[0] == 0 and _view(app, "CardListView").visible,
+		"Main Card List: 행을 누른 채 drag하면 카드를 열지 않음"
+	)
+	first_card_row._gui_input(row_press)
+	first_card_row._gui_input(row_release)
+	check(row_selection_count[0] == 1, "Main Card List: 짧은 tap은 카드 열기로 유지")
 	check(
 		_view(app, "CardDetailView").visible
 		and not _view(app, "CardEditorView").visible
@@ -1125,14 +1163,19 @@ func run_tests() -> void:
 		and _view(app, "DetailCardProperties").visible
 		and (_view(app, "DetailWrongTally") as WrongTallyView).wrong_count == 3
 		and _view(app, "DetailStatusLabel") == null
-		and _view(app, "DetailStatusBadge") == null
+		and _view(app, "DetailStatusBadge").text == "LEARNING"
 		and _view(_view(app, "DetailCardProperties"), "MenuButtonSpacer") == null
 		and _view(app, "DetailQuestionScroll").vertical_scroll_mode
 		== ScrollContainer.SCROLL_MODE_DISABLED
 		and _view(app, "DetailQuestionLabel").max_lines_visible == 2
 		and _view(app, "DetailQuestionLabel").text_overrun_behavior
 		== TextServer.OVERRUN_TRIM_ELLIPSIS,
-		"Main Card Detail: tap으로 뒷면·tally를 보고 상태 딱지는 제거"
+		"Main Card Detail: tap으로 뒷면·tally·상태 딱지 확인"
+	)
+	check(
+		(_view(app, "CardDetailMenuButton") as Button).action_mode
+		== BaseButton.ACTION_MODE_BUTTON_RELEASE,
+		"Main Card Detail: ⋮를 뗀 뒤 메뉴를 열어 같은 release로 닫히지 않음"
 	)
 	_view(app, "CardDetailMenuButton").pressed.emit()
 	check(
@@ -1237,7 +1280,7 @@ func run_tests() -> void:
 		DeckParser.parse(DeckStorage.read_deck(EDIT_DECK)).size() == 3,
 		"Main Card Edit: 새 카드 추가"
 	)
-	(_view(app, "CardRows").get_child(0) as Button).pressed.emit()
+	(_view(app, "CardRows").get_child(0) as CardListRow).activate()
 	_view(app, "CardDetailMenuButton").pressed.emit()
 	_view(app, "EditCardActionButton").pressed.emit()
 	_view(app, "WrongMinusButton").pressed.emit()
@@ -1256,7 +1299,7 @@ func run_tests() -> void:
 		"Main Card Edit: 학습 정보 변경사항 버리고 카드 보기 복귀"
 	)
 	_view(app, "BackFromCardDetailButton").pressed.emit()
-	(_view(app, "CardRows").get_child(2) as Button).pressed.emit()
+	(_view(app, "CardRows").get_child(2) as CardListRow).activate()
 	_view(app, "CardDetailMenuButton").pressed.emit()
 	_view(app, "EditCardActionButton").pressed.emit()
 	_view(app, "DeleteCardButton").pressed.emit()
