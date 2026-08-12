@@ -9,6 +9,7 @@ enum StudyScope {
 
 enum CardEditorOrigin {
 	CARD_LIST,
+	NEW_DECK,
 	STUDY,
 }
 
@@ -35,6 +36,9 @@ const RENAME_DECK_NOT_FOUND_MESSAGE := "이름을 변경할 덱 파일을 찾을
 const RENAME_FAILED_MESSAGE := "덱 이름을 변경하지 못했습니다. 다시 시도하세요."
 const DUPLICATE_DECK_NOT_FOUND_MESSAGE := "복제할 덱 파일을 찾을 수 없습니다."
 const DUPLICATE_DECK_FAILED_MESSAGE := "덱을 복제하지 못했습니다. 저장 공간을 확인하고 다시 시도하세요."
+const CREATE_DECK_EMPTY_MESSAGE := "덱 이름을 입력하세요."
+const CREATE_DECK_INVALID_MESSAGE := "덱 이름에 < > : \" / \\ | ? * 문자나 끝 마침표를 사용할 수 없습니다."
+const CREATE_DECK_DUPLICATE_MESSAGE := "같은 이름의 덱이 이미 있습니다."
 const CARD_QUESTION_EMPTY_MESSAGE := "질문을 입력하세요."
 const CARD_ANSWER_HEADING_MESSAGE := "답의 줄 시작에는 '# '를 사용할 수 없습니다."
 const CARD_SAVE_FAILED_MESSAGE := "카드를 저장하지 못했습니다. 저장 공간을 확인하세요."
@@ -54,6 +58,14 @@ const STUDY_RESULT_ROW_SCENE := preload("res://src/main/study_result_row.tscn")
 @onready var library_status_label: Label = $Margin/Page/LibraryContainer/LibraryStatusLabel
 @onready var import_dialog: FileDialog = $Margin/Page/LibraryContainer/ImportDialog
 @onready var export_dialog: FileDialog = $Margin/Page/LibraryContainer/ExportDialog
+@onready var add_deck_menu: Control = $AddDeckMenu
+@onready var add_deck_menu_panel: PanelContainer = $AddDeckMenu/AddDeckMenuPanel
+@onready var create_new_deck_button := (
+	add_deck_menu.find_child("CreateNewDeckButton", true, false) as Button
+)
+@onready var import_markdown_button := (
+	add_deck_menu.find_child("ImportMarkdownButton", true, false) as Button
+)
 @onready var deck_context_menu: Control = $DeckContextMenu
 @onready var deck_context_menu_panel: PanelContainer = $DeckContextMenu/DeckContextMenuPanel
 @onready var rename_deck_button := (
@@ -74,6 +86,9 @@ const STUDY_RESULT_ROW_SCENE := preload("res://src/main/study_result_row.tscn")
 @onready var delete_confirmation_overlay: Control = $DeleteConfirmationOverlay
 @onready var delete_confirmation_title: Label = $DeleteConfirmationOverlay/DeleteConfirmationPanel/Margin/Content/DeleteConfirmationTitle
 @onready var exit_confirmation_overlay: Control = $ExitConfirmationOverlay
+@onready var create_deck_overlay: Control = $CreateDeckOverlay
+@onready var create_deck_input: LineEdit = $CreateDeckOverlay/CreateDeckPanel/Margin/Content/CreateDeckInput
+@onready var create_deck_error_label: Label = $CreateDeckOverlay/CreateDeckPanel/Margin/Content/CreateDeckErrorLabel
 @onready var study_ready_view: VBoxContainer = $Margin/Page/StudyReadyView
 @onready var ready_overview: VBoxContainer = $Margin/Page/StudyReadyView/DeckStack/DeckCover/Margin/OverviewContent
 @onready var new_study_content: VBoxContainer = $Margin/Page/StudyReadyView/DeckStack/DeckCover/Margin/NewStudyContent
@@ -177,6 +192,9 @@ func _ready() -> void:
 	export_dialog.use_native_dialog = true
 	export_dialog.clear_filters()
 	export_dialog.add_filter("*.md", "Markdown", "text/markdown,text/plain")
+	create_new_deck_button.pressed.connect(_on_create_new_deck_pressed)
+	import_markdown_button.pressed.connect(_on_import_from_add_menu_pressed)
+	$AddDeckMenu/DismissAddDeckMenuButton.pressed.connect(_on_add_deck_menu_dismissed)
 	rename_deck_button.pressed.connect(_on_rename_pressed)
 	duplicate_deck_button.pressed.connect(_on_duplicate_pressed)
 	export_deck_button.pressed.connect(_on_export_pressed)
@@ -185,6 +203,13 @@ func _ready() -> void:
 	$RenameDeckOverlay/RenameDeckPanel/Margin/Content/Buttons/CancelRenameButton.pressed.connect(_on_rename_canceled)
 	$RenameDeckOverlay/RenameDeckPanel/Margin/Content/Buttons/ConfirmRenameButton.pressed.connect(_on_rename_confirmed)
 	rename_deck_input.text_submitted.connect(_on_rename_submitted)
+	$CreateDeckOverlay/CreateDeckPanel/Margin/Content/Buttons/CancelCreateDeckButton.pressed.connect(
+		_on_create_deck_canceled
+	)
+	$CreateDeckOverlay/CreateDeckPanel/Margin/Content/Buttons/ConfirmCreateDeckButton.pressed.connect(
+		_on_create_deck_confirmed
+	)
+	create_deck_input.text_submitted.connect(_on_create_deck_submitted)
 	$DeleteConfirmationOverlay/DeleteConfirmationPanel/Margin/Content/Buttons/CancelDeleteButton.pressed.connect(_on_delete_canceled)
 	$DeleteConfirmationOverlay/DeleteConfirmationPanel/Margin/Content/Buttons/ConfirmDeleteButton.pressed.connect(_on_delete_confirmed)
 	$ExitConfirmationOverlay/ExitConfirmationPanel/Margin/Content/Buttons/CancelExitButton.pressed.connect(_on_exit_canceled)
@@ -304,7 +329,9 @@ func show_library() -> void:
 	_study_edit_source_index = -1
 	_study_edit_return_show_answer = false
 	_menu_deck_file = ""
+	add_deck_menu.hide()
 	deck_context_menu.hide()
+	create_deck_overlay.hide()
 	rename_deck_overlay.hide()
 	delete_confirmation_overlay.hide()
 	card_delete_confirmation_overlay.hide()
@@ -412,10 +439,11 @@ func _refresh_deck_list() -> void:
 
 	var add_deck_tile := ADD_DECK_TILE_SCENE.instantiate() as AddDeckTileView
 	deck_list.add_child(add_deck_tile)
-	add_deck_tile.pressed.connect(_on_import_pressed)
+	add_deck_tile.pressed.connect(_on_add_deck_requested)
 
 
 func _on_deck_selected(deck_file: String) -> void:
+	add_deck_menu.hide()
 	deck_context_menu.hide()
 	show_study_ready(deck_file)
 
@@ -625,7 +653,11 @@ func _open_card_editor(index: int) -> void:
 		_editing_original_answer = ""
 		_editing_original_wrong_count = 0
 		_editing_original_status = CardStatus.Value.NEW
-		card_editor_title.text = "카드 추가"
+		card_editor_title.text = (
+			"첫 카드 추가"
+			if _card_editor_origin == CardEditorOrigin.NEW_DECK
+			else "카드 추가"
+		)
 		delete_card_button.hide()
 	else:
 		var card := _editing_cards[index]
@@ -716,6 +748,7 @@ func _on_discard_card_changes_confirmed() -> void:
 
 func _close_card_editor_without_save() -> void:
 	var return_to_study := _card_editor_origin == CardEditorOrigin.STUDY
+	var return_to_library := _card_editor_origin == CardEditorOrigin.NEW_DECK
 	var restore_answer := _study_edit_return_show_answer
 	card_delete_confirmation_overlay.hide()
 	discard_card_changes_overlay.hide()
@@ -727,6 +760,9 @@ func _close_card_editor_without_save() -> void:
 			_show_current()
 			if restore_answer:
 				_set_answer_visible(true)
+	elif return_to_library:
+		card_list_view.hide()
+		show_library()
 	else:
 		card_list_view.show()
 	_editing_card_index = -1
@@ -736,6 +772,7 @@ func _close_card_editor_without_save() -> void:
 
 
 func _on_save_card_pressed() -> void:
+	var creating_deck := _card_editor_origin == CardEditorOrigin.NEW_DECK
 	var question := card_question_input.text.strip_edges()
 	var answer := card_answer_input.text.replace("\r\n", "\n").strip_edges()
 	if question.is_empty():
@@ -743,6 +780,9 @@ func _on_save_card_pressed() -> void:
 		return
 	if answer_has_question_heading(answer):
 		_show_card_editor_error(CARD_ANSWER_HEADING_MESSAGE)
+		return
+	if creating_deck and _deck_file_name_is_taken(_editing_deck_file):
+		_show_card_editor_error(CREATE_DECK_DUPLICATE_MESSAGE)
 		return
 
 	var updated := _copy_cards(_editing_cards)
@@ -793,10 +833,16 @@ func _on_save_card_pressed() -> void:
 
 	DeckStorage.delete_study_resume(_editing_deck_file)
 	_editing_cards = updated
+	if creating_deck:
+		_card_editor_origin = CardEditorOrigin.CARD_LIST
 	_close_card_editor_without_save()
 	_refresh_card_rows()
 	_show_card_list_status(
-		"카드 저장 완료"
+		("'%s' 덱 생성 완료" % DeckNaming.display_name(_editing_deck_file))
+		if creating_deck and progress_saved
+		else "덱은 만들었지만 학습 기록을 저장하지 못했습니다."
+		if creating_deck
+		else "카드 저장 완료"
 		if progress_saved
 		else "카드는 저장했지만 학습 기록을 저장하지 못했습니다."
 	)
@@ -1023,7 +1069,33 @@ func _return_to_study_ready() -> void:
 	show_study_ready(deck_file)
 
 
+func _on_add_deck_requested(anchor: Control) -> void:
+	_menu_deck_file = ""
+	deck_context_menu.hide()
+	library_status_label.hide()
+	add_deck_menu.show()
+	add_deck_menu_panel.reset_size()
+	_position_add_deck_menu(anchor)
+
+
+func _position_add_deck_menu(anchor: Control) -> void:
+	var anchor_rect := _control_rect_in_overlay(add_deck_menu, anchor)
+	var menu_size := add_deck_menu_panel.get_combined_minimum_size()
+	add_deck_menu_panel.size = menu_size
+	var viewport_size := add_deck_menu.size
+	var margin := 12.0
+	var position := anchor_rect.position + (anchor_rect.size - menu_size) * 0.5
+	position.x = clampf(position.x, margin, viewport_size.x - menu_size.x - margin)
+	position.y = clampf(position.y, margin, viewport_size.y - menu_size.y - margin)
+	add_deck_menu_panel.position = position
+
+
+func _on_add_deck_menu_dismissed() -> void:
+	add_deck_menu.hide()
+
+
 func _on_deck_menu_requested(deck_file: String, anchor: Control) -> void:
+	add_deck_menu.hide()
 	_menu_deck_file = deck_file
 	export_dialog.current_file = "%s%s" % [
 		DeckNaming.display_name(deck_file),
@@ -1035,13 +1107,7 @@ func _on_deck_menu_requested(deck_file: String, anchor: Control) -> void:
 
 
 func _position_deck_context_menu(anchor: Control) -> void:
-	var anchor_to_menu := (
-		deck_context_menu.get_global_transform().affine_inverse()
-		* anchor.get_global_transform()
-	)
-	var anchor_position := anchor_to_menu * Vector2.ZERO
-	var anchor_end := anchor_to_menu * anchor.size
-	var anchor_rect := Rect2(anchor_position, anchor_end - anchor_position)
+	var anchor_rect := _control_rect_in_overlay(deck_context_menu, anchor)
 	var menu_size := deck_context_menu_panel.get_combined_minimum_size()
 	deck_context_menu_panel.size = menu_size
 	var viewport_size := deck_context_menu.size
@@ -1055,6 +1121,16 @@ func _position_deck_context_menu(anchor: Control) -> void:
 		position.y = anchor_rect.end.y - menu_size.y
 	position.y = clampf(position.y, margin, viewport_size.y - menu_size.y - margin)
 	deck_context_menu_panel.position = position
+
+
+static func _control_rect_in_overlay(overlay: Control, control: Control) -> Rect2:
+	var control_to_overlay := (
+		overlay.get_global_transform().affine_inverse()
+		* control.get_global_transform()
+	)
+	var position := control_to_overlay * Vector2.ZERO
+	var end := control_to_overlay * control.size
+	return Rect2(position, end - position)
 
 
 func _on_deck_context_dismissed() -> void:
@@ -1071,12 +1147,20 @@ func handle_back_request() -> bool:
 		_on_discard_card_changes_canceled()
 		return true
 
+	if create_deck_overlay.visible:
+		_on_create_deck_canceled()
+		return true
+
 	if rename_deck_overlay.visible:
 		_on_rename_canceled()
 		return true
 
 	if delete_confirmation_overlay.visible:
 		_on_delete_canceled()
+		return true
+
+	if add_deck_menu.visible:
+		_on_add_deck_menu_dismissed()
 		return true
 
 	if deck_context_menu.visible:
@@ -1118,7 +1202,77 @@ func _on_exit_confirmed() -> void:
 	get_tree().quit()
 
 
+func _on_create_new_deck_pressed() -> void:
+	add_deck_menu.hide()
+	create_deck_input.clear()
+	create_deck_error_label.hide()
+	create_deck_overlay.show()
+	create_deck_input.call_deferred("grab_focus")
+
+
+func _on_create_deck_canceled() -> void:
+	create_deck_overlay.hide()
+	create_deck_input.clear()
+	create_deck_error_label.hide()
+
+
+func _on_create_deck_confirmed() -> void:
+	_begin_new_deck(create_deck_input.text)
+
+
+func _on_create_deck_submitted(_new_name: String) -> void:
+	_on_create_deck_confirmed()
+
+
+func _begin_new_deck(display_name: String) -> bool:
+	var trimmed_name := display_name.strip_edges()
+	if trimmed_name.is_empty():
+		_show_create_deck_error(CREATE_DECK_EMPTY_MESSAGE)
+		return false
+	if not DeckNaming.is_valid_display_name(trimmed_name):
+		_show_create_deck_error(CREATE_DECK_INVALID_MESSAGE)
+		return false
+
+	var deck_file := DeckNaming.deck_file_name(trimmed_name)
+	if _deck_file_name_is_taken(deck_file):
+		_show_create_deck_error(CREATE_DECK_DUPLICATE_MESSAGE)
+		return false
+
+	create_deck_overlay.hide()
+	_editing_deck_file = deck_file
+	_editing_cards.clear()
+	_card_editor_origin = CardEditorOrigin.NEW_DECK
+	_study_edit_source_index = -1
+	_study_edit_return_show_answer = false
+	card_list_deck_label.text = trimmed_name
+	card_list_status_label.hide()
+	library_container.hide()
+	study_ready_view.hide()
+	study_flow.hide()
+	card_list_view.hide()
+	_open_card_editor(-1)
+	return true
+
+
+func _show_create_deck_error(message: String) -> void:
+	create_deck_error_label.text = message
+	create_deck_error_label.show()
+
+
+func _deck_file_name_is_taken(deck_file: String) -> bool:
+	for existing_file in DeckStorage.list_deck_files():
+		if existing_file.to_lower() == deck_file.to_lower():
+			return true
+	return false
+
+
+func _on_import_from_add_menu_pressed() -> void:
+	add_deck_menu.hide()
+	_on_import_pressed()
+
+
 func _on_import_pressed() -> void:
+	add_deck_menu.hide()
 	library_status_label.visible = false
 	import_dialog.popup_file_dialog()
 

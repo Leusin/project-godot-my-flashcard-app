@@ -17,6 +17,7 @@ const EDIT_DECK := "__gd_main_edit.md"
 const EDIT_TEXT := "# Old\nAnswer\n# Keep\nStay\n"
 const STUDY_EDIT_DECK := "__gd_main_study_edit.md"
 const STUDY_EDIT_TEXT := "# Study old\nStudy answer\n# Study keep\nKeep answer\n"
+const CREATED_DECK := "__gd_main_created.md"
 const EXPORT_TARGET_WITHOUT_EXTENSION := "user://__gd_main_export"
 const EXPORTED_PATH := "user://__gd_main_export.md"
 
@@ -91,6 +92,35 @@ func run_tests() -> void:
 		is StyleBoxEmpty,
 		"Main Deck Actions: ⋮ 버튼의 테두리와 hover 배경 제거"
 	)
+	var add_deck_button := _view(deck_buttons[-1], "AddDeckButton") as Button
+	add_deck_button.pressed.emit()
+	var add_deck_menu := _view(app, "AddDeckMenu") as Control
+	var add_deck_menu_panel := _view(app, "AddDeckMenuPanel") as PanelContainer
+	check(
+		add_deck_menu.visible
+		and _view(app, "CreateNewDeckButton").text == "새 덱 만들기"
+		and _view(app, "ImportMarkdownButton").text == "Markdown 가져오기",
+		"Main Create: 추가 타일에서 새 덱과 Markdown 가져오기 선택"
+	)
+	check(
+		add_deck_menu.scene_file_path.ends_with("add_deck_menu.tscn")
+		and add_deck_menu_panel.custom_minimum_size == Vector2(220, 126)
+		and add_deck_menu_panel.size
+		== add_deck_menu_panel.get_combined_minimum_size(),
+		"Main Create: 추가 선택 context list를 개별 scene과 실제 크기로 표시"
+	)
+	var add_anchor_rect := MainApp._control_rect_in_overlay(
+		add_deck_menu,
+		add_deck_button
+	)
+	check(
+		add_deck_menu_panel.get_rect().get_center().is_equal_approx(
+			add_anchor_rect.get_center()
+		),
+		"Main Create: 추가 선택 context list를 타일 중앙에 정렬"
+	)
+	check(app.handle_back_request(), "Main Create: 추가 선택창에서 뒤로가기 요청 소비")
+	check(not add_deck_menu.visible, "Main Create: 뒤로가기로 추가 선택창 닫기")
 	_view(deck_buttons[0], "DeckMenuButton").pressed.emit()
 	var deck_context_menu := _view(app, "DeckContextMenu") as Control
 	check(deck_context_menu.visible, "Main Export: ⋮ 위치에 context list 표시")
@@ -958,6 +988,93 @@ func run_tests() -> void:
 		"Main Result: SKIP 판정 표시 및 AGAIN이 없으면 재학습 비활성화"
 	)
 
+	app.show_library()
+	var create_add_tile := _view(app, "DeckList").get_children()[-1]
+	_view(create_add_tile, "AddDeckButton").pressed.emit()
+	_view(app, "CreateNewDeckButton").pressed.emit()
+	check(
+		_view(app, "CreateDeckOverlay").visible
+		and not _view(app, "AddDeckMenu").visible
+		and _view(app, "CreateDeckOverlay").scene_file_path.ends_with(
+			"create_deck_dialog.tscn"
+		)
+		and _view(app, "ConfirmCreateDeckButton").custom_minimum_size.y == 88.0,
+		"Main Create: 새 덱 이름 입력 scene으로 전환"
+	)
+	_view(app, "ConfirmCreateDeckButton").pressed.emit()
+	check(
+		_view(app, "CreateDeckErrorLabel").text
+		== MainApp.CREATE_DECK_EMPTY_MESSAGE,
+		"Main Create: 빈 덱 이름 오류 안내"
+	)
+	_view(app, "CreateDeckInput").text = "bad/name"
+	_view(app, "ConfirmCreateDeckButton").pressed.emit()
+	check(
+		_view(app, "CreateDeckErrorLabel").text
+		== MainApp.CREATE_DECK_INVALID_MESSAGE,
+		"Main Create: 파일명에 쓸 수 없는 덱 이름 차단"
+	)
+	_view(app, "CreateDeckInput").text = "__gd_main"
+	_view(app, "ConfirmCreateDeckButton").pressed.emit()
+	check(
+		_view(app, "CreateDeckErrorLabel").text
+		== MainApp.CREATE_DECK_DUPLICATE_MESSAGE,
+		"Main Create: 기존 덱과 중복되는 이름 차단"
+	)
+	_view(app, "CreateDeckInput").text = "  __gd_main_created  "
+	_view(app, "ConfirmCreateDeckButton").pressed.emit()
+	check(
+		_view(app, "CardEditorView").visible
+		and _view(app, "CardEditorTitle").text == "첫 카드 추가"
+		and not _view(app, "DeleteCardButton").visible
+		and not DeckStorage.deck_exists(CREATED_DECK),
+		"Main Create: 파일을 만들기 전에 첫 카드 편집으로 진입"
+	)
+	_view(app, "CardQuestionInput").text = "Draft"
+	_view(app, "CancelCardEditButton").pressed.emit()
+	_view(app, "DiscardChangesButton").pressed.emit()
+	check(
+		_view(app, "LibraryContainer").visible
+		and not DeckStorage.deck_exists(CREATED_DECK),
+		"Main Create: 첫 카드 작성을 취소하면 빈 덱을 남기지 않음"
+	)
+	create_add_tile = _view(app, "DeckList").get_children()[-1]
+	_view(create_add_tile, "AddDeckButton").pressed.emit()
+	_view(app, "CreateNewDeckButton").pressed.emit()
+	_view(app, "CreateDeckInput").text = "__gd_main_created"
+	_view(app, "ConfirmCreateDeckButton").pressed.emit()
+	_view(app, "CardQuestionInput").text = "Created question"
+	_view(app, "CardAnswerInput").text = "Created answer"
+	_view(app, "SaveCardButton").pressed.emit()
+	var created_cards := DeckParser.parse(DeckStorage.read_deck(CREATED_DECK))
+	check(
+		_view(app, "CardListView").visible
+		and DeckStorage.deck_exists(CREATED_DECK)
+		and created_cards.size() == 1
+		and created_cards[0].question == "Created question"
+		and created_cards[0].answer == "Created answer"
+		and _view(app, "CardRows").get_child_count() == 1,
+		"Main Create: 첫 카드 저장 순간 유효한 Markdown 덱 생성"
+	)
+	check(
+		_view(app, "CardListStatusLabel").text
+		== "'__gd_main_created' 덱 생성 완료",
+		"Main Create: 생성 완료 후 카드 추가가 가능한 목록 표시"
+	)
+	_view(app, "BackFromCardListButton").pressed.emit()
+	check(
+		_view(app, "StudyReadyView").visible
+		and _view(app, "ReadyTotalCountLabel").text == "1",
+		"Main Create: 생성한 덱의 Study Ready로 복귀"
+	)
+	_view(app, "BackToLibraryButton").pressed.emit()
+	var created_tile := _find_deck_tile(app, "__gd_main_created")
+	check(
+		created_tile != null
+		and _view(created_tile, "DeckCountLabel").text == "1장",
+		"Main Create: 덱 목록에 새 카드 뭉치 즉시 표시"
+	)
+
 	app.queue_free()
 	_cleanup()
 	DeckStorage.set_decks_dir("")
@@ -989,6 +1106,7 @@ func _cleanup() -> void:
 		DUPLICATED_DECK,
 		EDIT_DECK,
 		STUDY_EDIT_DECK,
+		CREATED_DECK,
 	]:
 		var progress_path := DeckStorage.progress_path(deck_file)
 		if FileAccess.file_exists(progress_path):
