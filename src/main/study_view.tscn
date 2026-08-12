@@ -1,8 +1,9 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
 [ext_resource type="Script" path="res://src/main/wrong_tally.gd" id="2_tally"]
 [ext_resource type="Script" path="res://src/main/study_gesture_surface.gd" id="3_gesture"]
+[ext_resource type="PackedScene" path="res://src/main/study_result_view.tscn" id="4_result"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxStudyCard"]
 bg_color = Color(1, 1, 1, 1)
@@ -286,21 +287,5 @@ size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
 text = "알겠음"
 
-[node name="DoneContainer" type="VBoxContainer" parent="."]
+[node name="StudyResultView" parent="." instance=ExtResource("4_result")]
 visible = false
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/separation = 24
-alignment = 1
-
-[node name="DoneLabel" type="Label" parent="DoneContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 36
-text = "학습 완료!"
-horizontal_alignment = 1
-
-[node name="RestartButton" type="Button" parent="DoneContainer"]
-custom_minimum_size = Vector2(0, 88)
-layout_mode = 2
-theme_override_font_sizes/font_size = 22
-text = "다시 시작"

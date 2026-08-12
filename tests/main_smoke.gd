@@ -398,16 +398,18 @@ func run_tests() -> void:
 	check(not _view(app, "AnswerScroll").visible, "Main Study: 첫 화면에서 답 영역 숨김")
 	check(_view(app, "Actions").visible, "Main Study: 답 공개 전에도 자기평가 버튼 표시")
 	check(_view(app, "RemainingLabel").text == "2장 남음", "MVP: 남은 카드 수 표시")
+	var study_card_properties := _view(app, "CardProperties") as HBoxContainer
+	var study_card_content := study_card_properties.get_parent()
 	check(
-		_view(app, "CardStatusLabel").text == "NEW"
-		and _view(app, "WrongTally").wrong_count == 0
-		and _view(app, "WrongCountLabel") == null
-		and not _view(app, "CardProperties").visible,
+		_view(study_card_properties, "WrongCountLabel") == null
+		and not study_card_properties.visible,
 		"Main Study: 앞면에서는 학습 상태와 오답 tally 숨김"
 	)
 	check(
-		_view(app, "WrongTally").get_index() < _view(app, "Spacer").get_index()
-		and _view(app, "StatusBadge").get_index() > _view(app, "Spacer").get_index(),
+		_view(study_card_properties, "WrongTally").get_index()
+		< _view(study_card_properties, "Spacer").get_index()
+		and _view(study_card_properties, "StatusBadge").get_index()
+		> _view(study_card_properties, "Spacer").get_index(),
 		"Main Study: 오답은 좌상단, 카드 속성은 우상단 배치"
 	)
 	check(
@@ -415,7 +417,10 @@ func run_tests() -> void:
 		and _view(app, "WrongTally").get_child_count() == 0,
 		"Main Study: 프레임과 문구 없이 직접 그리는 tally 사용"
 	)
-	check(_view(app, "QuestionCaption") == null, "Main Study: QUESTION 장식 문구 제거")
+	check(
+		_view(study_card_content, "QuestionCaption") == null,
+		"Main Study: QUESTION 장식 문구 제거"
+	)
 	check(
 		_view(app, "StudyProgressBar").value == 0
 		and _view(app, "StudyProgressBar").max_value == 2,
@@ -500,7 +505,8 @@ func run_tests() -> void:
 		"Main Study: 카드 tap으로 답과 학습 속성 공개"
 	)
 	check(
-		_view(app, "AnswerCaption") == null and _view(app, "Separator") == null,
+		_view(study_card_content, "AnswerCaption") == null
+		and _view(study_card_content, "Separator") == null,
 		"Main Study: ANSWER 문구와 질문·답 구분선 제거"
 	)
 	check(_view(app, "AnswerLabel").text == "1", "MVP: 현재 카드의 답 표시")
@@ -557,23 +563,55 @@ func run_tests() -> void:
 	_view(app, "GoodButton").pressed.emit()
 	check(
 		_view(app, "QuestionLabel").text == "B"
-		and not _view(app, "DoneContainer").visible
+		and not _view(app, "StudyResultView").visible
 		and DeckStorage.load_progress(TEST_DECK).get_status("B")
 		== CardStatus.Value.NEW,
 		"Main Study: 빠른 연속 판정은 다음 카드에 적용하지 않음"
 	)
 	app._reset_study_input_lock()
 	_view(app, "GoodButton").pressed.emit()
-	check(_view(app, "DoneContainer").visible, "MVP: 마지막 카드 후 완료 표시")
-	check(not _view(app, "StudyContainer").visible, "MVP: 완료 시 학습 화면 숨김")
+	check(
+		_view(app, "StudyResultView").visible
+		and not _view(app, "StudyContainer").visible,
+		"Main Result: 마지막 카드 후 학습 화면 대신 결과 화면 표시"
+	)
 	check(
 		DeckStorage.load_progress(TEST_DECK).get_status("B")
 		== CardStatus.Value.MASTERED,
 		"Main Ready: Good이 완료 상태를 저장"
 	)
-	_view(app, "RestartButton").pressed.emit()
-	check(_view(app, "StudyContainer").visible, "MVP: 다시 시작으로 학습 화면 복귀")
-	check(_view(app, "QuestionLabel").text == "A", "MVP: 다시 시작하면 첫 카드")
+	var first_result_rows := _view(app, "ResultRows") as VBoxContainer
+	check(
+		_view(app, "ResultGoodCountLabel").text == "1"
+		and _view(app, "ResultAgainCountLabel").text == "1"
+		and _view(app, "ResultSkipCountLabel").text == "0"
+		and first_result_rows.get_child_count() == 2,
+		"Main Result: GOOD·AGAIN·SKIP 수와 학습 카드 목록 표시"
+	)
+	check(
+		_view(first_result_rows.get_child(0), "QuestionLabel").text == "A"
+		and _view(first_result_rows.get_child(0), "OutcomeLabel").text == "AGAIN"
+		and _view(first_result_rows.get_child(1), "QuestionLabel").text == "B"
+		and _view(first_result_rows.get_child(1), "OutcomeLabel").text == "GOOD",
+		"Main Result: 카드별 마지막 판정을 학습 순서대로 표시"
+	)
+	check(
+		_view(app, "StudyResultView").scene_file_path.ends_with(
+			"study_result_view.tscn"
+		)
+		and first_result_rows.get_child(0).scene_file_path.ends_with(
+			"study_result_row.tscn"
+		),
+		"Main Result: 결과 화면과 행을 개별 편집 가능한 scene으로 분리"
+	)
+	_view(app, "RetryAgainButton").pressed.emit()
+	check(
+		_view(app, "StudyContainer").visible
+		and not _view(app, "StudyResultView").visible
+		and _view(app, "QuestionLabel").text == "A"
+		and _view(app, "RemainingLabel").text == "1장 남음",
+		"Main Result: AGAIN 카드만 모아 다시 학습"
+	)
 	check(
 		_view(app, "CardStatusLabel").text == "LEARNING"
 		and _view(app, "WrongTally").wrong_count == 1
@@ -848,9 +886,9 @@ func run_tests() -> void:
 	check(
 		_view(app, "StudyFlow").visible
 		and not _view(app, "CardEditorView").visible
-		and _view(app, "QuestionLabel").text == "Study updated"
-		and _view(app, "AnswerLabel").text == "Updated answer"
-		and _view(app, "AnswerScroll").visible
+		and _view(study_card_content, "QuestionLabel").text == "Study updated"
+		and _view(study_card_content, "AnswerLabel").text == "Updated answer"
+		and _view(study_card_content, "AnswerScroll").visible
 		and _view(app, "RemainingLabel").text == "2장 남음",
 		"Main Study Edit: 저장 후 같은 카드·뒷면·학습 위치로 복귀"
 	)
@@ -872,7 +910,7 @@ func run_tests() -> void:
 	app._reset_study_input_lock()
 	_view(app, "GoodButton").pressed.emit()
 	check(
-		_view(app, "QuestionLabel").text == "Study keep"
+		_view(study_card_content, "QuestionLabel").text == "Study keep"
 		and _view(app, "RemainingLabel").text == "1장 남음",
 		"Main Study Edit: 수정 후 기존 세션의 다음 카드 계속 학습"
 	)
@@ -882,11 +920,42 @@ func run_tests() -> void:
 	_view(app, "DiscardChangesButton").pressed.emit()
 	check(
 		_view(app, "StudyFlow").visible
-		and _view(app, "QuestionLabel").text == "Study keep"
-		and not _view(app, "AnswerScroll").visible
+		and _view(study_card_content, "QuestionLabel").text == "Study keep"
+		and not _view(study_card_content, "AnswerScroll").visible
 		and DeckParser.parse(DeckStorage.read_deck(STUDY_EDIT_DECK))[1].question
 		== "Study keep",
 		"Main Study Edit: 변경사항 폐기 후 같은 카드 앞면으로 복귀"
+	)
+	app._reset_study_input_lock()
+	_view(app, "AgainButton").pressed.emit()
+	var indexed_result_rows := _view(app, "ResultRows") as VBoxContainer
+	check(
+		_view(app, "StudyResultView").visible
+		and _view(app, "ResultGoodCountLabel").text == "1"
+		and _view(app, "ResultAgainCountLabel").text == "1"
+		and _view(indexed_result_rows.get_child(0), "QuestionLabel").text
+		== "Study updated"
+		and _view(indexed_result_rows.get_child(1), "OutcomeLabel").text
+		== "AGAIN",
+		"Main Result: 편집한 카드와 판정을 indexed 학습 결과에 반영"
+	)
+	_view(app, "RetryAgainButton").pressed.emit()
+	check(
+		_view(study_card_content, "QuestionLabel").text == "Study keep"
+		and _view(app, "RemainingLabel").text == "1장 남음",
+		"Main Result: 설정 학습에서도 AGAIN 카드의 원본 index로 재시작"
+	)
+	(_view(app, "CardFrame") as StudyGestureSurface).swiped.emit(
+		StudyGestureSurface.SKIP
+	)
+	check(
+		_view(app, "StudyResultView").visible
+		and _view(app, "ResultSkipCountLabel").text == "1"
+		and _view(app, "ResultAgainCountLabel").text == "0"
+		and _view(app, "RetryAgainButton").disabled
+		and _view(_view(app, "ResultRows").get_child(0), "OutcomeLabel").text
+		== "SKIP",
+		"Main Result: SKIP 판정 표시 및 AGAIN이 없으면 재학습 비활성화"
 	)
 
 	app.queue_free()
