@@ -159,6 +159,7 @@ func _test_app_settings_round_trip() -> void:
 	settings.last_deck_file = "영어단어.md"
 	settings.deck_dir = "user://test-decks"
 	settings.shuffle_study = true
+	settings.deck_order = ["회화.md", "영어단어.md"]
 
 	var restored := AppSettings.from_json(settings.to_json())
 
@@ -173,6 +174,10 @@ func _test_app_settings_round_trip() -> void:
 	check(
 		restored.shuffle_study,
 		"설정: 학습 순서 직렬화 왕복"
+	)
+	check(
+		restored.deck_order == ["회화.md", "영어단어.md"],
+		"설정: 덱 표시 순서 직렬화 왕복"
 	)
 
 
@@ -191,12 +196,21 @@ func _test_app_settings_defaults() -> void:
 		not empty.shuffle_study,
 		"설정: 학습 순서 기본값은 Sequential"
 	)
+	check(empty.deck_order.is_empty(), "설정: 덱 표시 순서 기본값은 비어 있음")
+	var filtered := AppSettings.from_json(
+		'{"DeckOrder":["B.md",3,"","B.md","A.md"]}'
+	)
+	check(
+		filtered.deck_order == ["B.md", "A.md"],
+		"설정: 덱 표시 순서의 빈 값·중복·잘못된 타입 제거"
+	)
 
 	var malformed := AppSettings.from_json("{깨진 json")
 	check(
 		malformed.last_deck_file.is_empty()
 		and malformed.deck_dir.is_empty()
-		and not malformed.shuffle_study,
+		and not malformed.shuffle_study
+		and malformed.deck_order.is_empty(),
 		"설정: 깨진 JSON은 모든 값을 기본값으로 복구"
 	)
 
