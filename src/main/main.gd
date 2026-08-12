@@ -11,6 +11,12 @@ enum CardEditorOrigin {
 	CARD_LIST,
 	NEW_DECK,
 	STUDY,
+	CARD_DETAIL,
+}
+
+enum CardDetailOrigin {
+	CARD_LIST,
+	STUDY_RESULT,
 }
 
 enum StudyOutcome {
@@ -90,8 +96,8 @@ const STUDY_RESULT_ROW_SCENE := preload("res://src/main/study_result_row.tscn")
 @onready var create_deck_input: LineEdit = $CreateDeckOverlay/CreateDeckPanel/Margin/Content/CreateDeckInput
 @onready var create_deck_error_label: Label = $CreateDeckOverlay/CreateDeckPanel/Margin/Content/CreateDeckErrorLabel
 @onready var study_ready_view: VBoxContainer = $Margin/Page/StudyReadyView
-@onready var ready_overview: VBoxContainer = $Margin/Page/StudyReadyView/DeckStack/DeckCover/Margin/OverviewContent
-@onready var new_study_content: VBoxContainer = $Margin/Page/StudyReadyView/DeckStack/DeckCover/Margin/NewStudyContent
+@onready var ready_overview: VBoxContainer = $Margin/Page/StudyReadyView/DeckStage/DeckStack/DeckCover/Margin/OverviewContent
+@onready var new_study_content: VBoxContainer = $Margin/Page/StudyReadyView/DeckStage/DeckStack/DeckCover/Margin/NewStudyContent
 @onready var ready_deck_name_label: Label = ready_overview.get_node("ReadyDeckNameLabel")
 @onready var setup_deck_name_label: Label = new_study_content.get_node("SetupDeckNameLabel")
 @onready var ready_total_count_label: Label = ready_overview.get_node("Stats/Total/ReadyTotalCountLabel")
@@ -109,22 +115,33 @@ const STUDY_RESULT_ROW_SCENE := preload("res://src/main/study_result_row.tscn")
 @onready var card_list_deck_label: Label = $Margin/Page/CardListView/Header/CardListDeckLabel
 @onready var card_list_status_label: Label = $Margin/Page/CardListView/CardListStatusLabel
 @onready var card_rows: VBoxContainer = $Margin/Page/CardListView/CardListScroll/CardRows
+@onready var card_detail_view: VBoxContainer = $Margin/Page/CardDetailView
+@onready var card_detail_surface: PanelContainer = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame
+@onready var card_detail_deck_label: Label = $Margin/Page/CardDetailView/Header/CardDetailDeckLabel
+@onready var detail_card_properties: HBoxContainer = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailCardProperties
+@onready var detail_wrong_tally: WrongTallyView = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailCardProperties/DetailWrongTally
+@onready var detail_status_label: Label = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailCardProperties/DetailStatusBadge/Margin/DetailStatusLabel
+@onready var detail_question_scroll: ScrollContainer = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailQuestionScroll
+@onready var detail_question_label: Label = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailQuestionScroll/DetailQuestionLabel
+@onready var detail_answer_scroll: ScrollContainer = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailAnswerScroll
+@onready var detail_answer_label: Label = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailAnswerScroll/DetailAnswerLabel
+@onready var edit_card_from_detail_button: Button = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardOverlay/EditCardFromDetailButton
 @onready var card_editor_view: VBoxContainer = $Margin/Page/CardEditorView
 @onready var card_editor_title: Label = $Margin/Page/CardEditorView/Header/CardEditorTitle
 @onready var delete_card_button: Button = $Margin/Page/CardEditorView/Header/DeleteCardButton
-@onready var wrong_minus_button: Button = $Margin/Page/CardEditorView/CardEditorProperties/WrongCountControls/WrongMinusButton
-@onready var editor_wrong_count_label: Label = $Margin/Page/CardEditorView/CardEditorProperties/WrongCountControls/EditorWrongCountLabel
-@onready var wrong_plus_button: Button = $Margin/Page/CardEditorView/CardEditorProperties/WrongCountControls/WrongPlusButton
-@onready var reset_card_progress_button: Button = $Margin/Page/CardEditorView/CardEditorProperties/ResetCardProgressButton
-@onready var card_status_option: OptionButton = $Margin/Page/CardEditorView/CardEditorProperties/CardStatusOption
-@onready var card_question_input: LineEdit = $Margin/Page/CardEditorView/CardQuestionInput
-@onready var card_answer_input: TextEdit = $Margin/Page/CardEditorView/CardAnswerInput
-@onready var card_editor_error_label: Label = $Margin/Page/CardEditorView/CardEditorErrorLabel
+@onready var wrong_minus_button: Button = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls/WrongMinusButton
+@onready var editor_wrong_count_label: Label = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls/EditorWrongCountLabel
+@onready var wrong_plus_button: Button = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls/WrongPlusButton
+@onready var reset_card_progress_button: Button = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/ResetCardProgressButton
+@onready var card_status_option: OptionButton = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/CardStatusOption
+@onready var card_question_input: LineEdit = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardQuestionInput
+@onready var card_answer_input: TextEdit = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardAnswerInput
+@onready var card_editor_error_label: Label = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorErrorLabel
 @onready var card_delete_confirmation_overlay: Control = $CardDeleteConfirmationOverlay
 @onready var discard_card_changes_overlay: Control = $DiscardCardChangesOverlay
 @onready var study_flow: VBoxContainer = $Margin/Page/StudyFlow
 @onready var deck_label: Label = $Margin/Page/StudyFlow/Header/DeckLabel
-@onready var edit_study_card_button: Button = $Margin/Page/StudyFlow/Header/EditStudyCardButton
+@onready var edit_study_card_button: Button = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardOverlay/EditStudyCardButton
 @onready var remaining_label: Label = $Margin/Page/StudyFlow/Header/RemainingLabel
 @onready var study_progress_bar: ProgressBar = $Margin/Page/StudyFlow/StudyProgressBar
 @onready var study_gesture_surface: StudyGestureSurface = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame
@@ -170,6 +187,9 @@ var _editing_original_wrong_count := 0
 var _editing_original_status: CardStatus.Value = CardStatus.Value.NEW
 var _editing_wrong_count := 0
 var _card_editor_origin: CardEditorOrigin = CardEditorOrigin.CARD_LIST
+var _card_detail_origin: CardDetailOrigin = CardDetailOrigin.CARD_LIST
+var _card_detail_index := -1
+var _card_detail_result_index := -1
 var _study_edit_source_index := -1
 var _study_edit_return_show_answer := false
 var _study_input_locked := false
@@ -230,6 +250,11 @@ func _ready() -> void:
 		_return_to_ready_from_card_list
 	)
 	$Margin/Page/CardListView/AddCardButton.pressed.connect(_on_add_card_pressed)
+	$Margin/Page/CardDetailView/Header/BackFromCardDetailButton.pressed.connect(
+		_close_card_detail
+	)
+	card_detail_surface.tapped.connect(_on_card_detail_tapped)
+	edit_card_from_detail_button.pressed.connect(_on_edit_card_from_detail_pressed)
 	$Margin/Page/CardEditorView/Header/CancelCardEditButton.pressed.connect(
 		_request_close_card_editor
 	)
@@ -326,6 +351,9 @@ func show_library() -> void:
 	_editing_deck_file = ""
 	_editing_cards.clear()
 	_card_editor_origin = CardEditorOrigin.CARD_LIST
+	_card_detail_origin = CardDetailOrigin.CARD_LIST
+	_card_detail_index = -1
+	_card_detail_result_index = -1
 	_study_edit_source_index = -1
 	_study_edit_return_show_answer = false
 	_menu_deck_file = ""
@@ -340,6 +368,7 @@ func show_library() -> void:
 	library_container.visible = true
 	study_ready_view.visible = false
 	card_list_view.visible = false
+	card_detail_view.visible = false
 	card_editor_view.visible = false
 	study_flow.visible = false
 	study_container.visible = false
@@ -365,6 +394,7 @@ func show_study_ready(deck_file: String) -> bool:
 	deck_context_menu.hide()
 	library_container.visible = false
 	card_list_view.visible = false
+	card_detail_view.visible = false
 	card_editor_view.visible = false
 	study_flow.visible = false
 	study_ready_view.visible = true
@@ -416,6 +446,7 @@ func _start_cards(
 	library_container.visible = false
 	study_ready_view.visible = false
 	card_list_view.visible = false
+	card_detail_view.visible = false
 	card_editor_view.visible = false
 	study_flow.visible = true
 	_restart_session()
@@ -542,6 +573,7 @@ func _open_card_list(deck_file: String) -> bool:
 	library_container.hide()
 	study_ready_view.hide()
 	study_flow.hide()
+	card_detail_view.hide()
 	card_editor_view.hide()
 	card_list_view.show()
 	return true
@@ -557,17 +589,120 @@ static func _copy_cards(cards: Array[FlashCard]) -> Array[FlashCard]:
 func _refresh_card_rows() -> void:
 	for child in card_rows.get_children():
 		child.free()
+	var progress := DeckStorage.load_progress(_editing_deck_file)
 	for index in _editing_cards.size():
 		var row := CARD_LIST_ROW_SCENE.instantiate() as CardListRow
 		card_rows.add_child(row)
-		row.setup(index, _editing_cards[index])
+		var card := _editing_cards[index]
+		row.setup(
+			index,
+			card,
+			progress.get_wrong_count(card.question),
+			progress.get_status(card.question)
+		)
 		row.selected.connect(_on_card_row_selected)
 
 
 func _on_card_row_selected(index: int) -> void:
 	if index < 0 or index >= _editing_cards.size():
 		return
-	_open_card_editor(index)
+	var card := _editing_cards[index]
+	_show_card_detail(
+		card,
+		DeckStorage.load_progress(_editing_deck_file),
+		index,
+		CardDetailOrigin.CARD_LIST
+	)
+
+
+func _show_card_detail(
+	card: FlashCard,
+	progress: Progress,
+	deck_index: int,
+	origin: CardDetailOrigin,
+	result_index: int = -1
+) -> void:
+	_card_detail_origin = origin
+	_card_detail_index = deck_index
+	_card_detail_result_index = result_index
+	card_detail_deck_label.text = DeckNaming.display_name(
+		_editing_deck_file if not _editing_deck_file.is_empty() else _deck_file
+	)
+	_render_card_detail(card, progress)
+	edit_card_from_detail_button.visible = (
+		deck_index >= 0
+		and deck_index < _editing_cards.size()
+		and DeckStorage.deck_exists(_editing_deck_file)
+	)
+	($Margin/Page/CardDetailView/Header/BackFromCardDetailButton as Button).text = (
+		"← 학습 결과"
+		if origin == CardDetailOrigin.STUDY_RESULT
+		else "← 카드 목록"
+	)
+	library_container.hide()
+	study_ready_view.hide()
+	card_list_view.hide()
+	card_editor_view.hide()
+	study_flow.hide()
+	card_detail_view.show()
+
+
+func _render_card_detail(card: FlashCard, progress: Progress) -> void:
+	detail_question_label.text = card.question
+	detail_answer_label.text = card.answer
+	detail_wrong_tally.set_count(progress.get_wrong_count(card.question))
+	detail_status_label.text = card_status_text(progress.get_status(card.question))
+	detail_question_scroll.scroll_vertical = 0
+	detail_answer_scroll.scroll_vertical = 0
+	_set_card_detail_answer_visible(false)
+
+
+func _on_card_detail_tapped() -> void:
+	var show_answer := not detail_answer_scroll.visible
+	card_detail_surface.flip(
+		_set_card_detail_answer_visible.bind(show_answer)
+	)
+
+
+func _set_card_detail_answer_visible(visible: bool) -> void:
+	detail_answer_scroll.visible = visible
+	detail_card_properties.visible = visible
+	if visible:
+		detail_question_scroll.scroll_vertical = 0
+		detail_question_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		detail_question_scroll.custom_minimum_size.y = 150.0
+		detail_question_scroll.size_flags_vertical = Control.SIZE_FILL
+		detail_question_label.max_lines_visible = 2
+		detail_question_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		detail_question_label.add_theme_color_override(
+			"font_color",
+			Color(0.56, 0.56, 0.56, 1)
+		)
+	else:
+		detail_question_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		detail_question_scroll.custom_minimum_size.y = 0.0
+		detail_question_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		detail_question_label.max_lines_visible = -1
+		detail_question_label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+		detail_question_label.remove_theme_color_override("font_color")
+
+
+func _on_edit_card_from_detail_pressed() -> void:
+	if _card_detail_index < 0 or _card_detail_index >= _editing_cards.size():
+		return
+	_card_editor_origin = CardEditorOrigin.CARD_DETAIL
+	_open_card_editor(_card_detail_index)
+
+
+func _close_card_detail() -> void:
+	card_detail_view.hide()
+	if _card_detail_origin == CardDetailOrigin.STUDY_RESULT:
+		study_flow.show()
+		_show_study_results()
+	else:
+		card_list_view.show()
+	_card_detail_index = -1
+	_card_detail_result_index = -1
 
 
 func _on_add_card_pressed() -> void:
@@ -670,13 +805,17 @@ func _open_card_editor(index: int) -> void:
 			if _card_editor_origin == CardEditorOrigin.STUDY
 			else "카드 편집"
 		)
-		delete_card_button.visible = _card_editor_origin == CardEditorOrigin.CARD_LIST
+		delete_card_button.visible = (
+			_card_editor_origin == CardEditorOrigin.CARD_LIST
+			or _card_editor_origin == CardEditorOrigin.CARD_DETAIL
+		)
 	_editing_wrong_count = _editing_original_wrong_count
 	_select_card_editor_status(_editing_original_status)
 	_update_card_editor_learning_fields()
 	card_question_input.text = _editing_original_question
 	card_answer_input.text = _editing_original_answer
 	card_list_view.hide()
+	card_detail_view.hide()
 	card_editor_view.show()
 	card_question_input.call_deferred("grab_focus")
 
@@ -749,6 +888,7 @@ func _on_discard_card_changes_confirmed() -> void:
 func _close_card_editor_without_save() -> void:
 	var return_to_study := _card_editor_origin == CardEditorOrigin.STUDY
 	var return_to_library := _card_editor_origin == CardEditorOrigin.NEW_DECK
+	var return_to_detail := _card_editor_origin == CardEditorOrigin.CARD_DETAIL
 	var restore_answer := _study_edit_return_show_answer
 	card_delete_confirmation_overlay.hide()
 	discard_card_changes_overlay.hide()
@@ -763,6 +903,14 @@ func _close_card_editor_without_save() -> void:
 	elif return_to_library:
 		card_list_view.hide()
 		show_library()
+	elif return_to_detail:
+		card_list_view.hide()
+		if _card_detail_index >= 0 and _card_detail_index < _editing_cards.size():
+			_render_card_detail(
+				_editing_cards[_card_detail_index],
+				DeckStorage.load_progress(_editing_deck_file)
+			)
+		card_detail_view.show()
 	else:
 		card_list_view.show()
 	_editing_card_index = -1
@@ -828,10 +976,31 @@ func _on_save_card_pressed() -> void:
 		_editing_cards = updated
 		if not progress_saved:
 			push_warning("Card progress save failed during study edit")
-		_close_card_editor_without_save()
-		return
+			_close_card_editor_without_save()
+			return
+	elif (
+		_card_editor_origin == CardEditorOrigin.CARD_DETAIL
+		and _card_detail_origin == CardDetailOrigin.STUDY_RESULT
+		and _card_detail_result_index >= 0
+		and _card_detail_result_index < _session_cards.size()
+	):
+		var updated_result_card := updated[_editing_card_index]
+		_session_cards[_card_detail_result_index] = updated_result_card
+		if (
+			_card_detail_result_index < _active_card_indices.size()
+			and _active_card_indices[_card_detail_result_index] >= 0
+			and _active_card_indices[_card_detail_result_index] < _source_cards.size()
+		):
+			_source_cards[_active_card_indices[_card_detail_result_index]] = (
+				updated_result_card
+			)
+		_progress = progress
+		_ready_deck_file = _editing_deck_file
+		_ready_cards = _copy_cards(updated)
+		_ready_deck_hash = updated_markdown.hash()
 
-	DeckStorage.delete_study_resume(_editing_deck_file)
+	if _card_editor_origin != CardEditorOrigin.STUDY:
+		DeckStorage.delete_study_resume(_editing_deck_file)
 	_editing_cards = updated
 	if creating_deck:
 		_card_editor_origin = CardEditorOrigin.CARD_LIST
@@ -877,6 +1046,8 @@ func _on_card_delete_confirmed() -> void:
 	card_delete_confirmation_overlay.hide()
 	if _editing_card_index < 0 or _editing_card_index >= _editing_cards.size():
 		return
+	var deleting_from_detail := _card_editor_origin == CardEditorOrigin.CARD_DETAIL
+	var detail_origin := _card_detail_origin
 
 	var deleted_question := _editing_cards[_editing_card_index].question
 	var updated := _copy_cards(_editing_cards)
@@ -896,6 +1067,25 @@ func _on_card_delete_confirmed() -> void:
 	var progress_saved := DeckStorage.save_progress(_editing_deck_file, progress)
 	DeckStorage.delete_study_resume(_editing_deck_file)
 	_editing_cards = updated
+	if deleting_from_detail:
+		card_editor_view.hide()
+		card_detail_view.hide()
+		_editing_card_index = -1
+		_card_editor_origin = CardEditorOrigin.CARD_LIST
+		_card_detail_index = -1
+		_card_detail_result_index = -1
+		_refresh_card_rows()
+		if detail_origin == CardDetailOrigin.STUDY_RESULT:
+			study_flow.show()
+			_show_study_results()
+		else:
+			card_list_view.show()
+		_show_card_list_status(
+			"카드 삭제 완료"
+			if progress_saved
+			else "카드는 삭제했지만 학습 기록을 저장하지 못했습니다."
+		)
+		return
 	_close_card_editor_without_save()
 	_refresh_card_rows()
 	_show_card_list_status(
@@ -1182,6 +1372,10 @@ func handle_back_request() -> bool:
 
 	if card_editor_view.visible:
 		_request_close_card_editor()
+		return true
+
+	if card_detail_view.visible:
+		_close_card_detail()
 		return true
 
 	if card_list_view.visible:
@@ -1589,7 +1783,8 @@ func _show_study_results() -> void:
 
 		var row := STUDY_RESULT_ROW_SCENE.instantiate() as StudyResultRow
 		result_rows.add_child(row)
-		row.setup(_session_cards[index], study_outcome_text(outcome))
+		row.setup(index, _session_cards[index], study_outcome_text(outcome))
+		row.selected.connect(_on_result_card_selected)
 
 	result_good_count_label.text = str(good_count)
 	result_again_count_label.text = str(again_count)
@@ -1601,6 +1796,44 @@ func _show_study_results() -> void:
 		else "AGAIN 카드 다시 학습"
 	)
 	(result_rows.get_parent() as ScrollContainer).scroll_vertical = 0
+
+
+func _on_result_card_selected(result_index: int) -> void:
+	if result_index < 0 or result_index >= _session_cards.size():
+		return
+
+	var card := _session_cards[result_index]
+	var deck_index := -1
+	_editing_deck_file = ""
+	_editing_cards.clear()
+	if DeckStorage.deck_exists(_deck_file):
+		_editing_deck_file = _deck_file
+		_editing_cards = _copy_cards(
+			DeckParser.parse(DeckStorage.read_deck(_deck_file))
+		)
+		if (
+			result_index < _active_card_indices.size()
+			and _active_card_indices[result_index] >= 0
+			and _active_card_indices[result_index] < _editing_cards.size()
+		):
+			deck_index = _active_card_indices[result_index]
+		else:
+			for index in _editing_cards.size():
+				var deck_card := _editing_cards[index]
+				if (
+					deck_card.question == card.question
+					and deck_card.answer == card.answer
+				):
+					deck_index = index
+					break
+
+	_show_card_detail(
+		card,
+		_progress,
+		deck_index,
+		CardDetailOrigin.STUDY_RESULT,
+		result_index
+	)
 
 
 static func study_outcome_text(outcome: StudyOutcome) -> String:
@@ -1627,15 +1860,22 @@ func _set_answer_visible(visible: bool) -> void:
 	answer_scroll.visible = visible
 	card_properties.visible = visible
 	if visible:
+		question_scroll.scroll_vertical = 0
+		question_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 		question_scroll.custom_minimum_size.y = 150.0
 		question_scroll.size_flags_vertical = Control.SIZE_FILL
+		question_label.max_lines_visible = 2
+		question_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		question_label.add_theme_color_override(
 			"font_color",
 			Color(0.56, 0.56, 0.56, 1)
 		)
 	else:
+		question_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 		question_scroll.custom_minimum_size.y = 0.0
 		question_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		question_label.max_lines_visible = -1
+		question_label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 		question_label.remove_theme_color_override("font_color")
 	study_actions.show()
 

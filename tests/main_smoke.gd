@@ -51,6 +51,7 @@ func run_tests() -> void:
 	app.auto_start = false
 	add_child(app)
 	(_view(app, "CardFrame") as StudyGestureSurface).animations_enabled = false
+	_view(app, "CardDetailFrame").set("animations_enabled", false)
 	app.show_library()
 
 	check(_view(app, "LibraryContainer").visible, "MVP: 덱 목록 화면 표시")
@@ -279,15 +280,20 @@ func run_tests() -> void:
 		"Main Ready: 학습 범위와 카드 순서 설정 표시"
 	)
 	var scope_option := _view(app, "StudyScopeOption") as OptionButton
+	var order_option := _view(app, "StudyOrderOption") as OptionButton
 	var dropdown_style := scope_option.get_theme_stylebox("normal") as StyleBoxFlat
+	var order_dropdown_style := order_option.get_theme_stylebox("normal") as StyleBoxFlat
 	var dropdown_popup := scope_option.get_popup()
 	var popup_style := dropdown_popup.get_theme_stylebox("panel") as StyleBoxFlat
 	check(
 		dropdown_style != null
+		and order_dropdown_style != null
 		and dropdown_style.bg_color == Color.WHITE
 		and dropdown_style.border_color == Color.BLACK
+		and dropdown_style.get_content_margin(SIDE_LEFT) == 22.0
+		and order_dropdown_style.get_content_margin(SIDE_LEFT) == 22.0
 		and scope_option.get_theme_color("font_color") == Color.BLACK,
-		"Main Ready: 새 학습 dropdown을 흰 배경·검은 글씨·검은 테두리로 표시"
+		"Main Ready: 새 학습 dropdown에 고대비 스타일과 왼쪽 안쪽 여백 적용"
 	)
 	check(
 		popup_style != null
@@ -302,6 +308,33 @@ func run_tests() -> void:
 		and _view(app, "BackCardFar") != null
 		and _view(app, "BackCardNear") != null,
 		"Main Ready: 카드 뭉치 위에 덱 커버를 씌운 프레임 표시"
+	)
+	var ready_deck_stage := _view(app, "DeckStage") as AspectRatioContainer
+	var ready_deck_stack := _view(app, "DeckStack") as Control
+	check(
+		is_equal_approx(ready_deck_stage.ratio, 2.0 / 3.0)
+		and ready_deck_stage.stretch_mode == AspectRatioContainer.STRETCH_FIT
+		and ready_deck_stack.get_parent() == ready_deck_stage,
+		"Main Ready: 덱 상세와 학습 설정 프레임을 화면 안의 2:3 카드로 유지"
+	)
+	var ready_action_buttons: Array[Button] = [
+		_view(app, "ContinueStudyButton") as Button,
+		_view(app, "OpenStudySetupButton") as Button,
+		_view(app, "ManageCardsButton") as Button,
+		_view(app, "StartStudyButton") as Button,
+		_view(app, "CancelStudySetupButton") as Button,
+	]
+	var ready_buttons_are_uniform := true
+	for button in ready_action_buttons:
+		if (
+			button.get_theme_font_size("font_size") != 20
+			or button.custom_minimum_size.y != 72.0
+		):
+			ready_buttons_are_uniform = false
+			break
+	check(
+		ready_buttons_are_uniform,
+		"Main Ready: 덱 상세와 학습 설정 버튼의 높이·font 크기 통일"
 	)
 	check(
 		_view(app, "OverviewContent").visible
@@ -473,7 +506,11 @@ func run_tests() -> void:
 	check(_view(app, "DeckLabel").text == "__gd_main", "Main: 덱 이름 표시")
 	check(
 		_view(app, "EditStudyCardButton").visible
-		and _view(app, "EditStudyCardButton").custom_minimum_size == Vector2(88, 60),
+		and _view(app, "EditStudyCardButton").custom_minimum_size == Vector2(64, 64)
+		and _view(app, "EditStudyCardButton").text == "✎"
+		and _view(app, "CardFrame").is_ancestor_of(
+			_view(app, "EditStudyCardButton")
+		),
 		"Main Study Edit: 저장된 덱은 모바일 크기의 현재 카드 편집 버튼 표시"
 	)
 	check(_view(app, "QuestionLabel").text == "A", "MVP: 첫 질문 표시")
@@ -535,7 +572,7 @@ func run_tests() -> void:
 		and _view(app, "SkipHint").text == "↑  SKIP"
 		and _view(app, "PreviousHint").text == "↓  PREV"
 		and _view(app, "GestureHints").get_parent().name == "CardStage"
-		and _view(app, "GestureHints").show_behind_parent
+		and _view(app, "GestureHints").z_index < _view(app, "CardFrame").z_index
 		and StudyGestureSurface.HINT_MIN_SCALE < 1.0
 		and StudyGestureSurface.HINT_MIN_ALPHA < 1.0
 		and StudyGestureSurface.HINT_PULL_PADDING > 0.0
@@ -549,6 +586,20 @@ func run_tests() -> void:
 		and not _view(app, "PreviousHint").visible,
 		"Main Study: 카드 뒤 빈 공간에만 drag 방향 도움말 준비"
 	)
+	var gesture_surface := _view(app, "CardFrame") as StudyGestureSurface
+	gesture_surface._show_horizontal_preview(-StudyGestureSurface.DRAG_THRESHOLD)
+	var swipe_feedback_style := (
+		_view(app, "SwipeFeedback").get_theme_stylebox("panel") as StyleBoxFlat
+	)
+	check(
+		_view(app, "SwipeFeedback").visible
+		and swipe_feedback_style != null
+		and swipe_feedback_style.bg_color == Color(0.06, 0.06, 0.06, 1)
+		and _view(app, "AgainHint").get_theme_color("font_color")
+		== StudyGestureSurface.HINT_INVERTED_COLOR,
+		"Main Study: AGAIN·GOOD swipe 중 카드 뒤 배경과 안내를 반전"
+	)
+	gesture_surface._reset_visual()
 	check(
 		_view(app, "LibraryHeading").get_theme_color("font_color") == Color.BLACK,
 		"MVP 스타일: 모든 Label 글자는 검은색"
@@ -604,13 +655,18 @@ func run_tests() -> void:
 	)
 	check(
 		_view(app, "QuestionScroll").custom_minimum_size.y == 150.0
-		and _view(app, "QuestionScroll").size_flags_vertical == Control.SIZE_FILL,
-		"Main Study: 답 공개 후 질문 영역을 compact header 높이로 축소"
+		and _view(app, "QuestionScroll").size_flags_vertical == Control.SIZE_FILL
+		and _view(app, "QuestionScroll").vertical_scroll_mode
+		== ScrollContainer.SCROLL_MODE_DISABLED
+		and _view(app, "QuestionLabel").max_lines_visible == 2
+		and _view(app, "QuestionLabel").text_overrun_behavior
+		== TextServer.OVERRUN_TRIM_ELLIPSIS,
+		"Main Study: 뒷면 질문을 두 줄 말줄임표로 고정하고 scroll 제거"
 	)
 	check(
 		_view(app, "Actions").visible
-		and _view(app, "AgainButton").text == "다시 보기"
-		and _view(app, "GoodButton").text == "알겠음",
+		and _view(app, "AgainButton").text == "AGAIN"
+		and _view(app, "GoodButton").text == "GOOD",
 		"Main Study: 답 공개 후 자기평가 버튼 유지"
 	)
 	(_view(app, "CardFrame") as StudyGestureSurface).tapped.emit()
@@ -619,6 +675,11 @@ func run_tests() -> void:
 		and not _view(app, "CardProperties").visible
 		and _view(app, "QuestionScroll").size_flags_vertical
 		== Control.SIZE_EXPAND_FILL
+		and _view(app, "QuestionScroll").vertical_scroll_mode
+		== ScrollContainer.SCROLL_MODE_AUTO
+		and _view(app, "QuestionLabel").max_lines_visible == -1
+		and _view(app, "QuestionLabel").text_overrun_behavior
+		== TextServer.OVERRUN_NO_TRIMMING
 		and _view(app, "QuestionLabel").get_theme_color("font_color") == Color.BLACK,
 		"Main Study: 카드를 다시 tap하면 질문만 보는 앞면으로 복귀"
 	)
@@ -685,6 +746,28 @@ func run_tests() -> void:
 			"study_result_row.tscn"
 		),
 		"Main Result: 결과 화면과 행을 개별 편집 가능한 scene으로 분리"
+	)
+	_view(first_result_rows.get_child(0), "OpenResultCardButton").pressed.emit()
+	check(
+		_view(app, "CardDetailView").visible
+		and not _view(app, "StudyResultView").is_visible_in_tree()
+		and _view(app, "BackFromCardDetailButton").text == "← 학습 결과"
+		and _view(app, "DetailQuestionLabel").text == "A"
+		and _view(app, "EditCardFromDetailButton").visible,
+		"Main Result: 결과 목록의 카드를 선택해 카드 앞면 보기"
+	)
+	_view(app, "CardDetailFrame").emit_signal("tapped")
+	check(
+		_view(app, "DetailAnswerScroll").visible
+		and _view(app, "DetailAnswerLabel").text == "1"
+		and (_view(app, "DetailWrongTally") as WrongTallyView).wrong_count == 1
+		and _view(app, "DetailStatusLabel").text == "LEARNING",
+		"Main Result: 결과 카드에서도 뒷면과 학습 속성 확인"
+	)
+	_view(app, "BackFromCardDetailButton").pressed.emit()
+	check(
+		_view(app, "StudyResultView").visible,
+		"Main Result: 카드 보기에서 학습 결과로 복귀"
 	)
 	_view(app, "RetryAgainButton").pressed.emit()
 	check(
@@ -822,7 +905,37 @@ func run_tests() -> void:
 		and _view(app, "CardRows").get_child_count() == 2,
 		"Main Card Edit: Study Ready에서 카드 목록 진입"
 	)
-	(_view(app, "CardRows").get_child(0) as Button).pressed.emit()
+	var first_card_row := _view(app, "CardRows").get_child(0) as Button
+	check(
+		(_view(first_card_row, "ListWrongTally") as WrongTallyView).wrong_count == 3
+		and _view(first_card_row, "ListStatusLabel").text == "LEARNING",
+		"Main Card List: 카드 행에 오답 tally와 학습 속성 표시"
+	)
+	first_card_row.pressed.emit()
+	check(
+		_view(app, "CardDetailView").visible
+		and not _view(app, "CardEditorView").visible
+		and _view(app, "DetailQuestionLabel").text == "Old"
+		and not _view(app, "DetailAnswerScroll").visible
+		and not _view(app, "DetailCardProperties").visible
+		and _view(app, "EditCardFromDetailButton").visible,
+		"Main Card Detail: 목록 선택은 편집기 대신 카드 앞면 보기로 진입"
+	)
+	_view(app, "CardDetailFrame").emit_signal("tapped")
+	check(
+		_view(app, "DetailAnswerScroll").visible
+		and _view(app, "DetailAnswerLabel").text == "Answer"
+		and _view(app, "DetailCardProperties").visible
+		and (_view(app, "DetailWrongTally") as WrongTallyView).wrong_count == 3
+		and _view(app, "DetailStatusLabel").text == "LEARNING"
+		and _view(app, "DetailQuestionScroll").vertical_scroll_mode
+		== ScrollContainer.SCROLL_MODE_DISABLED
+		and _view(app, "DetailQuestionLabel").max_lines_visible == 2
+		and _view(app, "DetailQuestionLabel").text_overrun_behavior
+		== TextServer.OVERRUN_TRIM_ELLIPSIS,
+		"Main Card Detail: tap으로 뒷면·속성을 보고 질문은 두 줄 말줄임표 처리"
+	)
+	_view(app, "EditCardFromDetailButton").pressed.emit()
 	check(
 		_view(app, "CardEditorView").visible
 		and _view(app, "CardQuestionInput").text == "Old"
@@ -832,12 +945,19 @@ func run_tests() -> void:
 		== CardStatus.Value.LEARNING,
 		"Main Card Edit: 질문·답과 기존 학습 정보를 편집기에 표시"
 	)
+	var card_editor_content := _view(app, "CardEditorProperties").get_parent()
+	var card_editor_style := (
+		_view(app, "CardEditorFrame").get_theme_stylebox("panel") as StyleBoxFlat
+	)
 	check(
 		_view(app, "CardEditorProperties").get_index()
 		< _view(app, "QuestionCaption").get_index()
-		and _view(app, "CardEditorProperties").get_parent()
-		== _view(app, "CardEditorView"),
-		"Main Card Edit: 학습 정보 속성 바를 질문·답 위에 배치"
+		and card_editor_content == _view(app, "QuestionCaption").get_parent()
+		and _view(app, "CardEditorFrame").is_ancestor_of(card_editor_content)
+		and card_editor_style != null
+		and card_editor_style.bg_color == Color.WHITE
+		and card_editor_style.border_color == Color.BLACK,
+		"Main Card Edit: 질문·답·학습 정보를 카드 프레임 안에 배치"
 	)
 	_view(app, "WrongPlusButton").pressed.emit()
 	_view(app, "CardStatusOption").select(
@@ -874,6 +994,12 @@ func run_tests() -> void:
 		DeckStorage.load_study_resume(EDIT_DECK) == null,
 		"Main Card Edit: 카드 변경 시 진행 중 세션 폐기"
 	)
+	check(
+		_view(app, "CardDetailView").visible
+		and _view(app, "DetailQuestionLabel").text == "New",
+		"Main Card Detail: 편집 저장 후 갱신된 카드 보기로 복귀"
+	)
+	_view(app, "BackFromCardDetailButton").pressed.emit()
 	_view(app, "AddCardButton").pressed.emit()
 	check(
 		_view(app, "EditorWrongCountLabel").text == "0"
@@ -890,6 +1016,7 @@ func run_tests() -> void:
 		"Main Card Edit: 새 카드 추가"
 	)
 	(_view(app, "CardRows").get_child(0) as Button).pressed.emit()
+	_view(app, "EditCardFromDetailButton").pressed.emit()
 	_view(app, "WrongMinusButton").pressed.emit()
 	_view(app, "CancelCardEditButton").pressed.emit()
 	check(
@@ -901,11 +1028,13 @@ func run_tests() -> void:
 	_view(app, "CancelCardEditButton").pressed.emit()
 	_view(app, "DiscardChangesButton").pressed.emit()
 	check(
-		_view(app, "CardListView").visible
+		_view(app, "CardDetailView").visible
 		and DeckStorage.load_progress(EDIT_DECK).get_wrong_count("New") == 4,
-		"Main Card Edit: 학습 정보 변경사항 버리고 카드 목록 복귀"
+		"Main Card Edit: 학습 정보 변경사항 버리고 카드 보기 복귀"
 	)
+	_view(app, "BackFromCardDetailButton").pressed.emit()
 	(_view(app, "CardRows").get_child(2) as Button).pressed.emit()
+	_view(app, "EditCardFromDetailButton").pressed.emit()
 	_view(app, "DeleteCardButton").pressed.emit()
 	check(_view(app, "CardDeleteConfirmationOverlay").visible, "Main Card Edit: 카드 삭제 확인")
 	_view(app, "ConfirmCardDeleteButton").pressed.emit()

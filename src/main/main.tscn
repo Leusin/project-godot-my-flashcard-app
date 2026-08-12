@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://bh17ip0fnu6v3"]
+[gd_scene load_steps=17 format=3 uid="uid://bh17ip0fnu6v3"]
 
 [ext_resource type="Script" uid="uid://c6jw5vgiox3f5" path="res://src/main/main.gd" id="1_main"]
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="2_theme"]
@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" path="res://src/main/discard_card_changes_confirmation.tscn" id="13_discard"]
 [ext_resource type="PackedScene" path="res://src/main/add_deck_menu.tscn" id="14_add_menu"]
 [ext_resource type="PackedScene" path="res://src/main/create_deck_dialog.tscn" id="15_create_deck"]
+[ext_resource type="PackedScene" path="res://src/main/card_detail_view.tscn" id="16_card_detail"]
 
 [node name="Main" type="Control" unique_id=1978189679]
 layout_mode = 3
@@ -60,6 +61,10 @@ visible = false
 layout_mode = 2
 
 [node name="CardListView" parent="Margin/Page" instance=ExtResource("10_card_list")]
+visible = false
+layout_mode = 2
+
+[node name="CardDetailView" parent="Margin/Page" instance=ExtResource("16_card_detail")]
 visible = false
 layout_mode = 2
 

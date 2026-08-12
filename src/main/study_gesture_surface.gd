@@ -43,6 +43,7 @@ const FLIP_EDGE_SCALE_X := 0.035
 const FLIP_PEAK_SCALE_Y := 1.035
 const FLIP_OVERSHOOT_SCALE_X := 1.025
 const HINT_ACTIVE_COLOR := Color(0.0, 0.0, 0.0, 0.9)
+const HINT_INVERTED_COLOR := Color(1.0, 1.0, 1.0, 0.96)
 const HINT_MIN_SCALE := 0.88
 const HINT_MIN_ALPHA := 0.32
 const HINT_PULL_PADDING := 24.0
@@ -60,6 +61,8 @@ const CARD_ASPECT_RATIO := 2.0 / 3.0
 @onready var good_hint: Label = $"../GestureHints/GoodHint"
 @onready var skip_hint: Label = $"../GestureHints/SkipHint"
 @onready var previous_hint: Label = $"../GestureHints/PreviousHint"
+@onready var swipe_feedback: PanelContainer = $"../SwipeFeedback"
+@onready var edit_card_button: Button = $CardOverlay/EditStudyCardButton
 
 var input_enabled := true:
 	set(value):
@@ -239,7 +242,13 @@ func _handle_mouse_motion(event: InputEventMouseMotion) -> void:
 
 
 func _can_start_drag(at_position: Vector2) -> bool:
-	return get_global_rect().has_point(at_position)
+	return (
+		get_global_rect().has_point(at_position)
+		and not (
+			edit_card_button.visible
+			and edit_card_button.get_global_rect().has_point(at_position)
+		)
+	)
 
 
 func _begin_drag(at_position: Vector2, pointer_id: int) -> void:
@@ -320,6 +329,7 @@ func _show_horizontal_preview(horizontal_delta: float) -> void:
 		PREVIEW_MAX_ROTATION_DEGREES
 	)
 	rotation = deg_to_rad(rotation_degrees)
+	_show_swipe_feedback(clampf(absf(horizontal_delta) / DRAG_THRESHOLD, 0.0, 1.0))
 	_set_active_hint(
 		GOOD if horizontal_delta > 0.0 else AGAIN,
 		absf(horizontal_delta) / (DRAG_THRESHOLD * HINT_DRAG_DISTANCE_MULTIPLIER)
@@ -327,6 +337,7 @@ func _show_horizontal_preview(horizontal_delta: float) -> void:
 
 
 func _show_vertical_preview(vertical_delta: float) -> void:
+	_hide_swipe_feedback()
 	var max_offset := size.y * VERTICAL_PREVIEW_MAX_OFFSET_RATIO
 	var preview_offset := clampf(
 		vertical_delta * VERTICAL_PREVIEW_FOLLOW_RATIO,
@@ -358,6 +369,10 @@ func _scroll_can_consume_vertical_drag(vertical_delta: float) -> bool:
 func _play_swipe_exit(direction: int) -> void:
 	_animating = true
 	_set_animation_controls_disabled(true)
+	if direction == AGAIN or direction == GOOD:
+		_show_swipe_feedback(1.0)
+	else:
+		_hide_swipe_feedback()
 	_complete_active_hint(direction)
 	var direction_vector := action_vector(direction)
 	var exit_distance := _travel_distance(direction_vector)
@@ -418,6 +433,13 @@ func _on_swipe_exit_finished(direction: int) -> void:
 		1.0,
 		ENTER_DURATION
 	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	if direction_vector.x != 0.0:
+		_motion_tween.parallel().tween_property(
+			swipe_feedback,
+			"modulate:a",
+			0.0,
+			ENTER_DURATION
+		).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_motion_tween.tween_property(
 		self,
 		"position",
@@ -437,6 +459,7 @@ func _on_swipe_enter_finished() -> void:
 	_motion_tween = null
 	_animating = false
 	_set_active_hint(0)
+	_hide_swipe_feedback()
 	_set_animation_controls_disabled(false)
 
 
@@ -513,7 +536,10 @@ func _set_active_hint(action: int, drag_strength: float = 0.0) -> void:
 	var hint_scale := lerpf(HINT_MIN_SCALE, 1.0, reveal_strength)
 	var rest_position := _hint_rest_positions[active_hint] as Vector2
 	var entry_offset := _hint_entry_offset(action, active_hint, rest_position)
-	active_hint.add_theme_color_override("font_color", HINT_ACTIVE_COLOR)
+	active_hint.add_theme_color_override(
+		"font_color",
+		HINT_INVERTED_COLOR if action == AGAIN or action == GOOD else HINT_ACTIVE_COLOR
+	)
 	active_hint.pivot_offset = active_hint.size * 0.5
 	active_hint.position = rest_position + entry_offset * (1.0 - pull_strength)
 	active_hint.scale = Vector2(hint_scale, hint_scale)
@@ -616,6 +642,8 @@ func _fit_to_stage() -> void:
 	var card_rect := fitted_card_rect(stage.size)
 	position = card_rect.position
 	size = card_rect.size
+	swipe_feedback.position = card_rect.position
+	swipe_feedback.size = card_rect.size
 	_rest_position = position
 	pivot_offset = size * 0.5
 
@@ -629,7 +657,18 @@ func _reset_visual() -> void:
 	rotation = 0.0
 	scale = Vector2.ONE
 	modulate = Color.WHITE
+	_hide_swipe_feedback()
 	_set_active_hint(0)
+
+
+func _show_swipe_feedback(alpha: float) -> void:
+	swipe_feedback.modulate.a = clampf(alpha, 0.0, 1.0)
+	swipe_feedback.show()
+
+
+func _hide_swipe_feedback() -> void:
+	swipe_feedback.hide()
+	swipe_feedback.modulate.a = 0.0
 
 
 func _on_visibility_changed() -> void:

@@ -1,6 +1,8 @@
 class_name StudyResultRow
 extends PanelContainer
 
+signal selected(index: int)
+
 @export var good_badge_style: StyleBoxFlat
 @export var again_badge_style: StyleBoxFlat
 @export var skip_badge_style: StyleBoxFlat
@@ -9,9 +11,17 @@ extends PanelContainer
 @onready var answer_label: Label = $Margin/Content/AnswerLabel
 @onready var outcome_badge: PanelContainer = $Margin/Content/Top/OutcomeBadge
 @onready var outcome_label: Label = $Margin/Content/Top/OutcomeBadge/Margin/OutcomeLabel
+@onready var open_button: Button = $OpenResultCardButton
+
+var result_index := -1
 
 
-func setup(card: FlashCard, outcome: String) -> void:
+func _ready() -> void:
+	open_button.pressed.connect(func() -> void: selected.emit(result_index))
+
+
+func setup(index: int, card: FlashCard, outcome: String) -> void:
+	result_index = index
 	question_label.text = card.question
 	answer_label.text = (
 		"답 없음"

@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
 [ext_resource type="Script" path="res://src/main/wrong_tally.gd" id="2_tally"]
@@ -46,6 +46,15 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxSwipeFeedback"]
+bg_color = Color(0.06, 0.06, 0.06, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEditButton"]
+
 [node name="StudyFlow" type="VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -70,13 +79,6 @@ text = "덱"
 horizontal_alignment = 1
 vertical_alignment = 1
 text_overrun_behavior = 3
-
-[node name="EditStudyCardButton" type="Button" parent="Header"]
-custom_minimum_size = Vector2(88, 60)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "편집"
-tooltip_text = "현재 카드 편집"
 
 [node name="RemainingLabel" type="Label" parent="Header"]
 custom_minimum_size = Vector2(140, 60)
@@ -104,7 +106,17 @@ custom_minimum_size = Vector2(0, 540)
 layout_mode = 2
 size_flags_vertical = 3
 
+[node name="SwipeFeedback" type="PanelContainer" parent="StudyContainer/CardStage"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_right = 656.0
+offset_bottom = 984.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxSwipeFeedback")
+
 [node name="CardFrame" type="PanelContainer" parent="StudyContainer/CardStage"]
+z_index = 2
 layout_mode = 0
 offset_right = 656.0
 offset_bottom = 984.0
@@ -154,6 +166,11 @@ theme_override_font_sizes/font_size = 16
 text = "NEW"
 vertical_alignment = 1
 
+[node name="EditButtonSpacer" type="Control" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties"]
+custom_minimum_size = Vector2(64, 42)
+layout_mode = 2
+mouse_filter = 2
+
 [node name="QuestionScroll" type="ScrollContainer" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -185,8 +202,32 @@ horizontal_alignment = 0
 vertical_alignment = 0
 autowrap_mode = 2
 
+[node name="CardOverlay" type="Control" parent="StudyContainer/CardStage/CardFrame"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="EditStudyCardButton" type="Button" parent="StudyContainer/CardStage/CardFrame/CardOverlay"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -82.0
+offset_top = 18.0
+offset_right = -18.0
+offset_bottom = 82.0
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 32
+theme_override_styles/normal = SubResource("StyleBoxEditButton")
+theme_override_styles/hover = SubResource("StyleBoxEditButton")
+theme_override_styles/pressed = SubResource("StyleBoxEditButton")
+theme_override_styles/focus = SubResource("StyleBoxEditButton")
+text = "✎"
+tooltip_text = "현재 카드 편집"
+
 [node name="GestureHints" type="Control" parent="StudyContainer/CardStage"]
-show_behind_parent = true
+z_index = 1
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -275,14 +316,14 @@ custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
-text = "다시 보기"
+text = "AGAIN"
 
 [node name="GoodButton" type="Button" parent="StudyContainer/Actions"]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 22
-text = "알겠음"
+text = "GOOD"
 
 [node name="StudyResultView" parent="." instance=ExtResource("4_result")]
 visible = false

@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://src/main/study_result_row.gd" id="1_script"]
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="2_theme"]
@@ -43,6 +43,8 @@ corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxOpenCard"]
 
 [node name="StudyResultRow" type="PanelContainer"]
 custom_minimum_size = Vector2(0, 112)
@@ -102,3 +104,12 @@ theme_override_colors/font_color = Color(0.38, 0.38, 0.38, 1)
 theme_override_font_sizes/font_size = 18
 text = "답"
 text_overrun_behavior = 3
+
+[node name="OpenResultCardButton" type="Button" parent="."]
+layout_mode = 2
+focus_mode = 0
+theme_override_styles/normal = SubResource("StyleBoxOpenCard")
+theme_override_styles/hover = SubResource("StyleBoxOpenCard")
+theme_override_styles/pressed = SubResource("StyleBoxOpenCard")
+theme_override_styles/focus = SubResource("StyleBoxOpenCard")
+tooltip_text = "카드 보기"
