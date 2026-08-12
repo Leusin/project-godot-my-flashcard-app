@@ -5,6 +5,9 @@ signal swiped(direction: int)
 signal tapped
 
 @export var animations_enabled := true
+@export var action_active_style: StyleBoxFlat
+@export var again_active_color := Color.BLACK
+@export var good_active_color := Color.BLACK
 
 enum DragAxis {
 	UNDECIDED,
@@ -34,16 +37,15 @@ const ENTER_OVERSHOOT_DISTANCE := 12.0
 const ENTER_ROTATION_DEGREES := 4.0
 const ENTER_DURATION := 0.28
 const ENTER_SETTLE_DURATION := 0.08
-const FLIP_LIFT_DURATION := 0.08
-const FLIP_HALF_DURATION := 0.18
-const FLIP_OPEN_DURATION := 0.21
-const FLIP_SETTLE_DURATION := 0.08
+const FLIP_LIFT_DURATION := 0.06
+const FLIP_HALF_DURATION := 0.14
+const FLIP_OPEN_DURATION := 0.16
+const FLIP_SETTLE_DURATION := 0.06
 const FLIP_LIFT_OFFSET := 7.0
 const FLIP_EDGE_SCALE_X := 0.035
 const FLIP_PEAK_SCALE_Y := 1.035
 const FLIP_OVERSHOOT_SCALE_X := 1.025
 const HINT_ACTIVE_COLOR := Color(0.0, 0.0, 0.0, 0.9)
-const HINT_INVERTED_COLOR := Color(1.0, 1.0, 1.0, 0.96)
 const HINT_MIN_SCALE := 0.88
 const HINT_MIN_ALPHA := 0.32
 const HINT_PULL_PADDING := 24.0
@@ -57,12 +59,8 @@ const CARD_ASPECT_RATIO := 2.0 / 3.0
 @onready var good_button: Button = $"../../Actions/GoodButton"
 @onready var question_scroll: ScrollContainer = $CardMargin/CardContent/QuestionScroll
 @onready var answer_scroll: ScrollContainer = $CardMargin/CardContent/AnswerScroll
-@onready var again_hint: Label = $"../GestureHints/AgainHint"
-@onready var good_hint: Label = $"../GestureHints/GoodHint"
 @onready var skip_hint: Label = $"../GestureHints/SkipHint"
 @onready var previous_hint: Label = $"../GestureHints/PreviousHint"
-@onready var swipe_feedback: PanelContainer = $"../SwipeFeedback"
-@onready var edit_card_button: Button = $CardOverlay/EditStudyCardButton
 
 var input_enabled := true:
 	set(value):
@@ -163,11 +161,13 @@ func commit(direction: int) -> void:
 	_play_swipe_exit(direction)
 
 
-func flip(midpoint: Callable) -> void:
+func flip(midpoint: Callable, finished: Callable = Callable()) -> void:
 	if not input_enabled or _animating or not midpoint.is_valid():
 		return
 	if not animations_enabled:
 		midpoint.call()
+		if finished.is_valid():
+			finished.call()
 		return
 
 	_animating = true
@@ -193,7 +193,7 @@ func flip(midpoint: Callable) -> void:
 		Vector2(FLIP_EDGE_SCALE_X, FLIP_PEAK_SCALE_Y),
 		FLIP_HALF_DURATION
 	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	_motion_tween.finished.connect(_on_flip_midpoint.bind(midpoint))
+	_motion_tween.finished.connect(_on_flip_midpoint.bind(midpoint, finished))
 
 
 func cancel_drag() -> void:
@@ -242,13 +242,7 @@ func _handle_mouse_motion(event: InputEventMouseMotion) -> void:
 
 
 func _can_start_drag(at_position: Vector2) -> bool:
-	return (
-		get_global_rect().has_point(at_position)
-		and not (
-			edit_card_button.visible
-			and edit_card_button.get_global_rect().has_point(at_position)
-		)
-	)
+	return get_global_rect().has_point(at_position)
 
 
 func _begin_drag(at_position: Vector2, pointer_id: int) -> void:
@@ -329,15 +323,18 @@ func _show_horizontal_preview(horizontal_delta: float) -> void:
 		PREVIEW_MAX_ROTATION_DEGREES
 	)
 	rotation = deg_to_rad(rotation_degrees)
-	_show_swipe_feedback(clampf(absf(horizontal_delta) / DRAG_THRESHOLD, 0.0, 1.0))
-	_set_active_hint(
-		GOOD if horizontal_delta > 0.0 else AGAIN,
-		absf(horizontal_delta) / (DRAG_THRESHOLD * HINT_DRAG_DISTANCE_MULTIPLIER)
+	var action := GOOD if horizontal_delta > 0.0 else AGAIN
+	var feedback_strength := clampf(
+		absf(rotation_degrees) / PREVIEW_MAX_ROTATION_DEGREES,
+		0.0,
+		1.0
 	)
+	_set_active_action_button(action, feedback_strength)
+	_set_active_hint(0)
 
 
 func _show_vertical_preview(vertical_delta: float) -> void:
-	_hide_swipe_feedback()
+	_set_active_action_button(0)
 	var max_offset := size.y * VERTICAL_PREVIEW_MAX_OFFSET_RATIO
 	var preview_offset := clampf(
 		vertical_delta * VERTICAL_PREVIEW_FOLLOW_RATIO,
@@ -369,10 +366,7 @@ func _scroll_can_consume_vertical_drag(vertical_delta: float) -> bool:
 func _play_swipe_exit(direction: int) -> void:
 	_animating = true
 	_set_animation_controls_disabled(true)
-	if direction == AGAIN or direction == GOOD:
-		_show_swipe_feedback(1.0)
-	else:
-		_hide_swipe_feedback()
+	_set_active_action_button(direction if direction == AGAIN or direction == GOOD else 0)
 	_complete_active_hint(direction)
 	var direction_vector := action_vector(direction)
 	var exit_distance := _travel_distance(direction_vector)
@@ -433,13 +427,6 @@ func _on_swipe_exit_finished(direction: int) -> void:
 		1.0,
 		ENTER_DURATION
 	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	if direction_vector.x != 0.0:
-		_motion_tween.parallel().tween_property(
-			swipe_feedback,
-			"modulate:a",
-			0.0,
-			ENTER_DURATION
-		).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_motion_tween.tween_property(
 		self,
 		"position",
@@ -459,11 +446,11 @@ func _on_swipe_enter_finished() -> void:
 	_motion_tween = null
 	_animating = false
 	_set_active_hint(0)
-	_hide_swipe_feedback()
+	_set_active_action_button(0)
 	_set_animation_controls_disabled(false)
 
 
-func _on_flip_midpoint(midpoint: Callable) -> void:
+func _on_flip_midpoint(midpoint: Callable, finished: Callable) -> void:
 	_motion_tween = null
 	midpoint.call()
 	_motion_tween = create_tween()
@@ -485,14 +472,16 @@ func _on_flip_midpoint(midpoint: Callable) -> void:
 		Vector2.ONE,
 		FLIP_SETTLE_DURATION
 	).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	_motion_tween.finished.connect(_on_flip_finished)
+	_motion_tween.finished.connect(_on_flip_finished.bind(finished))
 
 
-func _on_flip_finished() -> void:
+func _on_flip_finished(finished: Callable) -> void:
 	_motion_tween = null
 	scale = Vector2.ONE
 	_animating = false
 	_set_animation_controls_disabled(false)
+	if finished.is_valid():
+		finished.call()
 
 
 func _set_animation_controls_disabled(disabled: bool) -> void:
@@ -515,7 +504,7 @@ func _set_active_hint(action: int, drag_strength: float = 0.0) -> void:
 			_hint_motion_tween = null
 		_remember_hint_rest_positions()
 		_active_hint_action = action
-		var hints: Array[Label] = [again_hint, good_hint, skip_hint, previous_hint]
+		var hints: Array[Label] = [skip_hint, previous_hint]
 		for hint in hints:
 			hint.hide()
 			if _hint_rest_positions.has(hint):
@@ -536,10 +525,7 @@ func _set_active_hint(action: int, drag_strength: float = 0.0) -> void:
 	var hint_scale := lerpf(HINT_MIN_SCALE, 1.0, reveal_strength)
 	var rest_position := _hint_rest_positions[active_hint] as Vector2
 	var entry_offset := _hint_entry_offset(action, active_hint, rest_position)
-	active_hint.add_theme_color_override(
-		"font_color",
-		HINT_INVERTED_COLOR if action == AGAIN or action == GOOD else HINT_ACTIVE_COLOR
-	)
+	active_hint.add_theme_color_override("font_color", HINT_ACTIVE_COLOR)
 	active_hint.pivot_offset = active_hint.size * 0.5
 	active_hint.position = rest_position + entry_offset * (1.0 - pull_strength)
 	active_hint.scale = Vector2(hint_scale, hint_scale)
@@ -580,10 +566,6 @@ func _complete_active_hint(action: int) -> void:
 
 func _hint_for_action(action: int) -> Label:
 	match action:
-		AGAIN:
-			return again_hint
-		GOOD:
-			return good_hint
 		SKIP:
 			return skip_hint
 		PREVIOUS:
@@ -595,7 +577,7 @@ func _hint_for_action(action: int) -> Label:
 func _remember_hint_rest_positions() -> void:
 	if not _hint_rest_positions.is_empty():
 		return
-	var hints: Array[Label] = [again_hint, good_hint, skip_hint, previous_hint]
+	var hints: Array[Label] = [skip_hint, previous_hint]
 	for hint in hints:
 		_hint_rest_positions[hint] = hint.position
 
@@ -607,16 +589,6 @@ func _hint_entry_offset(
 ) -> Vector2:
 	var stage_size := (get_parent() as Control).size
 	match action:
-		GOOD:
-			return Vector2(
-				-(rest_position.x + hint.size.x + HINT_PULL_PADDING),
-				0.0
-			)
-		AGAIN:
-			return Vector2(
-				stage_size.x - rest_position.x + HINT_PULL_PADDING,
-				0.0
-			)
 		SKIP:
 			return Vector2(
 				0.0,
@@ -642,8 +614,6 @@ func _fit_to_stage() -> void:
 	var card_rect := fitted_card_rect(stage.size)
 	position = card_rect.position
 	size = card_rect.size
-	swipe_feedback.position = card_rect.position
-	swipe_feedback.size = card_rect.size
 	_rest_position = position
 	pivot_offset = size * 0.5
 
@@ -657,18 +627,50 @@ func _reset_visual() -> void:
 	rotation = 0.0
 	scale = Vector2.ONE
 	modulate = Color.WHITE
-	_hide_swipe_feedback()
+	_set_active_action_button(0)
 	_set_active_hint(0)
 
 
-func _show_swipe_feedback(alpha: float) -> void:
-	swipe_feedback.modulate.a = clampf(alpha, 0.0, 1.0)
-	swipe_feedback.show()
+func _set_active_action_button(action: int, strength: float = 1.0) -> void:
+	var buttons: Array[Button] = [again_button, good_button]
+	for button in buttons:
+		for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+			button.remove_theme_stylebox_override(state)
+		for color_name in [
+			"font_color",
+			"font_hover_color",
+			"font_pressed_color",
+			"font_focus_color",
+			"font_hover_pressed_color",
+			"font_disabled_color",
+		]:
+			button.remove_theme_color_override(color_name)
 
-
-func _hide_swipe_feedback() -> void:
-	swipe_feedback.hide()
-	swipe_feedback.modulate.a = 0.0
+	var active_button: Button
+	if action == AGAIN:
+		active_button = again_button
+	elif action == GOOD:
+		active_button = good_button
+	else:
+		return
+	if action_active_style == null:
+		return
+	var feedback_strength := clampf(strength, 0.0, 1.0)
+	var active_color := again_active_color if action == AGAIN else good_active_color
+	var feedback_style := action_active_style.duplicate() as StyleBoxFlat
+	feedback_style.bg_color = Color.WHITE.lerp(active_color, feedback_strength)
+	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+		active_button.add_theme_stylebox_override(state, feedback_style)
+	var feedback_font_color := Color.BLACK.lerp(Color.WHITE, feedback_strength)
+	for color_name in [
+		"font_color",
+		"font_hover_color",
+		"font_pressed_color",
+		"font_focus_color",
+		"font_hover_pressed_color",
+		"font_disabled_color",
+	]:
+		active_button.add_theme_color_override(color_name, feedback_font_color)
 
 
 func _on_visibility_changed() -> void:

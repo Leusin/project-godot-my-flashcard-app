@@ -6,9 +6,9 @@ signal tapped
 @export var animations_enabled := true
 
 const CARD_ASPECT_RATIO := 2.0 / 3.0
-const FLIP_HALF_DURATION := 0.18
-const FLIP_OPEN_DURATION := 0.21
-const FLIP_SETTLE_DURATION := 0.08
+const FLIP_HALF_DURATION := 0.14
+const FLIP_OPEN_DURATION := 0.16
+const FLIP_SETTLE_DURATION := 0.06
 const FLIP_EDGE_SCALE_X := 0.035
 const FLIP_PEAK_SCALE_Y := 1.035
 const FLIP_OVERSHOOT_SCALE_X := 1.025
@@ -26,11 +26,13 @@ func _ready() -> void:
 	_fit_to_stage()
 
 
-func flip(midpoint: Callable) -> void:
+func flip(midpoint: Callable, finished: Callable = Callable()) -> void:
 	if _animating or not midpoint.is_valid():
 		return
 	if not animations_enabled:
 		midpoint.call()
+		if finished.is_valid():
+			finished.call()
 		return
 
 	_animating = true
@@ -43,7 +45,7 @@ func flip(midpoint: Callable) -> void:
 		Vector2(FLIP_EDGE_SCALE_X, FLIP_PEAK_SCALE_Y),
 		FLIP_HALF_DURATION
 	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	_flip_tween.finished.connect(_on_flip_midpoint.bind(midpoint))
+	_flip_tween.finished.connect(_on_flip_midpoint.bind(midpoint, finished))
 
 
 static func fitted_card_rect(available_size: Vector2) -> Rect2:
@@ -62,7 +64,7 @@ static func fitted_card_rect(available_size: Vector2) -> Rect2:
 	return Rect2((available_size - card_size) * 0.5, card_size)
 
 
-func _on_flip_midpoint(midpoint: Callable) -> void:
+func _on_flip_midpoint(midpoint: Callable, finished: Callable) -> void:
 	_flip_tween = null
 	midpoint.call()
 	_flip_tween = create_tween()
@@ -78,14 +80,16 @@ func _on_flip_midpoint(midpoint: Callable) -> void:
 		Vector2.ONE,
 		FLIP_SETTLE_DURATION
 	).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	_flip_tween.finished.connect(_on_flip_finished)
+	_flip_tween.finished.connect(_on_flip_finished.bind(finished))
 
 
-func _on_flip_finished() -> void:
+func _on_flip_finished(finished: Callable) -> void:
 	_flip_tween = null
 	scale = Vector2.ONE
 	_animating = false
 	tap_button.disabled = false
+	if finished.is_valid():
+		finished.call()
 
 
 func _fit_to_stage() -> void:

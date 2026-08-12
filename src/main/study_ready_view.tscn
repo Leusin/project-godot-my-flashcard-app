@@ -25,9 +25,6 @@ corner_radius_top_left = 14
 corner_radius_top_right = 14
 corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
-shadow_color = Color(0, 0, 0, 0.2)
-shadow_size = 8
-shadow_offset = Vector2(5, 7)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxProgressBackground"]
 bg_color = Color(0.88, 0.88, 0.86, 1)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
 [ext_resource type="Script" path="res://src/main/card_detail_surface.gd" id="2_surface"]
@@ -15,21 +15,6 @@ corner_radius_top_left = 14
 corner_radius_top_right = 14
 corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
-shadow_color = Color(0, 0, 0, 0.16)
-shadow_size = 7
-shadow_offset = Vector2(4, 6)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxStatusBadge"]
-bg_color = Color(0.94, 0.94, 0.92, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0, 0, 0, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty"]
 
@@ -59,10 +44,20 @@ horizontal_alignment = 1
 vertical_alignment = 1
 text_overrun_behavior = 3
 
-[node name="HeaderBalance" type="Control" parent="Header"]
-custom_minimum_size = Vector2(140, 64)
+[node name="CardDetailMenuButton" type="Button" parent="Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
-mouse_filter = 2
+focus_mode = 0
+action_mode = 0
+mouse_filter = 0
+theme_override_font_sizes/font_size = 34
+theme_override_styles/normal = SubResource("StyleBoxEmpty")
+theme_override_styles/hover = SubResource("StyleBoxEmpty")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty")
+theme_override_styles/focus = SubResource("StyleBoxEmpty")
+text = "⋮"
+tooltip_text = "카드 작업"
 
 [node name="CardDetailStage" type="Control" parent="."]
 custom_minimum_size = Vector2(0, 540)
@@ -103,31 +98,6 @@ script = ExtResource("3_tally")
 [node name="Spacer" type="Control" parent="CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailCardProperties"]
 layout_mode = 2
 size_flags_horizontal = 3
-mouse_filter = 2
-
-[node name="DetailStatusBadge" type="PanelContainer" parent="CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailCardProperties"]
-custom_minimum_size = Vector2(116, 42)
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxStatusBadge")
-
-[node name="Margin" type="MarginContainer" parent="CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailCardProperties/DetailStatusBadge"]
-layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 5
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 5
-
-[node name="DetailStatusLabel" type="Label" parent="CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailCardProperties/DetailStatusBadge/Margin"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "NEW"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="EditButtonSpacer" type="Control" parent="CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailCardProperties"]
-custom_minimum_size = Vector2(64, 42)
-layout_mode = 2
 mouse_filter = 2
 
 [node name="DetailQuestionScroll" type="ScrollContainer" parent="CardDetailStage/CardDetailFrame/CardMargin/CardContent"]
@@ -172,27 +142,3 @@ theme_override_styles/normal = SubResource("StyleBoxEmpty")
 theme_override_styles/hover = SubResource("StyleBoxEmpty")
 theme_override_styles/pressed = SubResource("StyleBoxEmpty")
 theme_override_styles/focus = SubResource("StyleBoxEmpty")
-
-[node name="CardOverlay" type="Control" parent="CardDetailStage/CardDetailFrame"]
-layout_mode = 2
-mouse_filter = 2
-
-[node name="EditCardFromDetailButton" type="Button" parent="CardDetailStage/CardDetailFrame/CardOverlay"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(64, 64)
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -82.0
-offset_top = 18.0
-offset_right = -18.0
-offset_bottom = 82.0
-grow_horizontal = 0
-theme_override_font_sizes/font_size = 32
-theme_override_styles/normal = SubResource("StyleBoxEmpty")
-theme_override_styles/hover = SubResource("StyleBoxEmpty")
-theme_override_styles/pressed = SubResource("StyleBoxEmpty")
-theme_override_styles/focus = SubResource("StyleBoxEmpty")
-text = "✎"
-tooltip_text = "카드 편집"

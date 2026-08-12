@@ -86,6 +86,14 @@ const STUDY_RESULT_ROW_SCENE := preload("res://src/main/study_result_row.tscn")
 @onready var delete_deck_button := (
 	deck_context_menu.find_child("DeleteDeckButton", true, false) as Button
 )
+@onready var card_context_menu: Control = $CardContextMenu
+@onready var card_context_menu_panel: PanelContainer = $CardContextMenu/CardContextMenuPanel
+@onready var edit_card_action_button := (
+	card_context_menu.find_child("EditCardActionButton", true, false) as Button
+)
+@onready var favorite_card_action_button := (
+	card_context_menu.find_child("FavoriteCardActionButton", true, false) as Button
+)
 @onready var rename_deck_overlay: Control = $RenameDeckOverlay
 @onready var rename_deck_input: LineEdit = $RenameDeckOverlay/RenameDeckPanel/Margin/Content/RenameDeckInput
 @onready var rename_error_label: Label = $RenameDeckOverlay/RenameDeckPanel/Margin/Content/RenameErrorLabel
@@ -120,12 +128,11 @@ const STUDY_RESULT_ROW_SCENE := preload("res://src/main/study_result_row.tscn")
 @onready var card_detail_deck_label: Label = $Margin/Page/CardDetailView/Header/CardDetailDeckLabel
 @onready var detail_card_properties: HBoxContainer = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailCardProperties
 @onready var detail_wrong_tally: WrongTallyView = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailCardProperties/DetailWrongTally
-@onready var detail_status_label: Label = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailCardProperties/DetailStatusBadge/Margin/DetailStatusLabel
 @onready var detail_question_scroll: ScrollContainer = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailQuestionScroll
 @onready var detail_question_label: Label = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailQuestionScroll/DetailQuestionLabel
 @onready var detail_answer_scroll: ScrollContainer = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailAnswerScroll
 @onready var detail_answer_label: Label = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailAnswerScroll/DetailAnswerLabel
-@onready var edit_card_from_detail_button: Button = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardOverlay/EditCardFromDetailButton
+@onready var card_detail_menu_button: Button = $Margin/Page/CardDetailView/Header/CardDetailMenuButton
 @onready var card_editor_view: VBoxContainer = $Margin/Page/CardEditorView
 @onready var card_editor_title: Label = $Margin/Page/CardEditorView/Header/CardEditorTitle
 @onready var delete_card_button: Button = $Margin/Page/CardEditorView/Header/DeleteCardButton
@@ -141,12 +148,10 @@ const STUDY_RESULT_ROW_SCENE := preload("res://src/main/study_result_row.tscn")
 @onready var discard_card_changes_overlay: Control = $DiscardCardChangesOverlay
 @onready var study_flow: VBoxContainer = $Margin/Page/StudyFlow
 @onready var deck_label: Label = $Margin/Page/StudyFlow/Header/DeckLabel
-@onready var edit_study_card_button: Button = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardOverlay/EditStudyCardButton
 @onready var remaining_label: Label = $Margin/Page/StudyFlow/Header/RemainingLabel
-@onready var study_progress_bar: ProgressBar = $Margin/Page/StudyFlow/StudyProgressBar
+@onready var study_progress_bar: ProgressBar = $StudyProgressBar
 @onready var study_gesture_surface: StudyGestureSurface = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame
 @onready var card_properties: HBoxContainer = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties
-@onready var card_status_label: Label = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties/StatusBadge/Margin/CardStatusLabel
 @onready var wrong_tally: WrongTallyView = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties/WrongTally
 @onready var question_scroll: ScrollContainer = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/QuestionScroll
 @onready var question_label: Label = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame/CardMargin/CardContent/QuestionScroll/QuestionLabel
@@ -190,6 +195,7 @@ var _card_editor_origin: CardEditorOrigin = CardEditorOrigin.CARD_LIST
 var _card_detail_origin: CardDetailOrigin = CardDetailOrigin.CARD_LIST
 var _card_detail_index := -1
 var _card_detail_result_index := -1
+var _card_menu_from_study := false
 var _study_edit_source_index := -1
 var _study_edit_return_show_answer := false
 var _study_input_locked := false
@@ -220,6 +226,9 @@ func _ready() -> void:
 	export_deck_button.pressed.connect(_on_export_pressed)
 	delete_deck_button.pressed.connect(_on_delete_pressed)
 	$DeckContextMenu/DismissContextMenuButton.pressed.connect(_on_deck_context_dismissed)
+	$CardContextMenu/DismissCardContextMenuButton.pressed.connect(_on_card_context_dismissed)
+	edit_card_action_button.pressed.connect(_on_card_context_edit_pressed)
+	favorite_card_action_button.pressed.connect(_on_card_context_favorite_pressed)
 	$RenameDeckOverlay/RenameDeckPanel/Margin/Content/Buttons/CancelRenameButton.pressed.connect(_on_rename_canceled)
 	$RenameDeckOverlay/RenameDeckPanel/Margin/Content/Buttons/ConfirmRenameButton.pressed.connect(_on_rename_confirmed)
 	rename_deck_input.text_submitted.connect(_on_rename_submitted)
@@ -254,7 +263,9 @@ func _ready() -> void:
 		_close_card_detail
 	)
 	card_detail_surface.tapped.connect(_on_card_detail_tapped)
-	edit_card_from_detail_button.pressed.connect(_on_edit_card_from_detail_pressed)
+	card_detail_menu_button.pressed.connect(
+		_on_card_context_requested.bind(card_detail_menu_button, false)
+	)
 	$Margin/Page/CardEditorView/Header/CancelCardEditButton.pressed.connect(
 		_request_close_card_editor
 	)
@@ -277,7 +288,6 @@ func _ready() -> void:
 		_on_discard_card_changes_confirmed
 	)
 	$Margin/Page/StudyFlow/Header/BackToReadyButton.pressed.connect(_return_to_study_ready)
-	edit_study_card_button.pressed.connect(_on_edit_study_card_pressed)
 	study_gesture_surface.swiped.connect(_on_study_swiped)
 	study_gesture_surface.tapped.connect(_on_card_tapped)
 	again_button.pressed.connect(_on_again_requested)
@@ -288,7 +298,7 @@ func _ready() -> void:
 	_setup_card_editor_status_options()
 
 	if auto_start:
-		show_library()
+		_show_startup_view()
 
 
 func _notification(what: int) -> void:
@@ -334,7 +344,46 @@ func _apply_safe_area() -> void:
 
 
 func start_default_deck() -> void:
+	_show_startup_view()
+
+
+func _show_startup_view() -> void:
+	DeckStorage.seed_sample_if_empty()
+	var settings := DeckStorage.load_settings()
+	var last_deck_file := settings.last_deck_file.strip_edges()
+	if not last_deck_file.is_empty() and show_study_ready(last_deck_file):
+		return
+
+	if not last_deck_file.is_empty():
+		settings.last_deck_file = ""
+		_save_settings_or_warn(settings)
 	show_library()
+
+
+func _remember_last_study_deck(deck_file: String) -> void:
+	if not DeckStorage.deck_exists(deck_file):
+		return
+
+	var settings := DeckStorage.load_settings()
+	if settings.last_deck_file == deck_file:
+		return
+
+	settings.last_deck_file = deck_file
+	_save_settings_or_warn(settings)
+
+
+func _replace_last_study_deck(old_file: String, new_file: String) -> void:
+	var settings := DeckStorage.load_settings()
+	if settings.last_deck_file.to_lower() != old_file.to_lower():
+		return
+
+	settings.last_deck_file = new_file
+	_save_settings_or_warn(settings)
+
+
+func _save_settings_or_warn(settings: AppSettings) -> void:
+	if not DeckStorage.save_settings(settings):
+		push_warning("App settings save failed")
 
 
 func show_library() -> void:
@@ -359,6 +408,7 @@ func show_library() -> void:
 	_menu_deck_file = ""
 	add_deck_menu.hide()
 	deck_context_menu.hide()
+	card_context_menu.hide()
 	create_deck_overlay.hide()
 	rename_deck_overlay.hide()
 	delete_confirmation_overlay.hide()
@@ -373,6 +423,7 @@ func show_library() -> void:
 	study_flow.visible = false
 	study_container.visible = false
 	study_result_view.visible = false
+	study_progress_bar.hide()
 	_refresh_deck_list()
 
 
@@ -392,11 +443,13 @@ func show_study_ready(deck_file: String) -> bool:
 	_ready_deck_hash = deck_text.hash()
 	_menu_deck_file = ""
 	deck_context_menu.hide()
+	card_context_menu.hide()
 	library_container.visible = false
 	card_list_view.visible = false
 	card_detail_view.visible = false
 	card_editor_view.visible = false
 	study_flow.visible = false
+	study_progress_bar.hide()
 	study_ready_view.visible = true
 	ready_status_label.hide()
 	_update_study_ready_summary()
@@ -439,11 +492,13 @@ func _start_cards(
 	order: DeckOrdering.StudyOrder
 ) -> void:
 	_deck_file = deck_file
+	_remember_last_study_deck(deck_file)
 	_order = order
 	_progress = DeckStorage.load_progress(deck_file)
 	_source_cards = cards.duplicate()
 	_active_card_indices.clear()
 	library_container.visible = false
+	card_context_menu.hide()
 	study_ready_view.visible = false
 	card_list_view.visible = false
 	card_detail_view.visible = false
@@ -573,6 +628,7 @@ func _open_card_list(deck_file: String) -> bool:
 	library_container.hide()
 	study_ready_view.hide()
 	study_flow.hide()
+	study_progress_bar.hide()
 	card_detail_view.hide()
 	card_editor_view.hide()
 	card_list_view.show()
@@ -589,17 +645,11 @@ static func _copy_cards(cards: Array[FlashCard]) -> Array[FlashCard]:
 func _refresh_card_rows() -> void:
 	for child in card_rows.get_children():
 		child.free()
-	var progress := DeckStorage.load_progress(_editing_deck_file)
 	for index in _editing_cards.size():
 		var row := CARD_LIST_ROW_SCENE.instantiate() as CardListRow
 		card_rows.add_child(row)
 		var card := _editing_cards[index]
-		row.setup(
-			index,
-			card,
-			progress.get_wrong_count(card.question),
-			progress.get_status(card.question)
-		)
+		row.setup(index, card)
 		row.selected.connect(_on_card_row_selected)
 
 
@@ -629,7 +679,7 @@ func _show_card_detail(
 		_editing_deck_file if not _editing_deck_file.is_empty() else _deck_file
 	)
 	_render_card_detail(card, progress)
-	edit_card_from_detail_button.visible = (
+	card_detail_menu_button.visible = (
 		deck_index >= 0
 		and deck_index < _editing_cards.size()
 		and DeckStorage.deck_exists(_editing_deck_file)
@@ -644,6 +694,7 @@ func _show_card_detail(
 	card_list_view.hide()
 	card_editor_view.hide()
 	study_flow.hide()
+	study_progress_bar.hide()
 	card_detail_view.show()
 
 
@@ -651,7 +702,6 @@ func _render_card_detail(card: FlashCard, progress: Progress) -> void:
 	detail_question_label.text = card.question
 	detail_answer_label.text = card.answer
 	detail_wrong_tally.set_count(progress.get_wrong_count(card.question))
-	detail_status_label.text = card_status_text(progress.get_status(card.question))
 	detail_question_scroll.scroll_vertical = 0
 	detail_answer_scroll.scroll_vertical = 0
 	_set_card_detail_answer_visible(false)
@@ -694,7 +744,88 @@ func _on_edit_card_from_detail_pressed() -> void:
 	_open_card_editor(_card_detail_index)
 
 
+func _on_card_context_requested(anchor: Control, from_study: bool) -> void:
+	_card_menu_from_study = from_study
+	var card := _card_for_context_menu()
+	if card == null:
+		return
+	var deck_file := _deck_file if from_study else _editing_deck_file
+	if not DeckStorage.deck_exists(deck_file):
+		return
+	var progress := DeckStorage.load_progress(deck_file)
+	favorite_card_action_button.text = (
+		"즐겨찾기 해제" if progress.is_favorite(card.question) else "즐겨찾기"
+	)
+	card_context_menu.show()
+	card_context_menu.move_to_front()
+	card_context_menu_panel.reset_size()
+	_position_card_context_menu(anchor)
+
+
+func _position_card_context_menu(anchor: Control) -> void:
+	var anchor_rect := _control_rect_in_overlay(card_context_menu, anchor)
+	var menu_size := card_context_menu_panel.get_combined_minimum_size()
+	card_context_menu_panel.size = menu_size
+	var viewport_size := card_context_menu.size
+	var margin := 12.0
+	var menu_position := Vector2(
+		anchor_rect.end.x - menu_size.x,
+		anchor_rect.end.y + 4.0
+	)
+	menu_position.x = clampf(
+		menu_position.x,
+		margin,
+		viewport_size.x - menu_size.x - margin
+	)
+	if menu_position.y + menu_size.y > viewport_size.y - margin:
+		menu_position.y = anchor_rect.position.y - menu_size.y - 4.0
+	menu_position.y = clampf(
+		menu_position.y,
+		margin,
+		viewport_size.y - menu_size.y - margin
+	)
+	card_context_menu_panel.position = menu_position
+
+
+func _card_for_context_menu() -> FlashCard:
+	if _card_menu_from_study:
+		if _session == null or _session.is_finished():
+			return null
+		return _session.current()
+	if _card_detail_index < 0 or _card_detail_index >= _editing_cards.size():
+		return null
+	return _editing_cards[_card_detail_index]
+
+
+func _on_card_context_dismissed() -> void:
+	card_context_menu.hide()
+
+
+func _on_card_context_edit_pressed() -> void:
+	card_context_menu.hide()
+	if _card_menu_from_study:
+		_on_edit_study_card_pressed()
+	else:
+		_on_edit_card_from_detail_pressed()
+
+
+func _on_card_context_favorite_pressed() -> void:
+	var card := _card_for_context_menu()
+	if card == null:
+		card_context_menu.hide()
+		return
+	var deck_file := _deck_file if _card_menu_from_study else _editing_deck_file
+	var progress := DeckStorage.load_progress(deck_file)
+	progress.set_favorite(card.question, not progress.is_favorite(card.question))
+	if not DeckStorage.save_progress(deck_file, progress):
+		push_warning("Card favorite save failed: %s" % deck_file)
+	card_context_menu.hide()
+	if deck_file == _deck_file:
+		_progress = progress
+
+
 func _close_card_detail() -> void:
+	card_context_menu.hide()
 	card_detail_view.hide()
 	if _card_detail_origin == CardDetailOrigin.STUDY_RESULT:
 		study_flow.show()
@@ -733,6 +864,7 @@ func _on_edit_study_card_pressed() -> void:
 	_study_edit_source_index = _source_cards.find(current_card)
 	_study_edit_return_show_answer = answer_scroll.visible
 	study_flow.hide()
+	study_progress_bar.hide()
 	card_list_view.hide()
 	_open_card_editor(deck_index)
 
@@ -778,6 +910,7 @@ func _current_study_deck_index(
 
 
 func _open_card_editor(index: int) -> void:
+	card_context_menu.hide()
 	_editing_card_index = index
 	card_editor_error_label.hide()
 	card_delete_confirmation_overlay.hide()
@@ -1223,6 +1356,7 @@ func _begin_indexed_study(
 		cards.append(_ready_cards[index])
 
 	_deck_file = _ready_deck_file
+	_remember_last_study_deck(_deck_file)
 	_active_order = order
 	_active_scope = scope
 	_order = DeckOrdering.StudyOrder.SEQUENTIAL
@@ -1252,6 +1386,7 @@ func _save_active_study_resume() -> void:
 
 
 func _return_to_study_ready() -> void:
+	card_context_menu.hide()
 	_save_active_study_resume()
 	var deck_file := _deck_file
 	if deck_file.is_empty():
@@ -1274,13 +1409,14 @@ func _position_add_deck_menu(anchor: Control) -> void:
 	add_deck_menu_panel.size = menu_size
 	var viewport_size := add_deck_menu.size
 	var margin := 12.0
+	var gap := 4.0
 	var position := Vector2(
 		anchor_rect.end.x - menu_size.x,
-		anchor_rect.position.y
+		anchor_rect.end.y + gap
 	)
 	position.x = clampf(position.x, margin, viewport_size.x - menu_size.x - margin)
 	if position.y + menu_size.y > viewport_size.y - margin:
-		position.y = anchor_rect.end.y - menu_size.y
+		position.y = anchor_rect.position.y - menu_size.y - gap
 	position.y = clampf(position.y, margin, viewport_size.y - menu_size.y - margin)
 	add_deck_menu_panel.position = position
 
@@ -1307,13 +1443,14 @@ func _position_deck_context_menu(anchor: Control) -> void:
 	deck_context_menu_panel.size = menu_size
 	var viewport_size := deck_context_menu.size
 	var margin := 12.0
+	var gap := 4.0
 	var position := Vector2(
 		anchor_rect.end.x - menu_size.x,
-		anchor_rect.position.y
+		anchor_rect.end.y + gap
 	)
 	position.x = clampf(position.x, margin, viewport_size.x - menu_size.x - margin)
 	if position.y + menu_size.y > viewport_size.y - margin:
-		position.y = anchor_rect.end.y - menu_size.y
+		position.y = anchor_rect.position.y - menu_size.y - gap
 	position.y = clampf(position.y, margin, viewport_size.y - menu_size.y - margin)
 	deck_context_menu_panel.position = position
 
@@ -1356,6 +1493,10 @@ func handle_back_request() -> bool:
 
 	if add_deck_menu.visible:
 		_on_add_deck_menu_dismissed()
+		return true
+
+	if card_context_menu.visible:
+		_on_card_context_dismissed()
 		return true
 
 	if deck_context_menu.visible:
@@ -1448,6 +1589,7 @@ func _begin_new_deck(display_name: String) -> bool:
 	library_container.hide()
 	study_ready_view.hide()
 	study_flow.hide()
+	study_progress_bar.hide()
 	card_list_view.hide()
 	_open_card_editor(-1)
 	return true
@@ -1579,6 +1721,7 @@ func rename_deck_from_library(deck_file: String, new_display_name: String) -> bo
 		_show_rename_error(RENAME_FAILED_MESSAGE)
 		return false
 
+	_replace_last_study_deck(deck_file, new_file)
 	rename_deck_overlay.hide()
 	_menu_deck_file = ""
 	_refresh_deck_list()
@@ -1627,6 +1770,7 @@ func delete_deck_from_library(deck_file: String) -> bool:
 		_show_library_status(DELETE_DECK_FAILED_MESSAGE)
 		return false
 
+	_replace_last_study_deck(deck_file, "")
 	_refresh_deck_list()
 	_show_library_status("'%s' 삭제 완료" % display_name)
 	return true
@@ -1725,10 +1869,9 @@ func _show_current() -> void:
 		return
 
 	var card := _session.current()
-	edit_study_card_button.visible = DeckStorage.deck_exists(_deck_file)
 	study_container.visible = true
 	study_result_view.visible = false
-	card_status_label.text = card_status_text(_progress.get_status(card.question))
+	study_progress_bar.show()
 	var wrong_count := _progress.get_wrong_count(card.question)
 	wrong_tally.set_count(wrong_count)
 	question_label.text = card.question
@@ -1754,9 +1897,10 @@ static func card_status_text(status: CardStatus.Value) -> String:
 
 func _show_study_results() -> void:
 	_reset_study_input_lock()
-	edit_study_card_button.hide()
+	card_context_menu.hide()
 	study_container.visible = false
 	study_result_view.visible = true
+	study_progress_bar.hide()
 	remaining_label.text = "0장 남음"
 	study_progress_bar.max_value = maxi(_session_cards.size(), 1)
 	study_progress_bar.value = _session_cards.size()
@@ -1853,7 +1997,9 @@ func _on_card_tapped() -> void:
 		return
 
 	var show_answer := not answer_scroll.visible
-	study_gesture_surface.flip(_set_answer_visible.bind(show_answer))
+	study_gesture_surface.flip(
+		_set_answer_visible.bind(show_answer)
+	)
 
 
 func _set_answer_visible(visible: bool) -> void:

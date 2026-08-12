@@ -14,6 +14,7 @@ func run_tests() -> void:
 	_test_app_settings_defaults()
 	_test_progress_wrong_count()
 	_test_progress_status()
+	_test_progress_favorite()
 	_test_progress_remove()
 	_test_progress_rename()
 	_test_progress_json()
@@ -266,10 +267,20 @@ func _test_progress_status() -> void:
 	)
 
 
+func _test_progress_favorite() -> void:
+	var progress := Progress.new()
+	check(not progress.is_favorite("Apple"), "진행도: 기록이 없으면 즐겨찾기 아님")
+	progress.set_favorite("Apple", true)
+	check(progress.is_favorite("Apple"), "진행도: 카드 즐겨찾기 설정")
+	progress.set_favorite("Apple", false)
+	check(not progress.is_favorite("Apple"), "진행도: 카드 즐겨찾기 해제")
+
+
 func _test_progress_remove() -> void:
 	var progress := Progress.new()
 	progress.set_wrong_count("Apple", 5)
 	progress.set_status("Apple", CardStatus.Value.LEARNING)
+	progress.set_favorite("Apple", true)
 
 	progress.remove("Apple")
 
@@ -281,6 +292,7 @@ func _test_progress_remove() -> void:
 		progress.get_status("Apple") == CardStatus.Value.NEW,
 		"진행도: remove가 카드 상태를 제거"
 	)
+	check(not progress.is_favorite("Apple"), "진행도: remove가 즐겨찾기를 제거")
 
 	progress.remove("없는 질문")
 	check(
@@ -293,6 +305,7 @@ func _test_progress_rename() -> void:
 	var moved := Progress.new()
 	moved.set_wrong_count("A", 2)
 	moved.set_status("A", CardStatus.Value.LEARNING)
+	moved.set_favorite("A", true)
 	moved.set_status("B", CardStatus.Value.MASTERED)
 	moved.rename("A", "B")
 
@@ -305,6 +318,10 @@ func _test_progress_rename() -> void:
 	check(
 		moved.get_status("A") == CardStatus.Value.NEW,
 		"진행도 이사: 옛 질문의 상태 기록 제거"
+	)
+	check(
+		moved.is_favorite("B") and not moved.is_favorite("A"),
+		"진행도 이사: 즐겨찾기를 새 질문으로 이동"
 	)
 
 	var merged := Progress.new()
@@ -339,6 +356,7 @@ func _test_progress_json() -> void:
 	progress.set_wrong_count("Apple", 3)
 	progress.set_status("Apple", CardStatus.Value.LEARNING)
 	progress.set_status("Banana", CardStatus.Value.MASTERED)
+	progress.set_favorite("Banana", true)
 
 	var restored := Progress.from_json(progress.to_json())
 	check(
@@ -348,8 +366,9 @@ func _test_progress_json() -> void:
 	)
 	check(
 		restored.get_wrong_count("Banana") == 0
-		and restored.get_status("Banana") == CardStatus.Value.MASTERED,
-		"진행도 JSON: 상태만 있는 카드 왕복"
+		and restored.get_status("Banana") == CardStatus.Value.MASTERED
+		and restored.is_favorite("Banana"),
+		"진행도 JSON: 상태와 즐겨찾기만 있는 카드 왕복"
 	)
 	check(Progress.from_json("").get_wrong_count("x") == 0, "진행도 JSON: 빈 값 복구")
 	check(

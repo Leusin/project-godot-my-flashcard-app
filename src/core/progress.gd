@@ -3,6 +3,7 @@ extends RefCounted
 
 var _wrong_counts: Dictionary[String, int] = {}
 var _statuses: Dictionary[String, CardStatus.Value] = {}
+var _favorites: Dictionary[String, bool] = {}
 
 func get_wrong_count(question: String) -> int:
 	return _wrong_counts.get(question, 0)
@@ -27,9 +28,21 @@ func set_status(question: String, status: CardStatus.Value) -> void:
 
 	_statuses[question] = status
 
+
+func is_favorite(question: String) -> bool:
+	return _favorites.get(question, false)
+
+
+func set_favorite(question: String, favorite: bool) -> void:
+	if not favorite:
+		_favorites.erase(question)
+		return
+	_favorites[question] = true
+
 func remove(question: String) -> void:
 	_wrong_counts.erase(question)
 	_statuses.erase(question)
+	_favorites.erase(question)
 
 func rename(old_question: String, new_question: String) -> void:
 	if old_question == new_question or new_question.is_empty():
@@ -47,6 +60,10 @@ func rename(old_question: String, new_question: String) -> void:
 		_statuses.erase(old_question)
 		_statuses[new_question] = moved_status
 
+	if _favorites.has(old_question):
+		_favorites.erase(old_question)
+		_favorites[new_question] = true
+
 
 func to_json() -> String:
 	var questions: Dictionary[String, bool] = {}
@@ -54,12 +71,15 @@ func to_json() -> String:
 		questions[question] = true
 	for question in _statuses:
 		questions[question] = true
+	for question in _favorites:
+		questions[question] = true
 
 	var entries: Dictionary = {}
 	for question in questions:
 		entries[question] = {
 			"wrong": get_wrong_count(question),
 			"status": _status_to_string(get_status(question)),
+			"favorite": is_favorite(question),
 		}
 
 	return JSON.stringify(entries, "\t")
@@ -96,6 +116,10 @@ static func from_json(json: String) -> Progress:
 		var status: Variant = entry.get("status")
 		if status is String:
 			progress.set_status(question, _status_from_string(status as String))
+
+		var favorite: Variant = entry.get("favorite")
+		if favorite is bool:
+			progress.set_favorite(question, favorite as bool)
 
 	return progress
 

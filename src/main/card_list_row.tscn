@@ -1,23 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://src/main/card_list_row.gd" id="1_script"]
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="2_theme"]
-[ext_resource type="Script" path="res://src/main/wrong_tally.gd" id="3_tally"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxStatusBadge"]
-bg_color = Color(0.94, 0.94, 0.92, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0, 0, 0, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
 
 [node name="CardListRow" type="Button"]
-custom_minimum_size = Vector2(0, 160)
+custom_minimum_size = Vector2(0, 132)
 layout_mode = 2
 theme = ExtResource("2_theme")
 script = ExtResource("1_script")
@@ -40,45 +27,6 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 7
 
-[node name="Metadata" type="HBoxContainer" parent="Margin/Content"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 10
-
-[node name="ListWrongTally" type="Control" parent="Margin/Content/Metadata"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 42)
-layout_mode = 2
-mouse_filter = 2
-script = ExtResource("3_tally")
-
-[node name="MetadataSpacer" type="Control" parent="Margin/Content/Metadata"]
-layout_mode = 2
-size_flags_horizontal = 3
-mouse_filter = 2
-
-[node name="ListStatusBadge" type="PanelContainer" parent="Margin/Content/Metadata"]
-custom_minimum_size = Vector2(116, 42)
-layout_mode = 2
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxStatusBadge")
-
-[node name="Margin" type="MarginContainer" parent="Margin/Content/Metadata/ListStatusBadge"]
-layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 5
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 5
-
-[node name="ListStatusLabel" type="Label" parent="Margin/Content/Metadata/ListStatusBadge/Margin"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "NEW"
-horizontal_alignment = 1
-vertical_alignment = 1
-mouse_filter = 2
-
 [node name="QuestionLabel" type="Label" parent="Margin/Content"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
@@ -88,6 +36,6 @@ text_overrun_behavior = 3
 [node name="AnswerLabel" type="Label" parent="Margin/Content"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 0.35, 0.35, 1)
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 18
 text = "답"
 text_overrun_behavior = 3

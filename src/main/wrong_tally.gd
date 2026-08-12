@@ -1,12 +1,13 @@
 class_name WrongTallyView
 extends Control
 
-const STROKE_COLOR := Color(0.12, 0.12, 0.12, 1)
-const STROKE_WIDTH := 3.5
-const STROKE_SPACING := 8.0
-const GROUP_GAP := 12.0
-const MARK_TOP := 8.0
-const MARK_BOTTOM := 34.0
+@export var stroke_color := Color(0.12, 0.12, 0.12, 1)
+@export var stroke_width := 3.5
+@export var stroke_spacing := 8.0
+@export var group_gap := 12.0
+@export var mark_top := 8.0
+@export var mark_bottom := 34.0
+@export var minimum_height := 42.0
 
 var wrong_count := 0
 
@@ -34,24 +35,24 @@ func _draw() -> void:
 
 
 func _draw_group(group_index: int, marks_in_group: int) -> void:
-	var group_x := group_index * (STROKE_SPACING * 3.0 + GROUP_GAP)
+	var group_x := group_index * (stroke_spacing * 3.0 + group_gap)
 	var vertical_count := mini(marks_in_group, 4)
 	for stroke_index in vertical_count:
-		var stroke_x := group_x + stroke_index * STROKE_SPACING + STROKE_WIDTH
+		var stroke_x := group_x + stroke_index * stroke_spacing + stroke_width
 		draw_line(
-			Vector2(stroke_x, MARK_TOP),
-			Vector2(stroke_x, MARK_BOTTOM),
-			STROKE_COLOR,
-			STROKE_WIDTH,
+			Vector2(stroke_x, mark_top),
+			Vector2(stroke_x, mark_bottom),
+			stroke_color,
+			stroke_width,
 			true
 		)
 
 	if marks_in_group == 5:
 		draw_line(
-			Vector2(group_x, MARK_BOTTOM - 2.0),
-			Vector2(group_x + STROKE_SPACING * 3.0 + STROKE_WIDTH * 2.0, MARK_TOP + 2.0),
-			STROKE_COLOR,
-			STROKE_WIDTH,
+			Vector2(group_x, mark_bottom - 2.0),
+			Vector2(group_x + stroke_spacing * 3.0 + stroke_width * 2.0, mark_top + 2.0),
+			stroke_color,
+			stroke_width,
 			true
 		)
 
@@ -60,6 +61,6 @@ func _update_size() -> void:
 	var group_count := ceili(wrong_count / 5.0)
 	var width := 0.0
 	if group_count > 0:
-		width = group_count * (STROKE_SPACING * 3.0 + STROKE_WIDTH * 2.0)
-		width += (group_count - 1) * (GROUP_GAP - STROKE_WIDTH * 2.0)
-	custom_minimum_size = Vector2(width, 42.0)
+		width = group_count * (stroke_spacing * 3.0 + stroke_width * 2.0)
+		width += (group_count - 1) * (group_gap - stroke_width * 2.0)
+	custom_minimum_size = Vector2(width, minimum_height)

@@ -1,6 +1,6 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene format=3 uid="uid://bpieuycyirjw2"]
 
-[ext_resource type="Script" path="res://src/main/add_deck_tile.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://we10rm523pnu" path="res://src/main/add_deck_tile.gd" id="1_script"]
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="2_theme"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxStackCard"]
@@ -17,40 +17,14 @@ corner_radius_bottom_left = 8
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxAddButton"]
 
-[node name="AddDeckTile" type="Control"]
+[node name="AddDeckTile" type="Control" unique_id=1797121259]
 custom_minimum_size = Vector2(300, 220)
 layout_mode = 3
 anchors_preset = 0
 theme = ExtResource("2_theme")
 script = ExtResource("1_script")
 
-[node name="BackCardFar" type="PanelContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 14.0
-offset_bottom = -14.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxStackCard")
-
-[node name="BackCardNear" type="PanelContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 7.0
-offset_top = 7.0
-offset_right = -7.0
-offset_bottom = -7.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StyleBoxStackCard")
-
-[node name="FrontCard" type="PanelContainer" parent="."]
+[node name="FrontCard" type="PanelContainer" parent="." unique_id=918208206]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -62,54 +36,43 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxStackCard")
 
-[node name="Content" type="VBoxContainer" parent="FrontCard"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = -20.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="Content" type="VBoxContainer" parent="FrontCard" unique_id=1019539714]
+layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 12
 alignment = 1
 
-[node name="AddDeckLabel" type="Label" parent="FrontCard/Content"]
+[node name="AddDeckLabel" type="Label" parent="FrontCard/Content" unique_id=708833719]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 text = "덱 추가"
 horizontal_alignment = 1
-mouse_filter = 2
 
-[node name="AddDeckHintLabel" type="Label" parent="FrontCard/Content"]
+[node name="AddDeckHintLabel" type="Label" parent="FrontCard/Content" unique_id=1726885559]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "만들기 또는 가져오기"
 horizontal_alignment = 1
-mouse_filter = 2
 
-[node name="AddDeckButton" type="Button" parent="."]
+[node name="AddDeckButton" type="Button" parent="." unique_id=1196756328]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(64, 64)
+custom_minimum_size = Vector2(64, 32)
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -82.0
-offset_top = 26.0
+offset_top = 18.0
 offset_right = -18.0
-offset_bottom = 90.0
+offset_bottom = 81.999985
 grow_horizontal = 0
+tooltip_text = "새 덱 만들기 또는 Markdown 가져오기"
 theme_override_font_sizes/font_size = 32
 theme_override_styles/normal = SubResource("StyleBoxAddButton")
-theme_override_styles/hover = SubResource("StyleBoxAddButton")
 theme_override_styles/pressed = SubResource("StyleBoxAddButton")
-theme_override_styles/focus = SubResource("StyleBoxAddButton")
+theme_override_styles/hover = SubResource("StyleBoxAddButton")
 theme_override_styles/disabled = SubResource("StyleBoxAddButton")
+theme_override_styles/focus = SubResource("StyleBoxAddButton")
 text = "+"
-tooltip_text = "새 덱 만들기 또는 Markdown 가져오기"

@@ -1,0 +1,24 @@
+[gd_scene load_steps=3 format=3]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxProgressBackground"]
+bg_color = Color(0.76, 0.76, 0.73, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxProgressFill"]
+bg_color = Color(0.04, 0.04, 0.04, 1)
+
+[node name="StudyProgressBar" type="ProgressBar"]
+visible = false
+z_index = 20
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -2.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxProgressBackground")
+theme_override_styles/fill = SubResource("StyleBoxProgressFill")
+show_percentage = false

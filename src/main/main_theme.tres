@@ -1,8 +1,8 @@
-[gd_resource type="Theme" load_steps=9 format=3]
+[gd_resource type="Theme" format=3 uid="uid://bu5jyw4ehw6ya"]
 
-[ext_resource type="Texture2D" path="res://assets/icons/chevron_down.svg" id="1_arrow"]
-[ext_resource type="Texture2D" path="res://assets/icons/radio_checked.svg" id="2_checked"]
-[ext_resource type="Texture2D" path="res://assets/icons/radio_unchecked.svg" id="3_unchecked"]
+[ext_resource type="Texture2D" uid="uid://bpunkjjd4mfml" path="res://assets/icons/chevron_down.svg" id="1_arrow"]
+[ext_resource type="Texture2D" uid="uid://boedh2l27wvrk" path="res://assets/icons/radio_checked.svg" id="2_checked"]
+[ext_resource type="Texture2D" uid="uid://dcq55eljcy15l" path="res://assets/icons/radio_unchecked.svg" id="3_unchecked"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxWhite"]
 bg_color = Color(1, 1, 1, 1)
@@ -40,6 +40,13 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxPopupHover"]
+bg_color = Color(0.9, 0.9, 0.88, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxPopupPanel"]
 content_margin_left = 8.0
 content_margin_top = 8.0
@@ -58,13 +65,6 @@ corner_radius_bottom_left = 10
 shadow_color = Color(0, 0, 0, 0.22)
 shadow_size = 8
 shadow_offset = Vector2(4, 6)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxPopupHover"]
-bg_color = Color(0.9, 0.9, 0.88, 1)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
 
 [resource]
 Button/colors/font_color = Color(0, 0, 0, 1)
