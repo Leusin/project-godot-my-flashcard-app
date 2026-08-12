@@ -16,10 +16,10 @@ corner_radius_bottom_left = 12
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxDeckCover"]
 bg_color = Color(1, 1, 1, 1)
-border_width_left = 4
-border_width_top = 4
-border_width_right = 4
-border_width_bottom = 4
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
 border_color = Color(0, 0, 0, 1)
 corner_radius_top_left = 14
 corner_radius_top_right = 14
@@ -101,7 +101,7 @@ theme_override_constants/separation = 12
 [node name="BackToLibraryButton" type="Button" parent="Header"]
 custom_minimum_size = Vector2(132, 64)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 24
 text = "← 덱 목록"
 
 [node name="HeaderSpacer" type="Control" parent="Header"]
@@ -176,7 +176,7 @@ theme_override_constants/separation = 20
 
 [node name="ReadyDeckNameLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 38
+theme_override_font_sizes/font_size = 48
 text = "덱 이름"
 horizontal_alignment = 1
 autowrap_mode = 3
@@ -186,7 +186,7 @@ layout_mode = 2
 
 [node name="SummaryTitle" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 21
+theme_override_font_sizes/font_size = 28
 text = "학습 진행상황"
 horizontal_alignment = 1
 
@@ -194,7 +194,7 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 mouse_filter = 2
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 24
 theme_override_styles/background = SubResource("StyleBoxProgressBackground")
 theme_override_styles/fill = SubResource("StyleBoxProgressFill")
 show_percentage = false
@@ -210,13 +210,13 @@ theme_override_constants/separation = 4
 
 [node name="ReadyTotalCountLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/Total"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 36
 text = "0"
 horizontal_alignment = 1
 
 [node name="Caption" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/Total"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 24
 text = "전체"
 horizontal_alignment = 1
 
@@ -227,13 +227,13 @@ theme_override_constants/separation = 4
 
 [node name="ReadyNewCountLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/New"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 36
 text = "0"
 horizontal_alignment = 1
 
 [node name="Caption" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/New"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 24
 text = "새 카드"
 horizontal_alignment = 1
 
@@ -244,13 +244,13 @@ theme_override_constants/separation = 4
 
 [node name="ReadyLearningCountLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/Learning"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 36
 text = "0"
 horizontal_alignment = 1
 
 [node name="Caption" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/Learning"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 24
 text = "학습 중"
 horizontal_alignment = 1
 
@@ -261,13 +261,13 @@ theme_override_constants/separation = 4
 
 [node name="ReadyMasteredCountLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/Mastered"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 36
 text = "0"
 horizontal_alignment = 1
 
 [node name="Caption" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/Mastered"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 24
 text = "완료"
 horizontal_alignment = 1
 
@@ -280,19 +280,19 @@ size_flags_vertical = 3
 visible = false
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 28
 text = "이어서 학습"
 
 [node name="OpenStudySetupButton" type="Button" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent"]
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 28
 text = "새 학습 설정"
 
 [node name="ManageCardsButton" type="Button" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent"]
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 28
 text = "카드 관리"
 
 [node name="NewStudyContent" type="VBoxContainer" parent="DeckStage/DeckStack/DeckCover/Margin"]
@@ -302,14 +302,14 @@ theme_override_constants/separation = 16
 
 [node name="SetupDeckNameLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 36
 text = "덱 이름"
 horizontal_alignment = 1
 autowrap_mode = 3
 
 [node name="SetupDescription" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 24
 text = "진행 기록은 유지하고 새로운 학습 세션을 시작합니다."
 horizontal_alignment = 1
 autowrap_mode = 3
@@ -319,13 +319,13 @@ layout_mode = 2
 
 [node name="ScopeLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 24
 text = "학습 범위"
 
 [node name="StudyScopeOption" type="OptionButton" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
 custom_minimum_size = Vector2(0, 68)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 28
 theme_override_styles/disabled = SubResource("StyleBoxOptionNormal")
 theme_override_styles/focus = SubResource("StyleBoxOptionNormal")
 theme_override_styles/hover = SubResource("StyleBoxOptionHover")
@@ -334,13 +334,13 @@ theme_override_styles/pressed = SubResource("StyleBoxOptionPressed")
 
 [node name="OrderLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 24
 text = "카드 순서"
 
 [node name="StudyOrderOption" type="OptionButton" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
 custom_minimum_size = Vector2(0, 68)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 28
 theme_override_styles/disabled = SubResource("StyleBoxOptionNormal")
 theme_override_styles/focus = SubResource("StyleBoxOptionNormal")
 theme_override_styles/hover = SubResource("StyleBoxOptionHover")
@@ -350,7 +350,7 @@ theme_override_styles/pressed = SubResource("StyleBoxOptionPressed")
 [node name="ReadyStatusLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
 visible = false
 layout_mode = 2
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 24
 text = "안내"
 horizontal_alignment = 1
 autowrap_mode = 3
@@ -363,11 +363,11 @@ size_flags_vertical = 3
 [node name="StartStudyButton" type="Button" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 28
 text = "새 학습 시작"
 
 [node name="CancelStudySetupButton" type="Button" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 28
 text = "취소"

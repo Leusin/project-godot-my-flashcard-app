@@ -64,14 +64,14 @@ theme_override_constants/separation = 20
 
 [node name="Title" type="Label" parent="Panel/Margin/Content"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 36
 text = "이 카드를 삭제할까요?"
 horizontal_alignment = 1
 autowrap_mode = 3
 
 [node name="Warning" type="Label" parent="Panel/Margin/Content"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 24
 text = "카드와 해당 학습 기록이 함께 삭제됩니다."
 horizontal_alignment = 1
 autowrap_mode = 3
@@ -84,12 +84,12 @@ theme_override_constants/separation = 16
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 28
 text = "취소"
 
 [node name="ConfirmCardDeleteButton" type="Button" parent="Panel/Margin/Content/Buttons"]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 28
 text = "삭제"

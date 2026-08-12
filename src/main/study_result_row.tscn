@@ -47,7 +47,7 @@ corner_radius_bottom_left = 8
 [sub_resource type="StyleBoxEmpty" id="StyleBoxOpenCard"]
 
 [node name="StudyResultRow" type="PanelContainer"]
-custom_minimum_size = Vector2(0, 112)
+custom_minimum_size = Vector2(0, 132)
 layout_mode = 2
 theme = ExtResource("2_theme")
 theme_override_styles/panel = SubResource("StyleBoxResultRow")
@@ -58,28 +58,28 @@ skip_badge_style = SubResource("StyleBoxSkipBadge")
 
 [node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 14
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 14
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 18
 
 [node name="Content" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-theme_override_constants/separation = 7
+theme_override_constants/separation = 10
 
 [node name="Top" type="HBoxContainer" parent="Margin/Content"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 16
 
 [node name="QuestionLabel" type="Label" parent="Margin/Content/Top"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 28
 text = "질문"
 text_overrun_behavior = 3
 
 [node name="OutcomeBadge" type="PanelContainer" parent="Margin/Content/Top"]
-custom_minimum_size = Vector2(104, 40)
+custom_minimum_size = Vector2(112, 44)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxGoodBadge")
 
@@ -93,7 +93,7 @@ theme_override_constants/margin_bottom = 5
 [node name="OutcomeLabel" type="Label" parent="Margin/Content/Top/OutcomeBadge/Margin"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 24
 text = "GOOD"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -101,7 +101,7 @@ vertical_alignment = 1
 [node name="AnswerLabel" type="Label" parent="Margin/Content"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.38, 0.38, 0.38, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 24
 text = "답"
 text_overrun_behavior = 3
 

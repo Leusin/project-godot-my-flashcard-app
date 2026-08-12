@@ -44,13 +44,13 @@ theme_override_constants/separation = 12
 [node name="BackToReadyButton" type="Button" parent="Header" unique_id=2108732561]
 custom_minimum_size = Vector2(140, 60)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 24
 text = "← 학습 준비"
 
 [node name="DeckLabel" type="Label" parent="Header" unique_id=586662298]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 28
 text = "덱"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -59,7 +59,7 @@ text_overrun_behavior = 3
 [node name="RemainingLabel" type="Label" parent="Header" unique_id=224445267]
 custom_minimum_size = Vector2(140, 60)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 24
 text = "0장 남음"
 horizontal_alignment = 2
 vertical_alignment = 1
@@ -117,7 +117,7 @@ horizontal_scroll_mode = 0
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 34
+theme_override_font_sizes/font_size = 42
 text = "질문"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -133,7 +133,7 @@ horizontal_scroll_mode = 0
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 29
+theme_override_font_sizes/font_size = 36
 text = "답"
 autowrap_mode = 2
 
@@ -162,7 +162,7 @@ offset_bottom = -14.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_colors/font_color = Color(0, 0, 0, 0.78)
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 36
 text = "↑  SKIP"
 horizontal_alignment = 1
 
@@ -178,7 +178,7 @@ offset_right = 110.0
 offset_bottom = 52.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(0, 0, 0, 0.78)
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 36
 text = "↓  PREV"
 horizontal_alignment = 1
 
@@ -190,14 +190,14 @@ theme_override_constants/separation = 16
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 28
 text = "AGAIN"
 
 [node name="GoodButton" type="Button" parent="StudyContainer/Actions" unique_id=1868244667]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 28
 text = "GOOD"
 
 [node name="StudyResultView" parent="." unique_id=1976919345 instance=ExtResource("4_result")]

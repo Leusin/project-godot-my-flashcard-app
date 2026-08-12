@@ -14,6 +14,7 @@ const STUDY_RESUME_DIR := "user://study_resume"
 const SETTINGS_PATH := "user://settings.json"
 const SAMPLE_DECK_PATH := "res://sample_deck.md"
 const SAMPLE_SEEDED_MARKER := "user://.sample_deck_seeded"
+const LEGACY_SAMPLE_DECK_SHA256 := "0c6a1f24394c6caaf52a2962c38f3ccdfa80337a80b95640b01c87a1969d23da"
 
 static var _decks_dir := DEFAULT_DECKS_DIR
 
@@ -149,7 +150,11 @@ static func delete_deck(deck_file: String) -> bool:
 
 
 static func seed_sample_if_empty() -> void:
-	if _decks_dir != DEFAULT_DECKS_DIR or FileAccess.file_exists(SAMPLE_SEEDED_MARKER):
+	if _decks_dir != DEFAULT_DECKS_DIR:
+		return
+
+	_refresh_untouched_legacy_sample()
+	if FileAccess.file_exists(SAMPLE_SEEDED_MARKER):
 		return
 
 	if list_deck_files().is_empty():
@@ -161,6 +166,26 @@ static func seed_sample_if_empty() -> void:
 	var marker := FileAccess.open(SAMPLE_SEEDED_MARKER, FileAccess.WRITE)
 	if marker != null:
 		marker.store_string("seeded")
+
+
+static func is_legacy_sample_text(content: String) -> bool:
+	return _normalized_deck_text(content).sha256_text() == LEGACY_SAMPLE_DECK_SHA256
+
+
+static func _refresh_untouched_legacy_sample() -> void:
+	var sample_file := SAMPLE_DECK_PATH.get_file()
+	if not deck_exists(sample_file):
+		return
+
+	var existing := read_deck(sample_file)
+	if not is_legacy_sample_text(existing):
+		return
+
+	write_deck(sample_file, FileAccess.get_file_as_string(SAMPLE_DECK_PATH))
+
+
+static func _normalized_deck_text(content: String) -> String:
+	return content.replace("\r\n", "\n").strip_edges()
 
 
 static func progress_path(deck_file: String) -> String:

@@ -18,18 +18,18 @@ corner_radius_bottom_left = 10
 layout_mode = 2
 size_flags_vertical = 3
 theme = ExtResource("1_theme")
-theme_override_constants/separation = 18
+theme_override_constants/separation = 26
 
 [node name="ResultTitleLabel" type="Label" parent="."]
 layout_mode = 2
-theme_override_font_sizes/font_size = 34
+theme_override_font_sizes/font_size = 42
 text = "학습 완료"
 horizontal_alignment = 1
 
 [node name="ResultSummary" type="HBoxContainer" parent="."]
 custom_minimum_size = Vector2(0, 86)
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 18
 
 [node name="Good" type="PanelContainer" parent="ResultSummary"]
 layout_mode = 2
@@ -46,13 +46,13 @@ layout_mode = 2
 
 [node name="ResultGoodCountLabel" type="Label" parent="ResultSummary/Good/Margin/Content"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 36
 text = "0"
 horizontal_alignment = 1
 
 [node name="Caption" type="Label" parent="ResultSummary/Good/Margin/Content"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 24
 text = "GOOD"
 horizontal_alignment = 1
 
@@ -71,13 +71,13 @@ layout_mode = 2
 
 [node name="ResultAgainCountLabel" type="Label" parent="ResultSummary/Again/Margin/Content"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 36
 text = "0"
 horizontal_alignment = 1
 
 [node name="Caption" type="Label" parent="ResultSummary/Again/Margin/Content"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 24
 text = "AGAIN"
 horizontal_alignment = 1
 
@@ -96,13 +96,13 @@ layout_mode = 2
 
 [node name="ResultSkipCountLabel" type="Label" parent="ResultSummary/Skip/Margin/Content"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 36
 text = "0"
 horizontal_alignment = 1
 
 [node name="Caption" type="Label" parent="ResultSummary/Skip/Margin/Content"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 24
 text = "SKIP"
 horizontal_alignment = 1
 
@@ -114,7 +114,7 @@ horizontal_scroll_mode = 0
 [node name="ResultRows" type="VBoxContainer" parent="ResultListScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 10
+theme_override_constants/separation = 18
 
 [node name="Actions" type="HBoxContainer" parent="."]
 layout_mode = 2
@@ -124,12 +124,12 @@ theme_override_constants/separation = 16
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 28
 text = "AGAIN 카드 다시 학습"
 
 [node name="ReturnToReadyButton" type="Button" parent="Actions"]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 28
 text = "학습 준비로"

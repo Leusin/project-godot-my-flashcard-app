@@ -45,14 +45,14 @@ alignment = 1
 [node name="AddDeckLabel" type="Label" parent="FrontCard/Content" unique_id=708833719]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 32
 text = "덱 추가"
 horizontal_alignment = 1
 
 [node name="AddDeckHintLabel" type="Label" parent="FrontCard/Content" unique_id=1726885559]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 24
 text = "만들기 또는 가져오기"
 horizontal_alignment = 1
 
@@ -69,7 +69,12 @@ offset_right = -18.0
 offset_bottom = 81.999985
 grow_horizontal = 0
 tooltip_text = "새 덱 만들기 또는 Markdown 가져오기"
-theme_override_font_sizes/font_size = 32
+theme_override_font_sizes/font_size = 38
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
 theme_override_styles/normal = SubResource("StyleBoxAddButton")
 theme_override_styles/pressed = SubResource("StyleBoxAddButton")
 theme_override_styles/hover = SubResource("StyleBoxAddButton")

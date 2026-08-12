@@ -8,6 +8,23 @@ const TEST_TEXT := "# A\n1\n# B\n2\n"
 const RENAMED_DECK := "__gd_phase4_renamed.md"
 const EXPORTED_PATH := "user://__gd_phase4_export.md"
 const INVALID_IMPORT_PATH := "user://__gd_phase4_invalid.txt"
+const LEGACY_SAMPLE_TEXT := """# MyFlashCard는 어떤 앱인가요?
+Markdown 파일로 만든 카드를 한 장씩 복습하는 간단한 플래시카드 앱입니다.
+
+# 카드는 어디에 저장되나요?
+질문과 답은 평범한 .md 파일에 저장됩니다. 특정 앱에 갇히지 않고 텍스트 편집기로도 열 수 있습니다.
+
+# 답은 어떻게 확인하나요?
+질문을 먼저 떠올린 다음 「답 보기」 버튼을 누르면 답이 나타납니다.
+
+# Again은 언제 누르나요?
+답을 모르거나 헷갈렸을 때 누릅니다. 해당 질문의 오답 횟수가 1 증가합니다.
+
+# Good은 언제 누르나요?
+답을 제대로 떠올렸을 때 누릅니다. 오답 횟수를 늘리지 않고 다음 카드로 넘어갑니다.
+
+# 한 덱을 끝내면 어떻게 되나요?
+학습 완료 화면이 나타납니다. 「다시 시작」을 누르면 같은 덱을 처음부터 복습할 수 있습니다."""
 
 
 func run_tests() -> void:
@@ -19,12 +36,24 @@ func run_tests() -> void:
 	_test_study_resume_storage()
 	_test_import_and_export()
 	_test_rename_duplicate_delete()
+	_test_sample_upgrade_detection()
 
 	_cleanup()
 	DeckStorage.set_decks_dir("")
 	check(
 		DeckStorage.decks_dir() == DeckStorage.DEFAULT_DECKS_DIR,
 		"저장소: 빈 경로는 기본 덱 폴더로 복귀"
+	)
+
+
+func _test_sample_upgrade_detection() -> void:
+	check(
+		DeckStorage.is_legacy_sample_text(LEGACY_SAMPLE_TEXT),
+		"저장소: 손대지 않은 옛 샘플 덱 감지"
+	)
+	check(
+		not DeckStorage.is_legacy_sample_text(LEGACY_SAMPLE_TEXT + "\n사용자 수정"),
+		"저장소: 사용자가 수정한 샘플 덱은 갱신 대상에서 제외"
 	)
 
 

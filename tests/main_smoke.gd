@@ -102,6 +102,12 @@ func run_tests() -> void:
 		"Main: 덱 목록을 왼쪽부터 정렬"
 	)
 	check(
+		_view(app, "LibraryContainer").get_theme_constant("separation") == 30
+		and _view(app, "DeckList").get_theme_constant("h_separation") == 28
+		and _view(app, "DeckList").get_theme_constant("v_separation") == 32,
+		"Main: 덱 헤더와 카드 목록에 넉넉한 여백 표시"
+	)
+	check(
 		_view(deck_buttons[-1], "AddDeckLabel").text == "덱 추가"
 		and _view(deck_buttons[-1], "AddDeckHintLabel").text
 		== "만들기 또는 가져오기",
@@ -152,10 +158,10 @@ func run_tests() -> void:
 	)
 	check(
 		add_deck_menu.scene_file_path.ends_with("add_deck_menu.tscn")
-		and add_deck_menu_panel.custom_minimum_size == Vector2(220, 126)
-		and add_deck_menu_panel.size
-		== add_deck_menu_panel.get_combined_minimum_size(),
-		"Main Create: 추가 선택 context list를 개별 scene과 실제 크기로 표시"
+		and add_deck_menu_panel.custom_minimum_size == Vector2(320, 172)
+		and _view(app, "CreateNewDeckButton").custom_minimum_size.y == 72.0
+		and _view(app, "CreateNewDeckButton").get_theme_font_size("font_size") == 30,
+		"Main Create: 추가 선택 context list를 큰 글자와 터치 크기로 표시"
 	)
 	var add_anchor_rect := MainApp._control_rect_in_overlay(
 		add_deck_menu,
@@ -198,12 +204,14 @@ func run_tests() -> void:
 		and deck_context_style.border_width_left == 0
 		and deck_context_style.shadow_size == 6
 		and deck_context_style.corner_radius_top_left == 12,
-		"Main Deck Actions: 테두리 없이 그림자만 있는 흰 context list 표시"
+		"Main Deck Actions: 둥근 흰 바탕과 그림자 context list 표시"
 	)
 	check(
 		_view(app, "ExportDeckButton").get_theme_color("font_color") == Color.BLACK
-		and _view(app, "DeleteDeckButton").get_theme_color("font_color") == Color.BLACK,
-		"Main Deck Actions: context list 텍스트를 검게 표시"
+		and _view(app, "DeleteDeckButton").get_theme_color("font_color") == Color.BLACK
+		and _view(app, "DeleteDeckButton").get_theme_color("font_hover_color")
+		== Color.BLACK,
+		"Main Deck Actions: context list hover에서도 검은 글자 유지"
 	)
 	var deck_menu_button := _view(deck_buttons[0], "DeckMenuButton") as Button
 	var deck_menu_anchor_rect := MainApp._control_rect_in_overlay(
@@ -241,12 +249,13 @@ func run_tests() -> void:
 		"Main Deck Actions: context list 실제 layout 크기로 위치 계산"
 	)
 	check(
-		_view(app, "DeckContextMenuPanel").custom_minimum_size == Vector2(200, 230)
-		and _view(app, "RenameDeckButton").custom_minimum_size.y == 48.0
-		and _view(app, "DuplicateDeckButton").custom_minimum_size.y == 48.0
-		and _view(app, "ExportDeckButton").custom_minimum_size.y == 48.0
-		and _view(app, "DeleteDeckButton").custom_minimum_size.y == 48.0,
-		"Main Deck Actions: 네 가지 작업을 담은 200px context list 표시"
+		_view(app, "DeckContextMenuPanel").custom_minimum_size == Vector2(320, 324)
+		and _view(app, "RenameDeckButton").custom_minimum_size.y == 72.0
+		and _view(app, "DuplicateDeckButton").custom_minimum_size.y == 72.0
+		and _view(app, "ExportDeckButton").custom_minimum_size.y == 72.0
+		and _view(app, "DeleteDeckButton").custom_minimum_size.y == 72.0
+		and _view(app, "DeleteDeckButton").get_theme_font_size("font_size") == 30,
+		"Main Deck Actions: 네 가지 큰 작업을 담은 320px context list 표시"
 	)
 	var dialog_panels: Array[PanelContainer] = [
 		_view(app, "CreateDeckPanel") as PanelContainer,
@@ -341,6 +350,7 @@ func run_tests() -> void:
 	var scope_option := _view(app, "StudyScopeOption") as OptionButton
 	var order_option := _view(app, "StudyOrderOption") as OptionButton
 	var dropdown_style := scope_option.get_theme_stylebox("normal") as StyleBoxFlat
+	var dropdown_hover_style := scope_option.get_theme_stylebox("hover") as StyleBoxFlat
 	var order_dropdown_style := order_option.get_theme_stylebox("normal") as StyleBoxFlat
 	var dropdown_popup := scope_option.get_popup()
 	var popup_style := dropdown_popup.get_theme_stylebox("panel") as StyleBoxFlat
@@ -349,17 +359,21 @@ func run_tests() -> void:
 		and order_dropdown_style != null
 		and dropdown_style.bg_color == Color.WHITE
 		and dropdown_style.border_color == Color.BLACK
+		and dropdown_style.border_width_left == 3
+		and dropdown_style.corner_radius_top_left == 8
 		and dropdown_style.get_content_margin(SIDE_LEFT) == 22.0
 		and order_dropdown_style.get_content_margin(SIDE_LEFT) == 22.0
-		and scope_option.get_theme_color("font_color") == Color.BLACK,
-		"Main Ready: 새 학습 dropdown에 고대비 스타일과 왼쪽 안쪽 여백 적용"
+		and scope_option.get_theme_color("font_color") == Color.BLACK
+		and dropdown_hover_style.bg_color == Color(0.94, 0.94, 0.94, 1)
+		and scope_option.get_theme_color("font_hover_color") == Color.BLACK,
+		"Main Ready: 새 학습 dropdown을 둥근 테두리와 옅은 hover로 표시"
 	)
 	check(
 		popup_style != null
 		and popup_style.bg_color == Color.WHITE
 		and popup_style.border_color == Color.BLACK
 		and dropdown_popup.get_theme_color("font_color") == Color.BLACK
-		and dropdown_popup.get_theme_font_size("font_size") == 20,
+		and dropdown_popup.get_theme_font_size("font_size") == 28,
 		"Main Ready: dropdown 목록도 밝은 고대비 메뉴로 표시"
 	)
 	check(
@@ -395,7 +409,7 @@ func run_tests() -> void:
 	var ready_buttons_are_uniform := true
 	for button in ready_action_buttons:
 		if (
-			button.get_theme_font_size("font_size") != 20
+			button.get_theme_font_size("font_size") != 28
 			or button.custom_minimum_size.y != 72.0
 		):
 			ready_buttons_are_uniform = false
@@ -667,6 +681,29 @@ func run_tests() -> void:
 		"Main Study: 중복 AGAIN·GOOD 문구 없이 세로 drag 도움말만 준비"
 	)
 	var gesture_surface := _view(app, "CardFrame") as StudyGestureSurface
+	var threshold_crossings: Array[int] = []
+	gesture_surface.judgment_threshold_crossed.connect(
+		func(direction: int) -> void: threshold_crossings.append(direction)
+	)
+	gesture_surface._show_horizontal_preview(StudyGestureSurface.DRAG_THRESHOLD - 1.0)
+	gesture_surface._show_horizontal_preview(StudyGestureSurface.DRAG_THRESHOLD + 1.0)
+	gesture_surface._show_horizontal_preview(StudyGestureSurface.DRAG_THRESHOLD + 20.0)
+	gesture_surface._show_horizontal_preview(0.0)
+	gesture_surface._show_horizontal_preview(-StudyGestureSurface.DRAG_THRESHOLD - 1.0)
+	check(
+		threshold_crossings == [StudyGestureSurface.GOOD, StudyGestureSurface.AGAIN]
+		and gesture_surface.haptics_enabled
+		and StudyGestureSurface.HAPTIC_DURATION_MS == 15
+		and StudyGestureSurface.HAPTIC_AMPLITUDE == 0.25,
+		"Main Study: GOOD·AGAIN 판정선을 넘을 때만 짧은 햅틱 요청"
+	)
+	check(
+		FileAccess.get_file_as_string("res://export_presets.cfg").contains(
+			"permissions/vibrate=true"
+		),
+		"Main Android: 햅틱용 VIBRATE 권한 포함"
+	)
+	gesture_surface._reset_visual()
 	gesture_surface._show_horizontal_preview(-gesture_surface.size.x * 0.25)
 	var again_partial_style := (
 		_view(app, "AgainButton").get_theme_stylebox("normal") as StyleBoxFlat
@@ -701,8 +738,9 @@ func run_tests() -> void:
 	)
 	gesture_surface._reset_visual()
 	check(
-		_view(app, "LibraryHeading").get_theme_color("font_color") == Color.BLACK,
-		"MVP 스타일: 모든 Label 글자는 검은색"
+		_view(app, "LibraryHeading").get_theme_color("font_color") == Color.BLACK
+		and _view(app, "LibraryHeading").get_theme_font_size("font_size") == 36,
+		"MVP 스타일: 제목을 큰 검은 글자로 표시"
 	)
 	var card_style := (
 		app.get_node("Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame").get_theme_stylebox("panel")
@@ -725,11 +763,20 @@ func run_tests() -> void:
 	var button_style := (
 		_view(app, "AgainButton").get_theme_stylebox("normal") as StyleBoxFlat
 	)
+	var button_hover_style := (
+		_view(app, "AgainButton").get_theme_stylebox("hover") as StyleBoxFlat
+	)
 	check(
 		button_style != null
 		and button_style.bg_color == Color.WHITE
-		and button_style.border_color == Color.BLACK,
-		"MVP 스타일: 버튼은 흰 바탕과 검은 테두리"
+		and button_style.border_color == Color.BLACK
+		and button_style.border_width_left == 3
+		and button_style.corner_radius_top_left == 8
+		and button_hover_style != null
+		and button_hover_style.bg_color == Color(0.94, 0.94, 0.94, 1)
+		and _view(app, "AgainButton").get_theme_color("font_hover_color")
+		== Color.BLACK,
+		"MVP 스타일: 버튼을 둥근 흰 바탕과 옅은 hover로 표시"
 	)
 
 	(_view(app, "CardFrame") as StudyGestureSurface).tapped.emit()
@@ -856,6 +903,15 @@ func run_tests() -> void:
 		),
 		"Main Result: 결과 화면과 행을 개별 편집 가능한 scene으로 분리"
 	)
+	check(
+		_view(app, "StudyResultView").get_theme_constant("separation") == 26
+		and first_result_rows.get_theme_constant("separation") == 18
+		and first_result_rows.get_child(0).custom_minimum_size.y == 132.0
+		and _view(first_result_rows.get_child(0), "Margin").get_theme_constant(
+			"margin_top"
+		) == 18,
+		"Main Result: 결과 목록의 행간과 카드 안쪽 여백 확보"
+	)
 	_view(first_result_rows.get_child(0), "OpenResultCardButton").pressed.emit()
 	check(
 		_view(app, "CardDetailView").visible
@@ -905,8 +961,9 @@ func run_tests() -> void:
 	app.start_sample_deck()
 	check(_view(app, "StudyContainer").visible, "MVP: 샘플 덱으로 학습 시작")
 	check(
-		_view(app, "QuestionLabel").text == "MyFlashCard는 어떤 앱인가요?",
-		"MVP: 앱 소개 샘플 덱의 첫 질문 표시"
+		_view(app, "QuestionLabel").text == "MyFlashCard는 어떤 앱인가요?"
+		and _view(app, "RemainingLabel").text == "15장 남음",
+		"MVP: 최신 앱 사용법 15장으로 구성된 샘플 덱 시작"
 	)
 	check(
 		_view(app, "StudyCardMenuButton") == null,
@@ -1081,8 +1138,12 @@ func run_tests() -> void:
 	check(
 		_view(app, "CardContextMenu").visible
 		and _view(app, "EditCardActionButton").text == "수정하기"
-		and _view(app, "FavoriteCardActionButton").text == "즐겨찾기",
-		"Main Card Detail: 연필 대신 ⋮ context list로 카드 작업 표시"
+		and _view(app, "FavoriteCardActionButton").text == "즐겨찾기"
+		and _view(app, "CardContextMenuPanel").custom_minimum_size
+		== Vector2(320, 172)
+		and _view(app, "EditCardActionButton").custom_minimum_size.y == 72.0
+		and _view(app, "EditCardActionButton").get_theme_font_size("font_size") == 30,
+		"Main Card Detail: ⋮ context list를 큰 글자와 터치 크기로 표시"
 	)
 	_view(app, "FavoriteCardActionButton").pressed.emit()
 	check(

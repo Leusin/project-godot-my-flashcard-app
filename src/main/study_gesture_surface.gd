@@ -3,8 +3,10 @@ extends PanelContainer
 
 signal swiped(direction: int)
 signal tapped
+signal judgment_threshold_crossed(direction: int)
 
 @export var animations_enabled := true
+@export var haptics_enabled := true
 @export var action_active_style: StyleBoxFlat
 @export var again_active_color := Color.BLACK
 @export var good_active_color := Color.BLACK
@@ -54,6 +56,8 @@ const HINT_PULL_EXPONENT := 1.6
 const HINT_REVEAL_START := 0.12
 const HINT_COMPLETE_DURATION := 0.4
 const CARD_ASPECT_RATIO := 2.0 / 3.0
+const HAPTIC_DURATION_MS := 15
+const HAPTIC_AMPLITUDE := 0.25
 
 @onready var again_button: Button = $"../../Actions/AgainButton"
 @onready var good_button: Button = $"../../Actions/GoodButton"
@@ -81,10 +85,12 @@ var _motion_tween: Tween
 var _active_hint_action := 0
 var _hint_rest_positions: Dictionary = {}
 var _hint_motion_tween: Tween
+var _haptic_action := 0
 
 
 func _ready() -> void:
 	visibility_changed.connect(_on_visibility_changed)
+	judgment_threshold_crossed.connect(_vibrate_for_judgment_threshold)
 	(get_parent() as Control).resized.connect(_on_stage_resized)
 	_fit_to_stage()
 	_set_active_hint(0)
@@ -205,6 +211,7 @@ func cancel_drag() -> void:
 	_animating = false
 	_pointer_id = -1
 	_drag_axis = DragAxis.UNDECIDED
+	_haptic_action = 0
 	_set_animation_controls_disabled(false)
 
 
@@ -252,6 +259,7 @@ func _begin_drag(at_position: Vector2, pointer_id: int) -> void:
 	_drag_start = at_position
 	_drag_position = at_position
 	_rest_position = position
+	_haptic_action = 0
 	pivot_offset = size * 0.5
 
 
@@ -309,6 +317,7 @@ func _finish_drag(at_position: Vector2) -> void:
 
 
 func _show_horizontal_preview(horizontal_delta: float) -> void:
+	_update_judgment_haptic(horizontal_delta)
 	var max_offset := size.x * PREVIEW_MAX_OFFSET_RATIO
 	var preview_offset := clampf(
 		horizontal_delta * PREVIEW_FOLLOW_RATIO,
@@ -334,6 +343,7 @@ func _show_horizontal_preview(horizontal_delta: float) -> void:
 
 
 func _show_vertical_preview(vertical_delta: float) -> void:
+	_haptic_action = 0
 	_set_active_action_button(0)
 	var max_offset := size.y * VERTICAL_PREVIEW_MAX_OFFSET_RATIO
 	var preview_offset := clampf(
@@ -361,6 +371,25 @@ func _scroll_can_consume_vertical_drag(vertical_delta: float) -> bool:
 		if vertical_delta > 0.0:
 			return scroll_bar.value > scroll_bar.min_value + 0.5
 	return false
+
+
+func _update_judgment_haptic(horizontal_delta: float) -> void:
+	var action := 0
+	if absf(horizontal_delta) >= DRAG_THRESHOLD:
+		action = GOOD if horizontal_delta > 0.0 else AGAIN
+	if action == _haptic_action:
+		return
+	_haptic_action = action
+	if action != 0:
+		judgment_threshold_crossed.emit(action)
+
+
+func _vibrate_for_judgment_threshold(_direction: int) -> void:
+	if not haptics_enabled:
+		return
+	if OS.get_name() != "Android" and OS.get_name() != "iOS":
+		return
+	Input.vibrate_handheld(HAPTIC_DURATION_MS, HAPTIC_AMPLITUDE)
 
 
 func _play_swipe_exit(direction: int) -> void:
@@ -627,6 +656,7 @@ func _reset_visual() -> void:
 	rotation = 0.0
 	scale = Vector2.ONE
 	modulate = Color.WHITE
+	_haptic_action = 0
 	_set_active_action_button(0)
 	_set_active_hint(0)
 

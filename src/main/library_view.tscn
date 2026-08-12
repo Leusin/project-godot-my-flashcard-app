@@ -6,11 +6,11 @@
 layout_mode = 2
 size_flags_vertical = 3
 theme = ExtResource("1_theme")
-theme_override_constants/separation = 16
+theme_override_constants/separation = 30
 
 [node name="LibraryHeading" type="Label" parent="."]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 36
 text = "내 덱"
 
 [node name="DeckListScroll" type="ScrollContainer" parent="."]
@@ -21,22 +21,22 @@ horizontal_scroll_mode = 0
 [node name="DeckList" type="HFlowContainer" parent="DeckListScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/h_separation = 20
-theme_override_constants/v_separation = 24
+theme_override_constants/h_separation = 28
+theme_override_constants/v_separation = 32
 alignment = 0
 last_wrap_alignment = 0
 
 [node name="EmptyDecksLabel" type="Label" parent="."]
 visible = false
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 28
 text = "덱이 없습니다."
 horizontal_alignment = 1
 
 [node name="LibraryStatusLabel" type="Label" parent="."]
 visible = false
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 24
 text = "작업 완료"
 horizontal_alignment = 1
 autowrap_mode = 3

@@ -85,7 +85,7 @@ alignment = 1
 
 [node name="RenameDeckTitle" type="Label" parent="RenameDeckPanel/Margin/Content"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 36
 text = "덱 이름 변경"
 horizontal_alignment = 1
 
@@ -96,7 +96,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/caret_color = Color(0, 0, 0, 1)
 theme_override_colors/selection_color = Color(0.7, 0.7, 0.7, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 28
 theme_override_styles/normal = SubResource("StyleBoxInput")
 theme_override_styles/focus = SubResource("StyleBoxInputFocus")
 placeholder_text = "덱 이름"
@@ -106,7 +106,7 @@ select_all_on_focus = true
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 24
 text = "이름을 확인하세요."
 horizontal_alignment = 1
 autowrap_mode = 3
@@ -120,7 +120,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 28
 text = "취소"
 
 [node name="ConfirmRenameButton" type="Button" parent="RenameDeckPanel/Margin/Content/Buttons"]
@@ -128,5 +128,5 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 28
 text = "변경"

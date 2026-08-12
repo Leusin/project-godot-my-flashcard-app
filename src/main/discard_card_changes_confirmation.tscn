@@ -64,14 +64,14 @@ theme_override_constants/separation = 20
 
 [node name="Title" type="Label" parent="Panel/Margin/Content"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 36
 text = "변경사항을 버릴까요?"
 horizontal_alignment = 1
 autowrap_mode = 3
 
 [node name="Warning" type="Label" parent="Panel/Margin/Content"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 24
 text = "저장하지 않은 질문과 답은 복구할 수 없습니다."
 horizontal_alignment = 1
 autowrap_mode = 3
@@ -84,12 +84,12 @@ theme_override_constants/separation = 16
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 28
 text = "계속 편집"
 
 [node name="DiscardChangesButton" type="Button" parent="Panel/Margin/Content/Buttons"]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 28
 text = "버리기"

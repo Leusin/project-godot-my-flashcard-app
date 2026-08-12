@@ -29,13 +29,13 @@ theme_override_constants/separation = 7
 
 [node name="QuestionLabel" type="Label" parent="Margin/Content"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 28
 text = "질문"
 text_overrun_behavior = 3
 
 [node name="AnswerLabel" type="Label" parent="Margin/Content"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 0.35, 0.35, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 24
 text = "답"
 text_overrun_behavior = 3

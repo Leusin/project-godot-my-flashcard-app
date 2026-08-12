@@ -15,7 +15,8 @@ shadow_size = 6
 shadow_offset = Vector2(0, 3)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxMenuItem"]
-content_margin_left = 16.0
+content_margin_left = 24.0
+content_margin_right = 16.0
 bg_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
@@ -23,7 +24,8 @@ corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxMenuItemPressed"]
-content_margin_left = 16.0
+content_margin_left = 24.0
+content_margin_right = 16.0
 bg_color = Color(0.84, 0.84, 0.84, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
@@ -31,7 +33,8 @@ corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxMenuItemHover"]
-content_margin_left = 16.0
+content_margin_left = 24.0
+content_margin_right = 16.0
 bg_color = Color(0.93, 0.93, 0.93, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
@@ -61,35 +64,35 @@ theme_override_styles/hover = SubResource("StyleBoxBackdrop")
 theme_override_styles/focus = SubResource("StyleBoxBackdrop")
 
 [node name="DeckContextMenuPanel" type="PanelContainer" parent="." unique_id=1331468520]
-custom_minimum_size = Vector2(200, 230)
+custom_minimum_size = Vector2(320, 324)
 layout_mode = 0
 offset_left = 190.0
 offset_top = 120.0
-offset_right = 390.0
-offset_bottom = 350.0
+offset_right = 510.0
+offset_bottom = 444.0
 theme_override_styles/panel = SubResource("StyleBoxContextMenu")
 
 [node name="Margin" type="MarginContainer" parent="DeckContextMenuPanel" unique_id=965396841]
 layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
 
 [node name="Content" type="VBoxContainer" parent="DeckContextMenuPanel/Margin" unique_id=2081619200]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 
 [node name="DuplicateDeckButton" type="Button" parent="DeckContextMenuPanel/Margin/Content" unique_id=1685094676]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
 theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("StyleBoxMenuItem")
 theme_override_styles/pressed = SubResource("StyleBoxMenuItemPressed")
 theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
@@ -99,14 +102,14 @@ alignment = 0
 
 [node name="RenameDeckButton" type="Button" parent="DeckContextMenuPanel/Margin/Content" unique_id=1918369660]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
 theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("StyleBoxMenuItem")
 theme_override_styles/pressed = SubResource("StyleBoxMenuItemPressed")
 theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
@@ -116,14 +119,14 @@ alignment = 0
 
 [node name="ExportDeckButton" type="Button" parent="DeckContextMenuPanel/Margin/Content" unique_id=2038619403]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
 theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("StyleBoxMenuItem")
 theme_override_styles/pressed = SubResource("StyleBoxMenuItemPressed")
 theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
@@ -133,14 +136,14 @@ alignment = 0
 
 [node name="DeleteDeckButton" type="Button" parent="DeckContextMenuPanel/Margin/Content" unique_id=490262387]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
 theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 30
 theme_override_styles/normal = SubResource("StyleBoxMenuItem")
 theme_override_styles/pressed = SubResource("StyleBoxMenuItemPressed")
 theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")

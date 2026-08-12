@@ -9,6 +9,7 @@ func run_tests() -> void:
 	_test_duplicate_question_fixture()
 	_test_crlf_and_preamble()
 	_test_writer()
+	_test_sample_deck()
 
 
 func _test_empty_text() -> void:
@@ -78,3 +79,25 @@ func _test_writer() -> void:
 	check(restored[0].answer == "사과\n빨간 과일", "writer/parser: 여러 줄 답 왕복")
 	check(restored[1].question == "Empty answer", "writer/parser: 빈 답 질문 왕복")
 	check(restored[1].answer.is_empty(), "writer/parser: 빈 답 왕복")
+
+
+func _test_sample_deck() -> void:
+	var text := FileAccess.get_file_as_string("res://sample_deck.md")
+	var cards := DeckParser.parse(text)
+
+	check(cards.size() == 15, "샘플 덱: 최신 사용법 15장 제공")
+	if cards.size() != 15:
+		return
+
+	check(
+		cards[0].question == "MyFlashCard는 어떤 앱인가요?"
+		and cards[3].answer.contains("카드 자체를 탭")
+		and cards[5].answer.contains("오른쪽은 GOOD")
+		and cards[-1].answer.contains("개인 학습 데이터"),
+		"샘플 덱: 탭·스와이프·내보내기 동작을 현재 UX로 안내"
+	)
+	check(
+		not text.contains("「답 보기」 버튼")
+		and not text.contains("「다시 시작」"),
+		"샘플 덱: 제거된 버튼과 옛 결과 화면 설명 제거"
+	)

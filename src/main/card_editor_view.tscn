@@ -78,13 +78,13 @@ theme_override_constants/separation = 12
 [node name="CancelCardEditButton" type="Button" parent="Header"]
 custom_minimum_size = Vector2(112, 64)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 24
 text = "← 취소"
 
 [node name="CardEditorTitle" type="Label" parent="Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 32
 text = "카드 편집"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -92,7 +92,7 @@ vertical_alignment = 1
 [node name="DeleteCardButton" type="Button" parent="Header"]
 custom_minimum_size = Vector2(112, 64)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 24
 text = "삭제"
 
 [node name="CardEditorFrame" type="PanelContainer" parent="."]
@@ -124,14 +124,14 @@ theme_override_constants/separation = 8
 [node name="WrongMinusButton" type="Button" parent="CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 36
 text = "−"
 tooltip_text = "오답 횟수 줄이기"
 
 [node name="EditorWrongCountLabel" type="Label" parent="CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls"]
 custom_minimum_size = Vector2(72, 64)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 32
 text = "0"
 tooltip_text = "오답 0회"
 horizontal_alignment = 1
@@ -140,7 +140,7 @@ vertical_alignment = 1
 [node name="WrongPlusButton" type="Button" parent="CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls"]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 32
 text = "+"
 tooltip_text = "오답 횟수 늘리기"
 
@@ -152,19 +152,19 @@ mouse_filter = 2
 [node name="ResetCardProgressButton" type="Button" parent="CardEditorFrame/CardMargin/CardContent/CardEditorProperties"]
 custom_minimum_size = Vector2(112, 64)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 24
 text = "초기화"
 tooltip_text = "상태와 오답 횟수를 초기화"
 
 [node name="CardStatusOption" type="OptionButton" parent="CardEditorFrame/CardMargin/CardContent/CardEditorProperties"]
 custom_minimum_size = Vector2(210, 64)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 28
 tooltip_text = "카드 학습 상태"
 
 [node name="QuestionCaption" type="Label" parent="CardEditorFrame/CardMargin/CardContent"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 24
 text = "질문"
 
 [node name="CardQuestionInput" type="LineEdit" parent="CardEditorFrame/CardMargin/CardContent"]
@@ -176,7 +176,7 @@ theme_override_colors/font_uneditable_color = Color(0.25, 0.25, 0.25, 1)
 theme_override_colors/font_placeholder_color = Color(0.42, 0.42, 0.42, 1)
 theme_override_colors/caret_color = Color(0, 0, 0, 1)
 theme_override_colors/selection_color = Color(0.75, 0.75, 0.75, 1)
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 36
 theme_override_styles/normal = SubResource("StyleBoxFieldNormal")
 theme_override_styles/focus = SubResource("StyleBoxFieldFocus")
 theme_override_styles/read_only = SubResource("StyleBoxFieldReadOnly")
@@ -184,7 +184,7 @@ placeholder_text = "질문을 입력하세요"
 
 [node name="AnswerCaption" type="Label" parent="CardEditorFrame/CardMargin/CardContent"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 24
 text = "답"
 
 [node name="CardAnswerInput" type="TextEdit" parent="CardEditorFrame/CardMargin/CardContent"]
@@ -196,7 +196,7 @@ theme_override_colors/font_readonly_color = Color(0.25, 0.25, 0.25, 1)
 theme_override_colors/font_placeholder_color = Color(0.42, 0.42, 0.42, 1)
 theme_override_colors/caret_color = Color(0, 0, 0, 1)
 theme_override_colors/selection_color = Color(0.75, 0.75, 0.75, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 32
 theme_override_styles/normal = SubResource("StyleBoxFieldNormal")
 theme_override_styles/focus = SubResource("StyleBoxFieldFocus")
 theme_override_styles/read_only = SubResource("StyleBoxFieldReadOnly")
@@ -206,12 +206,12 @@ wrap_mode = 1
 [node name="CardEditorErrorLabel" type="Label" parent="CardEditorFrame/CardMargin/CardContent"]
 visible = false
 layout_mode = 2
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 24
 text = "오류"
 autowrap_mode = 3
 
 [node name="SaveCardButton" type="Button" parent="."]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 32
 text = "카드 저장"

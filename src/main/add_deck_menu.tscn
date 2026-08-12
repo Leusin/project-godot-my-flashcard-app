@@ -15,28 +15,31 @@ shadow_size = 6
 shadow_offset = Vector2(0, 3)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxMenuItem"]
+content_margin_left = 24.0
+content_margin_right = 16.0
 bg_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
-content_margin_left = 16.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxMenuItemHover"]
+content_margin_left = 24.0
+content_margin_right = 16.0
 bg_color = Color(0.93, 0.93, 0.93, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
-content_margin_left = 16.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxMenuItemPressed"]
+content_margin_left = 24.0
+content_margin_right = 16.0
 bg_color = Color(0.84, 0.84, 0.84, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
-content_margin_left = 16.0
 
 [node name="AddDeckMenu" type="Control"]
 layout_mode = 3
@@ -61,30 +64,30 @@ theme_override_styles/pressed = SubResource("StyleBoxBackdrop")
 theme_override_styles/focus = SubResource("StyleBoxBackdrop")
 
 [node name="AddDeckMenuPanel" type="PanelContainer" parent="."]
-custom_minimum_size = Vector2(220, 126)
+custom_minimum_size = Vector2(320, 172)
 layout_mode = 0
 offset_left = 190.0
 offset_top = 120.0
-offset_right = 410.0
-offset_bottom = 246.0
+offset_right = 510.0
+offset_bottom = 292.0
 theme_override_styles/panel = SubResource("StyleBoxContextMenu")
 
 [node name="Margin" type="MarginContainer" parent="AddDeckMenuPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
 
 [node name="Content" type="VBoxContainer" parent="AddDeckMenuPanel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 
 [node name="CreateNewDeckButton" type="Button" parent="AddDeckMenuPanel/Margin/Content"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
@@ -99,9 +102,9 @@ alignment = 0
 
 [node name="ImportMarkdownButton" type="Button" parent="AddDeckMenuPanel/Margin/Content"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
