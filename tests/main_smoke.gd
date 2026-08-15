@@ -19,6 +19,8 @@ const EDIT_TEXT := "# Old\nAnswer\n# Keep\nStay\n"
 const STUDY_EDIT_DECK := "__gd_main_study_edit.md"
 const STUDY_EDIT_TEXT := "# Study old\nStudy answer\n# Study keep\nKeep answer\n"
 const CREATED_DECK := "__gd_main_created.md"
+const CLIPBOARD_DECK := "__gd_main_clipboard.md"
+const CLIPBOARD_TEXT := "복사한 서문\r\n# Clip A\r\nOne\r\n# Clip B\r\nTwo\r\n"
 const EXPORT_TARGET_WITHOUT_EXTENSION := "user://__gd_main_export"
 const EXPORTED_PATH := "user://__gd_main_export.md"
 
@@ -153,15 +155,23 @@ func run_tests() -> void:
 	check(
 		add_deck_menu.visible
 		and _view(app, "CreateNewDeckButton").text == "새 덱 만들기"
-		and _view(app, "ImportMarkdownButton").text == "Markdown 가져오기",
-		"Main Create: 추가 타일에서 새 덱과 Markdown 가져오기 선택"
+		and _view(app, "ImportMarkdownButton").text == "Markdown 가져오기"
+		and _view(app, "CreateFromClipboardButton").text == "클립보드에서 만들기",
+		"Main Create: 추가 타일에서 새 덱·Markdown 파일·클립보드 선택"
 	)
 	check(
 		add_deck_menu.scene_file_path.ends_with("add_deck_menu.tscn")
-		and add_deck_menu_panel.custom_minimum_size == Vector2(320, 172)
+		and add_deck_menu_panel.custom_minimum_size == Vector2(320, 248)
 		and _view(app, "CreateNewDeckButton").custom_minimum_size.y == 72.0
+		and _view(app, "CreateFromClipboardButton").custom_minimum_size.y == 72.0
 		and _view(app, "CreateNewDeckButton").get_theme_font_size("font_size") == 30,
 		"Main Create: 추가 선택 context list를 큰 글자와 터치 크기로 표시"
+	)
+	check(
+		(_view(app, "CreateFromClipboardButton") as Button).pressed.is_connected(
+			Callable(app, "_on_create_from_clipboard_pressed")
+		),
+		"Main Clipboard: 클립보드 생성 버튼 signal 연결"
 	)
 	var add_anchor_rect := MainApp._control_rect_in_overlay(
 		add_deck_menu,
@@ -1465,6 +1475,46 @@ func run_tests() -> void:
 		"Main Create: 덱 목록에 새 카드 뭉치 즉시 표시"
 	)
 
+	check(
+		MainApp.clipboard_content_error("") == MainApp.CLIPBOARD_EMPTY_MESSAGE
+		and MainApp.clipboard_content_error("질문 제목 없음")
+		== MainApp.CLIPBOARD_BROKEN_MESSAGE,
+		"Main Clipboard: 빈 텍스트와 잘못된 Markdown 안내"
+	)
+	check(
+		app.begin_clipboard_deck_creation(CLIPBOARD_TEXT),
+		"Main Clipboard: 복사한 Markdown에서 덱 생성 시작"
+	)
+	check(
+		_view(app, "CreateDeckOverlay").visible
+		and _view(app, "CreateDeckTitle").text == "클립보드로 덱 만들기"
+		and _view(app, "CreateDeckDescription").text
+		== "복사한 Markdown에서 2장의 카드를 찾았습니다."
+		and _view(app, "ConfirmCreateDeckButton").text == "덱 만들기",
+		"Main Clipboard: 카드 수를 확인하고 덱 이름 입력"
+	)
+	_view(app, "CreateDeckInput").text = "__gd_main_clipboard"
+	_view(app, "ConfirmCreateDeckButton").pressed.emit()
+	check(
+		_view(app, "CardListView").visible
+		and DeckStorage.read_deck(CLIPBOARD_DECK) == CLIPBOARD_TEXT
+		and _view(app, "CardRows").get_child_count() == 2,
+		"Main Clipboard: 복사한 Markdown 원문 그대로 덱 저장"
+	)
+	check(
+		_view(app, "CardListStatusLabel").text
+		== "'__gd_main_clipboard' 덱 생성 완료",
+		"Main Clipboard: 생성 완료 후 카드 목록 진입"
+	)
+	_view(app, "BackFromCardListButton").pressed.emit()
+	_view(app, "BackToLibraryButton").pressed.emit()
+	var clipboard_tile := _find_deck_tile(app, "__gd_main_clipboard")
+	check(
+		clipboard_tile != null
+		and _view(clipboard_tile, "DeckCountLabel").text == "2장",
+		"Main Clipboard: 생성한 덱을 라이브러리에 즉시 표시"
+	)
+
 	app.queue_free()
 	_cleanup()
 	DeckStorage.set_decks_dir("")
@@ -1497,6 +1547,7 @@ func _cleanup() -> void:
 		EDIT_DECK,
 		STUDY_EDIT_DECK,
 		CREATED_DECK,
+		CLIPBOARD_DECK,
 	]:
 		var progress_path := DeckStorage.progress_path(deck_file)
 		if FileAccess.file_exists(progress_path):

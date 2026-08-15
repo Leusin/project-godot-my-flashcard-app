@@ -36,10 +36,14 @@ src/core/* → Godot UI와 파일 IO를 모름
 
 ```text
 Deck Library
-  → Study Ready
+  ├─ 덱 선택 → Study Ready
     ├─ 새 학습 설정 → Study → Result
     ├─ 이어서 학습 ────────┘
     └─ 카드 관리 → Card List → Card Detail → Card Editor
+  └─ 덱 추가
+      ├─ 새 덱 → 이름 입력 → 첫 Card Editor
+      ├─ Markdown 파일 가져오기 → Library
+      └─ 클립보드 Markdown → 이름 입력 → Card List
 ```
 
 - 덱 타일 `⋮`와 추가 타일 `+`는 각 anchor 아래에 context list를 연다.
@@ -57,6 +61,7 @@ user://settings.json
 ```
 
 - Markdown 덱이 원본 데이터다.
+- 클립보드 생성은 파싱으로 형식을 확인한 뒤 복사한 Markdown 원문을 그대로 저장한다.
 - 진행도와 이어서 학습은 덱별 파생 JSON이다.
 - 질문 문자열이 카드 기록의 식별자이므로 질문 편집 시 `Progress.rename`으로 기록을 옮긴다.
 - Import/Export 실패 원인은 `DeckStorage.ExportResult` 등 구체적인 결과로 구분한다.

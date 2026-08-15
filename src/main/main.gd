@@ -19,6 +19,11 @@ enum CardDetailOrigin {
 	STUDY_RESULT,
 }
 
+enum CreateDeckMode {
+	EMPTY,
+	CLIPBOARD,
+}
+
 enum StudyOutcome {
 	PENDING,
 	AGAIN,
@@ -45,6 +50,9 @@ const DUPLICATE_DECK_FAILED_MESSAGE := "덱을 복제하지 못했습니다. 저
 const CREATE_DECK_EMPTY_MESSAGE := "덱 이름을 입력하세요."
 const CREATE_DECK_INVALID_MESSAGE := "덱 이름에 < > : \" / \\ | ? * 문자나 끝 마침표를 사용할 수 없습니다."
 const CREATE_DECK_DUPLICATE_MESSAGE := "같은 이름의 덱이 이미 있습니다."
+const CREATE_DECK_SAVE_FAILED_MESSAGE := "덱을 저장하지 못했습니다. 저장 공간을 확인하세요."
+const CLIPBOARD_EMPTY_MESSAGE := "클립보드에 Markdown 텍스트가 없습니다."
+const CLIPBOARD_BROKEN_MESSAGE := "클립보드에서 카드를 찾지 못했습니다. 각 질문을 '# 질문' 형식으로 작성하세요."
 const CARD_QUESTION_EMPTY_MESSAGE := "질문을 입력하세요."
 const CARD_ANSWER_HEADING_MESSAGE := "답의 줄 시작에는 '# '를 사용할 수 없습니다."
 const CARD_SAVE_FAILED_MESSAGE := "카드를 저장하지 못했습니다. 저장 공간을 확인하세요."
@@ -71,6 +79,9 @@ const STUDY_RESULT_ROW_SCENE := preload("res://src/main/study_result_row.tscn")
 )
 @onready var import_markdown_button := (
 	add_deck_menu.find_child("ImportMarkdownButton", true, false) as Button
+)
+@onready var create_from_clipboard_button := (
+	add_deck_menu.find_child("CreateFromClipboardButton", true, false) as Button
 )
 @onready var deck_context_menu: Control = $DeckContextMenu
 @onready var deck_context_menu_panel: PanelContainer = $DeckContextMenu/DeckContextMenuPanel
@@ -101,8 +112,11 @@ const STUDY_RESULT_ROW_SCENE := preload("res://src/main/study_result_row.tscn")
 @onready var delete_confirmation_title: Label = $DeleteConfirmationOverlay/DeleteConfirmationPanel/Margin/Content/DeleteConfirmationTitle
 @onready var exit_confirmation_overlay: Control = $ExitConfirmationOverlay
 @onready var create_deck_overlay: Control = $CreateDeckOverlay
+@onready var create_deck_title: Label = $CreateDeckOverlay/CreateDeckPanel/Margin/Content/CreateDeckTitle
+@onready var create_deck_description: Label = $CreateDeckOverlay/CreateDeckPanel/Margin/Content/CreateDeckDescription
 @onready var create_deck_input: LineEdit = $CreateDeckOverlay/CreateDeckPanel/Margin/Content/CreateDeckInput
 @onready var create_deck_error_label: Label = $CreateDeckOverlay/CreateDeckPanel/Margin/Content/CreateDeckErrorLabel
+@onready var confirm_create_deck_button: Button = $CreateDeckOverlay/CreateDeckPanel/Margin/Content/Buttons/ConfirmCreateDeckButton
 @onready var study_ready_view: VBoxContainer = $Margin/Page/StudyReadyView
 @onready var ready_overview: VBoxContainer = $Margin/Page/StudyReadyView/DeckStage/DeckStack/DeckCover/Margin/OverviewContent
 @onready var new_study_content: VBoxContainer = $Margin/Page/StudyReadyView/DeckStage/DeckStack/DeckCover/Margin/NewStudyContent
@@ -202,6 +216,8 @@ var _study_edit_source_index := -1
 var _study_edit_return_show_answer := false
 var _study_input_locked := false
 var _study_input_lock_generation := 0
+var _create_deck_mode := CreateDeckMode.EMPTY
+var _pending_markdown := ""
 
 
 func _ready() -> void:
@@ -222,6 +238,7 @@ func _ready() -> void:
 	export_dialog.add_filter("*.md", "Markdown", "text/markdown,text/plain")
 	create_new_deck_button.pressed.connect(_on_create_new_deck_pressed)
 	import_markdown_button.pressed.connect(_on_import_from_add_menu_pressed)
+	create_from_clipboard_button.pressed.connect(_on_create_from_clipboard_pressed)
 	$AddDeckMenu/DismissAddDeckMenuButton.pressed.connect(_on_add_deck_menu_dismissed)
 	rename_deck_button.pressed.connect(_on_rename_pressed)
 	duplicate_deck_button.pressed.connect(_on_duplicate_pressed)
@@ -408,6 +425,7 @@ func show_library() -> void:
 	_study_edit_source_index = -1
 	_study_edit_return_show_answer = false
 	_menu_deck_file = ""
+	_reset_create_deck_state()
 	add_deck_menu.hide()
 	deck_context_menu.hide()
 	card_context_menu.hide()
@@ -1547,6 +1565,11 @@ func _on_exit_confirmed() -> void:
 
 func _on_create_new_deck_pressed() -> void:
 	add_deck_menu.hide()
+	_create_deck_mode = CreateDeckMode.EMPTY
+	_pending_markdown = ""
+	create_deck_title.text = "새 덱 만들기"
+	create_deck_description.text = "이름을 정한 뒤 첫 카드를 작성합니다."
+	confirm_create_deck_button.text = "첫 카드 작성"
 	create_deck_input.clear()
 	create_deck_error_label.hide()
 	create_deck_overlay.show()
@@ -1557,29 +1580,70 @@ func _on_create_deck_canceled() -> void:
 	create_deck_overlay.hide()
 	create_deck_input.clear()
 	create_deck_error_label.hide()
+	_reset_create_deck_state()
 
 
 func _on_create_deck_confirmed() -> void:
-	_begin_new_deck(create_deck_input.text)
+	if _create_deck_mode == CreateDeckMode.CLIPBOARD:
+		create_deck_from_markdown(create_deck_input.text, _pending_markdown)
+	else:
+		_begin_new_deck(create_deck_input.text)
 
 
 func _on_create_deck_submitted(_new_name: String) -> void:
 	_on_create_deck_confirmed()
 
 
-func _begin_new_deck(display_name: String) -> bool:
-	var trimmed_name := display_name.strip_edges()
-	if trimmed_name.is_empty():
-		_show_create_deck_error(CREATE_DECK_EMPTY_MESSAGE)
-		return false
-	if not DeckNaming.is_valid_display_name(trimmed_name):
-		_show_create_deck_error(CREATE_DECK_INVALID_MESSAGE)
+func _on_create_from_clipboard_pressed() -> void:
+	begin_clipboard_deck_creation(DisplayServer.clipboard_get())
+
+
+func begin_clipboard_deck_creation(markdown_text: String) -> bool:
+	add_deck_menu.hide()
+	var clipboard_error := clipboard_content_error(markdown_text)
+	if not clipboard_error.is_empty():
+		_show_library_status(clipboard_error)
 		return false
 
-	var deck_file := DeckNaming.deck_file_name(trimmed_name)
-	if _deck_file_name_is_taken(deck_file):
-		_show_create_deck_error(CREATE_DECK_DUPLICATE_MESSAGE)
+	_create_deck_mode = CreateDeckMode.CLIPBOARD
+	_pending_markdown = markdown_text
+	var card_count := DeckParser.parse(markdown_text).size()
+	create_deck_title.text = "클립보드로 덱 만들기"
+	create_deck_description.text = "복사한 Markdown에서 %d장의 카드를 찾았습니다." % card_count
+	confirm_create_deck_button.text = "덱 만들기"
+	create_deck_input.clear()
+	create_deck_error_label.hide()
+	create_deck_overlay.show()
+	create_deck_input.call_deferred("grab_focus")
+	return true
+
+
+func create_deck_from_markdown(display_name: String, markdown_text: String) -> bool:
+	var content_error := clipboard_content_error(markdown_text)
+	if not content_error.is_empty():
+		_show_create_deck_error(content_error)
 		return false
+
+	var deck_file := _new_deck_file(display_name)
+	if deck_file.is_empty():
+		return false
+
+	if not DeckStorage.write_deck(deck_file, markdown_text):
+		_show_create_deck_error(CREATE_DECK_SAVE_FAILED_MESSAGE)
+		return false
+
+	create_deck_overlay.hide()
+	_reset_create_deck_state()
+	_open_card_list(deck_file)
+	_show_card_list_status("'%s' 덱 생성 완료" % DeckNaming.display_name(deck_file))
+	return true
+
+
+func _begin_new_deck(display_name: String) -> bool:
+	var deck_file := _new_deck_file(display_name)
+	if deck_file.is_empty():
+		return false
+	var trimmed_name := DeckNaming.display_name(deck_file)
 
 	create_deck_overlay.hide()
 	_editing_deck_file = deck_file
@@ -1596,6 +1660,27 @@ func _begin_new_deck(display_name: String) -> bool:
 	card_list_view.hide()
 	_open_card_editor(-1)
 	return true
+
+
+func _new_deck_file(display_name: String) -> String:
+	var trimmed_name := display_name.strip_edges()
+	if trimmed_name.is_empty():
+		_show_create_deck_error(CREATE_DECK_EMPTY_MESSAGE)
+		return ""
+	if not DeckNaming.is_valid_display_name(trimmed_name):
+		_show_create_deck_error(CREATE_DECK_INVALID_MESSAGE)
+		return ""
+
+	var deck_file := DeckNaming.deck_file_name(trimmed_name)
+	if _deck_file_name_is_taken(deck_file):
+		_show_create_deck_error(CREATE_DECK_DUPLICATE_MESSAGE)
+		return ""
+	return deck_file
+
+
+func _reset_create_deck_state() -> void:
+	_create_deck_mode = CreateDeckMode.EMPTY
+	_pending_markdown = ""
 
 
 func _show_create_deck_error(message: String) -> void:
@@ -1841,6 +1926,14 @@ static func deck_content_error(deck_text: String) -> String:
 	if DeckParser.parse(deck_text).is_empty():
 		return BROKEN_DECK_MESSAGE
 
+	return ""
+
+
+static func clipboard_content_error(markdown_text: String) -> String:
+	if markdown_text.strip_edges().is_empty():
+		return CLIPBOARD_EMPTY_MESSAGE
+	if DeckParser.parse(markdown_text).is_empty():
+		return CLIPBOARD_BROKEN_MESSAGE
 	return ""
 
 
