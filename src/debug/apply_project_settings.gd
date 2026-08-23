@@ -5,8 +5,8 @@ extends SceneTree
 
 # ── 애플리케이션 / 윈도우 ────────────────────────────────────────────
 const PROJECT_SETTINGS: Dictionary = {
-	"application/config/name": "MyFlashCard",
-	"application/config/version": "0.3.0",
+	"application/config/name": "My Simple Flash Card",
+	"application/config/version": "0.9.0",
 	# 진입점은 화면 전환과 앱 상태를 조정하는 Main이다.
 	"application/run/main_scene": "res://src/main/main.tscn",
 

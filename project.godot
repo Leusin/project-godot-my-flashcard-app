@@ -10,8 +10,8 @@ config_version=5
 
 [application]
 
-config/name="MyFlashCard"
-config/version="0.3.0"
+config/name="My Simple Flash Card"
+config/version="0.9.0"
 run/main_scene="uid://bh17ip0fnu6v3"
 config/quit_on_go_back=false
 config/features=PackedStringArray("4.7", "Mobile")

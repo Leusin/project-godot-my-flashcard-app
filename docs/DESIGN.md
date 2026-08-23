@@ -1,4 +1,4 @@
-# MyFlashCard App (가제)
+# My Simple Flash Card
 
 ## 개요
 

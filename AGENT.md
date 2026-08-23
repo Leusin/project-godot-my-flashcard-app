@@ -1,4 +1,4 @@
-# MyFlashCard App
+# My Simple Flash Card
 
 Markdown 덱을 앱에서 만들고 편집하며, 스와이프와 버튼으로 복습하는 Godot 4.7.1 GDScript 앱이다. 기획은 [docs/DESIGN.md](docs/DESIGN.md), 현재 구조는 [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md), 이정표는 [docs/ROADMAP.md](docs/ROADMAP.md)를 참고한다.
 

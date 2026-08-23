@@ -12,3 +12,9 @@ export_credentials.cfg
 
 # 빌드 결과물
 build/
+
+# 키스토어와 비밀 값 — 절대 커밋하지 않는다 (경로·비밀번호는 export_credentials.cfg나 환경 변수로)
+*.keystore
+*.jks
+*.p12
+.env

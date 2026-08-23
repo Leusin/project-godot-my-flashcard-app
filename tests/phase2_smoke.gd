@@ -90,7 +90,7 @@ func _test_sample_deck() -> void:
 		return
 
 	check(
-		cards[0].question == "MyFlashCard는 어떤 앱인가요?"
+		cards[0].question == "My Simple Flash Card는 어떤 앱인가요?"
 		and cards[3].answer.contains("카드 자체를 탭")
 		and cards[5].answer.contains("오른쪽은 GOOD")
 		and cards[-1].answer.contains("개인 학습 데이터"),

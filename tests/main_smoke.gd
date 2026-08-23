@@ -980,7 +980,7 @@ func run_tests() -> void:
 	app.start_sample_deck()
 	check(_view(app, "StudyContainer").visible, "MVP: 샘플 덱으로 학습 시작")
 	check(
-		_view(app, "QuestionLabel").text == "MyFlashCard는 어떤 앱인가요?"
+		_view(app, "QuestionLabel").text == "My Simple Flash Card는 어떤 앱인가요?"
 		and _view(app, "RemainingLabel").text == "15장 남음",
 		"MVP: 최신 앱 사용법 15장으로 구성된 샘플 덱 시작"
 	)

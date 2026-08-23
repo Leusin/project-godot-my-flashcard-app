@@ -50,7 +50,10 @@
 - [x] Safe Area와 Android 뒤로가기 처리
 - [x] Android APK export, 실제 기기 설치·실행 확인
 - [x] GDScript 전환과 .NET 의존성 제거
-- [ ] Release 서명과 스토어 배포 자료 준비
+- [x] 배포 브랜드 확정 — 앱 이름 My Simple Flash Card, 패키지 `com.leusin.mysimpleflashcard`, 첫 테스트 버전 0.9.0 (versionCode 1)
+- [x] Play 업로드용 AAB export 프리셋 (Android Release AAB, target SDK 36)
+- [ ] 업로드 키스토어 생성·등록과 release 서명 (절차는 README의 "Android 배포" 참고)
+- [ ] Play Console 앱 등록과 스토어 등록 정보(512px 아이콘, 스크린샷, 설명) 준비
   - Android는 기본 `user://decks`를 사용한다.
   - 시스템 폴더를 덱 폴더로 직접 지정하려면 SAF 플러그인 또는 네이티브 연동이 필요하다.
 
