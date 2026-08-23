@@ -1,0 +1,10 @@
+<svg width="432" height="432" viewBox="0 0 432 432" xmlns="http://www.w3.org/2000/svg">
+  <!-- 적응형 아이콘 전경: 카드 두 장만, 안전 영역(중앙 지름 264px 원) 안에 수납.
+       배경 레이어는 아이보리 단색 — 앞카드는 윤곽선으로 구분한다. -->
+  <g transform="translate(207,221) rotate(-8)">
+    <rect x="-69" y="-93.5" width="138" height="187" rx="20" fill="#232839"/>
+  </g>
+  <g transform="translate(221,214) rotate(5)">
+    <rect x="-69" y="-93.5" width="138" height="187" rx="20" fill="#FFFFFF" stroke="#232839" stroke-width="8"/>
+  </g>
+</svg>

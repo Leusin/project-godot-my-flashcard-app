@@ -10,6 +10,14 @@ const PROJECT_SETTINGS: Dictionary = {
 	# 진입점은 화면 전환과 앱 상태를 조정하는 Main이다.
 	"application/run/main_scene": "res://src/main/main.tscn",
 
+	# 부트 스플래시: Godot 기본 로고 대신 브랜드 심볼. 배경을 default_clear_color와
+	# 같은 아이보리로 맞춰 시스템 스플래시 → 부트 스플래시 → 첫 프레임 사이 깜빡임을 없앤다.
+	"application/boot_splash/bg_color": Color(0.969, 0.965, 0.949, 1.0),
+	"application/boot_splash/image": "res://assets/branding/boot_splash_360.png",
+	# 0 = Disabled: 원본 픽셀 크기로 중앙 표시. 기본값 Keep은 여백 포함 이미지를
+	# 화면 크기까지 확대해 심볼이 과하게 커진다.
+	"application/boot_splash/stretch_mode": 0,
+
 	# 최종 타깃이 Android라 모바일 세로 해상도를 기준으로 잡는다
 	"display/window/size/viewport_width": 720,
 	"display/window/size/viewport_height": 1280,

@@ -1,0 +1,10 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Android 12 시스템 스플래시 아이콘: 아이보리 배경 위 변형.
+       심볼은 중앙 2/3 원(지름 341px) 안에 수납해야 시스템 원형 마스크에 잘리지 않는다. -->
+  <g transform="translate(244,262) rotate(-8)">
+    <rect x="-83" y="-112" width="166" height="224" rx="24" fill="#232839"/>
+  </g>
+  <g transform="translate(262,253) rotate(5)">
+    <rect x="-83" y="-112" width="166" height="224" rx="24" fill="#FFFFFF" stroke="#232839" stroke-width="10"/>
+  </g>
+</svg>

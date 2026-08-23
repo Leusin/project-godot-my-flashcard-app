@@ -1,11 +1,9 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <!-- 프로젝트/창 아이콘. 원본: assets/branding/masters/app_icon_rounded.svg -->
+  <!-- 레거시 런처 아이콘(192)과 프로젝트 아이콘용: 모서리 18.75% 라운딩, 밖은 투명 -->
   <rect width="512" height="512" rx="96" fill="#F7F6F2"/>
-  <!-- 뒷카드 (네이비 잉크) -->
   <g transform="translate(240,264) rotate(-8)">
     <rect x="-112" y="-152" width="224" height="304" rx="32" fill="#232839"/>
   </g>
-  <!-- 앞카드 (흰 카드 + 잉크 윤곽) -->
   <g transform="translate(264,252) rotate(5)">
     <rect x="-112" y="-152" width="224" height="304" rx="32" fill="#FFFFFF" stroke="#232839" stroke-width="13"/>
   </g>

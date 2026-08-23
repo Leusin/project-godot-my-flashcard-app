@@ -1,0 +1,6 @@
+<svg width="432" height="432" viewBox="0 0 432 432" xmlns="http://www.w3.org/2000/svg">
+  <!-- 단색 아이콘 합성용 레이어 2: 앞카드를 14px 팽창시킨 지우개 모양 (두 카드 사이 간격) -->
+  <g transform="translate(221,214) rotate(5)">
+    <rect x="-83" y="-107.5" width="166" height="215" rx="34" fill="#000000"/>
+  </g>
+</svg>

@@ -1,0 +1,9 @@
+<svg width="360" height="360" viewBox="0 0 360 360" xmlns="http://www.w3.org/2000/svg">
+  <!-- Godot 부트 스플래시 심볼: 아이보리 bg_color 위에 원본 크기(stretch_mode=0)로 중앙 표시 -->
+  <g transform="translate(168,186) rotate(-8)">
+    <rect x="-85" y="-115" width="170" height="230" rx="25" fill="#232839"/>
+  </g>
+  <g transform="translate(186,177) rotate(5)">
+    <rect x="-85" y="-115" width="170" height="230" rx="25" fill="#FFFFFF" stroke="#232839" stroke-width="10"/>
+  </g>
+</svg>

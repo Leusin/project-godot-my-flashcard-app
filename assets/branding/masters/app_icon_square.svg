@@ -1,6 +1,7 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <!-- 프로젝트/창 아이콘. 원본: assets/branding/masters/app_icon_rounded.svg -->
-  <rect width="512" height="512" rx="96" fill="#F7F6F2"/>
+  <!-- Play Store 512 원본: 풀블리드 정사각형 (모서리 라운딩은 Google이 적용)
+       잉크 모노톤: 아이보리 종이 + 네이비 잉크 — 앱 UI와 동일 팔레트 -->
+  <rect width="512" height="512" fill="#F7F6F2"/>
   <!-- 뒷카드 (네이비 잉크) -->
   <g transform="translate(240,264) rotate(-8)">
     <rect x="-112" y="-152" width="224" height="304" rx="32" fill="#232839"/>
