@@ -41,6 +41,13 @@ text = "작업 완료"
 horizontal_alignment = 1
 autowrap_mode = 3
 
+[node name="PrivacyPolicyLink" type="LinkButton" parent="."]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 18
+text = "개인정보처리방침"
+underline = 1
+
 [node name="ImportDialog" type="FileDialog" parent="."]
 title = "가져올 Markdown 덱 선택"
 initial_position = 2

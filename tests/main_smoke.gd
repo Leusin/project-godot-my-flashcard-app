@@ -97,6 +97,16 @@ func run_tests() -> void:
 		and _view(app, "CardListTitle") == null,
 		"Main UI: 기능 없는 장식 문구 제거"
 	)
+	var privacy_policy_link := _view(app, "PrivacyPolicyLink") as LinkButton
+	check(
+		privacy_policy_link.text == "개인정보처리방침"
+		and privacy_policy_link.pressed.is_connected(
+			Callable(app, "_on_privacy_policy_pressed")
+		)
+		and MainApp.PRIVACY_POLICY_URL
+		== "https://leusin.github.io/project-godot-my-flashcard-app/privacy/",
+		"Main Privacy: 라이브러리에서 공개 개인정보처리방침 연결"
+	)
 	var deck_buttons := _view(app, "DeckList").get_children()
 	check(deck_buttons.size() == 2, "Main: 저장된 덱 뒤에 추가 타일 표시")
 	check(

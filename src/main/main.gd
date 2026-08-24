@@ -57,6 +57,7 @@ const CARD_QUESTION_EMPTY_MESSAGE := "질문을 입력하세요."
 const CARD_ANSWER_HEADING_MESSAGE := "답의 줄 시작에는 '# '를 사용할 수 없습니다."
 const CARD_SAVE_FAILED_MESSAGE := "카드를 저장하지 못했습니다. 저장 공간을 확인하세요."
 const LAST_CARD_DELETE_MESSAGE := "덱에는 카드가 최소 1장 필요합니다."
+const PRIVACY_POLICY_URL := "https://leusin.github.io/project-godot-my-flashcard-app/privacy/"
 const STUDY_INPUT_LOCK_SECONDS := 0.22
 const DECK_TILE_SCENE := preload("res://src/main/deck_tile.tscn")
 const ADD_DECK_TILE_SCENE := preload("res://src/main/add_deck_tile.tscn")
@@ -70,6 +71,7 @@ const STUDY_RESULT_ROW_SCENE := preload("res://src/main/study_result_row.tscn")
 @onready var deck_list: HFlowContainer = $Margin/Page/LibraryContainer/DeckListScroll/DeckList
 @onready var empty_decks_label: Label = $Margin/Page/LibraryContainer/EmptyDecksLabel
 @onready var library_status_label: Label = $Margin/Page/LibraryContainer/LibraryStatusLabel
+@onready var privacy_policy_link: LinkButton = $Margin/Page/LibraryContainer/PrivacyPolicyLink
 @onready var import_dialog: FileDialog = $Margin/Page/LibraryContainer/ImportDialog
 @onready var export_dialog: FileDialog = $Margin/Page/LibraryContainer/ExportDialog
 @onready var add_deck_menu: Control = $AddDeckMenu
@@ -239,6 +241,7 @@ func _ready() -> void:
 	create_new_deck_button.pressed.connect(_on_create_new_deck_pressed)
 	import_markdown_button.pressed.connect(_on_import_from_add_menu_pressed)
 	create_from_clipboard_button.pressed.connect(_on_create_from_clipboard_pressed)
+	privacy_policy_link.pressed.connect(_on_privacy_policy_pressed)
 	$AddDeckMenu/DismissAddDeckMenuButton.pressed.connect(_on_add_deck_menu_dismissed)
 	rename_deck_button.pressed.connect(_on_rename_pressed)
 	duplicate_deck_button.pressed.connect(_on_duplicate_pressed)
@@ -1561,6 +1564,12 @@ func _on_exit_canceled() -> void:
 
 func _on_exit_confirmed() -> void:
 	get_tree().quit()
+
+
+func _on_privacy_policy_pressed() -> void:
+	var open_error := OS.shell_open(PRIVACY_POLICY_URL)
+	if open_error != OK:
+		_show_library_status("개인정보처리방침 페이지를 열 수 없습니다.")
 
 
 func _on_create_new_deck_pressed() -> void:
