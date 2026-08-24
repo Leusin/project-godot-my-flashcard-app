@@ -1973,6 +1973,7 @@ func _show_current() -> void:
 		_show_study_results()
 		return
 
+	remaining_label.get_parent().show()
 	var card := _session.current()
 	study_container.visible = true
 	study_result_view.visible = false
@@ -2004,6 +2005,7 @@ static func card_status_text(status: CardStatus.Value) -> String:
 func _show_study_results() -> void:
 	_reset_study_input_lock()
 	card_context_menu.hide()
+	remaining_label.get_parent().hide()
 	study_container.visible = false
 	study_result_view.visible = true
 	study_progress_bar.hide()
