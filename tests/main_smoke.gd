@@ -104,7 +104,7 @@ func run_tests() -> void:
 			Callable(app, "_on_privacy_policy_pressed")
 		)
 		and MainApp.PRIVACY_POLICY_URL
-		== "https://leusin.github.io/project-godot-my-flashcard-app/privacy/",
+		== "https://leusin.github.io/privacy/my-simple-flash-card/",
 		"Main Privacy: 라이브러리에서 공개 개인정보처리방침 연결"
 	)
 	var deck_buttons := _view(app, "DeckList").get_children()
