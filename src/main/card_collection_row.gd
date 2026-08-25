@@ -49,7 +49,7 @@ func setup(index: int, card: FlashCard, outcome: String = "") -> void:
 	answer_label.text = (
 		"답 없음"
 		if card.answer.is_empty()
-		else card.answer.replace("\n", "  ·  ")
+		else card.answer.replace("\n", ", ")
 	)
 	outcome_badge.visible = not outcome.is_empty()
 	if outcome.is_empty():

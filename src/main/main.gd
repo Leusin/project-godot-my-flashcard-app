@@ -53,6 +53,15 @@ const CREATE_DECK_DUPLICATE_MESSAGE := "같은 이름의 덱이 이미 있습니
 const CREATE_DECK_SAVE_FAILED_MESSAGE := "덱을 저장하지 못했습니다. 저장 공간을 확인하세요."
 const CLIPBOARD_EMPTY_MESSAGE := "클립보드에 Markdown 텍스트가 없습니다."
 const CLIPBOARD_BROKEN_MESSAGE := "클립보드에서 카드를 찾지 못했습니다. 각 질문을 '# 질문' 형식으로 작성하세요."
+const AI_PROMPT_TEMPLATE := """사진에 보이는 영어 단어를 아래 형식의 Markdown으로 만들어줘.
+다른 설명 없이 코드 블록 하나로만 답해줘.
+
+# apple
+사과
+
+# run
+달리다"""
+const AI_PROMPT_COPIED_MESSAGE := "AI 프롬프트를 복사했습니다. AI 앱에 단어 사진과 함께 붙여넣고, 답변을 복사한 뒤 '클립보드에서 만들기'를 누르세요."
 const CARD_QUESTION_EMPTY_MESSAGE := "질문을 입력하세요."
 const CARD_ANSWER_HEADING_MESSAGE := "답의 줄 시작에는 '# '를 사용할 수 없습니다."
 const CARD_SAVE_FAILED_MESSAGE := "카드를 저장하지 못했습니다. 저장 공간을 확인하세요."
@@ -92,6 +101,9 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 )
 @onready var create_from_clipboard_button := (
 	add_deck_menu.find_child("CreateFromClipboardButton", true, false) as Button
+)
+@onready var copy_ai_prompt_button := (
+	add_deck_menu.find_child("CopyAiPromptButton", true, false) as Button
 )
 @onready var deck_context_menu: Control = $DeckContextMenu
 @onready var deck_context_menu_panel: PanelContainer = $DeckContextMenu/DeckContextMenuPanel
@@ -262,6 +274,7 @@ func _ready() -> void:
 	create_new_deck_button.pressed.connect(_on_create_new_deck_pressed)
 	import_markdown_button.pressed.connect(_on_import_from_add_menu_pressed)
 	create_from_clipboard_button.pressed.connect(_on_create_from_clipboard_pressed)
+	copy_ai_prompt_button.pressed.connect(_on_copy_ai_prompt_pressed)
 	$Margin/Page/LibraryContainer/Header/OpenSettingsButton.pressed.connect(show_settings)
 	$Margin/Page/SettingsView/Header/BackFromSettingsButton.pressed.connect(show_library)
 	$Margin/Page/SettingsView/SettingsScroll/Content/DataPanel/Margin/DataActions/CreateBackupButton.pressed.connect(
@@ -1326,7 +1339,7 @@ func _update_continue_action() -> void:
 			DeckStorage.delete_study_resume(_ready_deck_file)
 		return
 
-	continue_study_button.text = "이어서 학습 · %d장 남음" % resume.remaining_indices.size()
+	continue_study_button.text = "이어서 학습 (%d장 남음)" % resume.remaining_indices.size()
 	continue_study_button.show()
 	study_scope_option.select(resume.scope)
 	study_order_option.select(resume.order)
@@ -1719,6 +1732,12 @@ func _on_create_deck_submitted(_new_name: String) -> void:
 
 func _on_create_from_clipboard_pressed() -> void:
 	begin_clipboard_deck_creation(DisplayServer.clipboard_get())
+
+
+func _on_copy_ai_prompt_pressed() -> void:
+	add_deck_menu.hide()
+	DisplayServer.clipboard_set(AI_PROMPT_TEMPLATE)
+	_show_library_status(AI_PROMPT_COPIED_MESSAGE)
 
 
 func begin_clipboard_deck_creation(markdown_text: String) -> bool:

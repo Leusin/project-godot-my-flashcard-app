@@ -229,12 +229,13 @@ func run_tests() -> void:
 		add_deck_menu.visible
 		and _view(app, "CreateNewDeckButton").text == "새 덱 만들기"
 		and _view(app, "ImportMarkdownButton").text == "Markdown 가져오기"
-		and _view(app, "CreateFromClipboardButton").text == "클립보드에서 만들기",
-		"Main Create: 추가 타일에서 새 덱·Markdown 파일·클립보드 선택"
+		and _view(app, "CreateFromClipboardButton").text == "클립보드에서 만들기"
+		and _view(app, "CopyAiPromptButton").text == "AI 프롬프트 복사",
+		"Main Create: 추가 타일에서 새 덱, Markdown 파일, 클립보드, AI 프롬프트 선택"
 	)
 	check(
 		add_deck_menu.scene_file_path.ends_with("add_deck_menu.tscn")
-		and add_deck_menu_panel.custom_minimum_size == Vector2(320, 248)
+		and add_deck_menu_panel.custom_minimum_size == Vector2(320, 324)
 		and _view(app, "CreateNewDeckButton").custom_minimum_size.y == 72.0
 		and _view(app, "CreateFromClipboardButton").custom_minimum_size.y == 72.0
 		and _view(app, "CreateNewDeckButton").get_theme_font_size("font_size") == 30,
@@ -245,6 +246,12 @@ func run_tests() -> void:
 			Callable(app, "_on_create_from_clipboard_pressed")
 		),
 		"Main Clipboard: 클립보드 생성 버튼 signal 연결"
+	)
+	check(
+		(_view(app, "CopyAiPromptButton") as Button).pressed.is_connected(
+			Callable(app, "_on_copy_ai_prompt_pressed")
+		),
+		"Main Clipboard: AI 프롬프트 복사 버튼 signal 연결"
 	)
 	var add_anchor_rect := MainApp._control_rect_in_overlay(
 		add_deck_menu,
@@ -267,6 +274,16 @@ func run_tests() -> void:
 	)
 	check(app.handle_back_request(), "Main Create: 추가 선택창에서 뒤로가기 요청 소비")
 	check(not add_deck_menu.visible, "Main Create: 뒤로가기로 추가 선택창 닫기")
+	app.call("_on_copy_ai_prompt_pressed")
+	check(
+		not add_deck_menu.visible
+		and (_view(app, "LibraryStatusLabel") as Label).visible
+		and (_view(app, "LibraryStatusLabel") as Label).text
+		== MainApp.AI_PROMPT_COPIED_MESSAGE
+		and DeckParser.parse(MainApp.AI_PROMPT_TEMPLATE).size() == 2,
+		"Main Clipboard: AI 프롬프트 복사 후 다음 단계 안내"
+	)
+	(_view(app, "LibraryStatusLabel") as Label).hide()
 	_view(deck_buttons[0], "DeckMenuButton").pressed.emit()
 	var deck_context_menu := _view(app, "DeckContextMenu") as Control
 	check(deck_context_menu.visible, "Main Export: ⋮ 위치에 context list 표시")
@@ -585,7 +602,7 @@ func run_tests() -> void:
 	check(_view(app, "StudyReadyView").visible, "Main Ready: 학습 화면 뒤로가기는 준비 화면으로 복귀")
 	check(
 		_view(app, "ContinueStudyButton").visible
-		and _view(app, "ContinueStudyButton").text == "이어서 학습 · 2장 남음",
+		and _view(app, "ContinueStudyButton").text == "이어서 학습 (2장 남음)",
 		"Main Ready: 저장된 세션의 남은 카드 수 표시"
 	)
 	_view(app, "OpenStudySetupButton").pressed.emit()
@@ -600,7 +617,7 @@ func run_tests() -> void:
 	_view(app, "GoodButton").pressed.emit()
 	check(app.handle_back_request(), "Main Ready: 한 카드 학습 후 뒤로가기 요청 소비")
 	check(
-		_view(app, "ContinueStudyButton").text == "이어서 학습 · 1장 남음",
+		_view(app, "ContinueStudyButton").text == "이어서 학습 (1장 남음)",
 		"Main Ready: 진행 후 줄어든 남은 카드 수 표시"
 	)
 	_view(app, "ContinueStudyButton").pressed.emit()

@@ -64,12 +64,12 @@ theme_override_styles/pressed = SubResource("StyleBoxBackdrop")
 theme_override_styles/focus = SubResource("StyleBoxBackdrop")
 
 [node name="AddDeckMenuPanel" type="PanelContainer" parent="."]
-custom_minimum_size = Vector2(320, 248)
+custom_minimum_size = Vector2(320, 324)
 layout_mode = 0
 offset_left = 190.0
 offset_top = 120.0
 offset_right = 510.0
-offset_bottom = 292.0
+offset_bottom = 444.0
 theme_override_styles/panel = SubResource("StyleBoxContextMenu")
 
 [node name="Margin" type="MarginContainer" parent="AddDeckMenuPanel"]
@@ -132,4 +132,21 @@ theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
 theme_override_styles/pressed = SubResource("StyleBoxMenuItemPressed")
 theme_override_styles/focus = SubResource("StyleBoxMenuItemHover")
 text = "클립보드에서 만들기"
+alignment = 0
+
+[node name="CopyAiPromptButton" type="Button" parent="AddDeckMenuPanel/Margin/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxMenuItem")
+theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
+theme_override_styles/pressed = SubResource("StyleBoxMenuItemPressed")
+theme_override_styles/focus = SubResource("StyleBoxMenuItemHover")
+text = "AI 프롬프트 복사"
 alignment = 0
