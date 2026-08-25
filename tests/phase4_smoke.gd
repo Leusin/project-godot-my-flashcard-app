@@ -8,6 +8,8 @@ const TEST_TEXT := "# A\n1\n# B\n2\n"
 const RENAMED_DECK := "__gd_phase4_renamed.md"
 const EXPORTED_PATH := "user://__gd_phase4_export.md"
 const INVALID_IMPORT_PATH := "user://__gd_phase4_invalid.txt"
+const BACKUP_PATH := "user://__gd_phase4_backup.zip"
+const INVALID_BACKUP_PATH := "user://__gd_phase4_invalid_backup.zip"
 const LEGACY_SAMPLE_TEXT := """# MyFlashCard는 어떤 앱인가요?
 Markdown 파일로 만든 카드를 한 장씩 복습하는 간단한 플래시카드 앱입니다.
 
@@ -34,6 +36,7 @@ func run_tests() -> void:
 	_test_paths_and_crud()
 	_test_progress_storage()
 	_test_study_resume_storage()
+	_test_full_backup_restore()
 	_test_import_and_export()
 	_test_rename_duplicate_delete()
 	_test_sample_upgrade_detection()
@@ -118,6 +121,49 @@ func _test_import_and_export() -> void:
 		DeckStorage.export_deck_result(TEST_DECK, EXPORTED_PATH)
 		== DeckStorage.ExportResult.OK,
 		"저장소: Export 성공 원인을 구분"
+	)
+
+
+func _test_full_backup_restore() -> void:
+	check(
+		AppBackup.create_backup(BACKUP_PATH) == AppBackup.Result.OK,
+		"백업: 전체 앱 데이터를 ZIP으로 생성"
+	)
+	var reader := ZIPReader.new()
+	var backup_entries: PackedStringArray = []
+	if reader.open(BACKUP_PATH) == OK:
+		backup_entries = reader.get_files()
+		reader.close()
+	check(
+		"manifest.json" in backup_entries
+		and "decks/%s" % TEST_DECK in backup_entries
+		and "progress/__gd_phase4_a.json" in backup_entries
+		and "study_resume/__gd_phase4_a.json" in backup_entries,
+		"백업: 덱·진행도·이어하기와 manifest 포함"
+	)
+
+	DeckStorage.write_deck(TEST_DECK, "# 변경됨\n임시 데이터\n")
+	var changed_progress := Progress.new()
+	changed_progress.set_wrong_count("A", 99)
+	DeckStorage.save_progress(TEST_DECK, changed_progress)
+	check(
+		AppBackup.restore_backup(BACKUP_PATH) == AppBackup.Result.OK,
+		"백업: 검증된 ZIP에서 전체 데이터 복원"
+	)
+	check(
+		DeckStorage.read_deck(TEST_DECK) == TEST_TEXT
+		and DeckStorage.load_progress(TEST_DECK).get_wrong_count("A") == 2
+		and DeckStorage.load_study_resume(TEST_DECK) != null,
+		"백업: 복원 후 덱·진행도·이어하기 원본 보존"
+	)
+
+	var invalid := FileAccess.open(INVALID_BACKUP_PATH, FileAccess.WRITE)
+	invalid.store_string("not a zip")
+	invalid.close()
+	check(
+		AppBackup.restore_backup(INVALID_BACKUP_PATH) == AppBackup.Result.INVALID_ARCHIVE
+		and DeckStorage.read_deck(TEST_DECK) == TEST_TEXT,
+		"백업: 잘못된 ZIP은 현재 데이터를 건드리지 않고 거부"
 	)
 
 
@@ -229,3 +275,7 @@ func _cleanup() -> void:
 		DirAccess.remove_absolute(EXPORTED_PATH)
 	if FileAccess.file_exists(INVALID_IMPORT_PATH):
 		DirAccess.remove_absolute(INVALID_IMPORT_PATH)
+	if FileAccess.file_exists(BACKUP_PATH):
+		DirAccess.remove_absolute(BACKUP_PATH)
+	if FileAccess.file_exists(INVALID_BACKUP_PATH):
+		DirAccess.remove_absolute(INVALID_BACKUP_PATH)

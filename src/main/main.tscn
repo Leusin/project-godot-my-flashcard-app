@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" path="res://src/main/add_deck_menu.tscn" id="14_add_menu"]
 [ext_resource type="PackedScene" path="res://src/main/card_detail_view.tscn" id="16_card_detail"]
 [ext_resource type="PackedScene" path="res://src/main/card_context_menu.tscn" id="17_card_context"]
+[ext_resource type="PackedScene" path="res://src/main/settings_view.tscn" id="18_settings"]
 
 [node name="Main" type="Control" unique_id=1978189679]
 layout_mode = 3
@@ -50,6 +51,9 @@ layout_mode = 2
 theme_override_constants/separation = 18
 
 [node name="LibraryContainer" parent="Margin/Page" unique_id=1342003132 instance=ExtResource("3_library")]
+
+[node name="SettingsView" parent="Margin/Page" instance=ExtResource("18_settings")]
+visible = false
 
 [node name="StudyReadyView" parent="Margin/Page" unique_id=1934807985 instance=ExtResource("9_ready")]
 visible = false
@@ -124,3 +128,10 @@ title_text = "변경사항을 버릴까요?"
 description_text = "저장하지 않은 질문과 답은 복구할 수 없습니다."
 secondary_button_text = "계속 편집"
 primary_button_text = "버리기"
+
+[node name="RestoreBackupConfirmationOverlay" parent="." instance=ExtResource("5_modal")]
+visible = false
+title_text = "전체 데이터를 복원할까요?"
+description_text = "현재 덱과 학습 기록을 백업 파일의 데이터로 교체합니다."
+secondary_button_text = "취소"
+primary_button_text = "복원"

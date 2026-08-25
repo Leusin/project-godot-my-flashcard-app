@@ -8,10 +8,22 @@ size_flags_vertical = 3
 theme = ExtResource("1_theme")
 theme_override_constants/separation = 30
 
-[node name="LibraryHeading" type="Label" parent="."]
+[node name="Header" type="HBoxContainer" parent="."]
 layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="LibraryHeading" type="Label" parent="Header"]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 36
 text = "내 덱"
+vertical_alignment = 1
+
+[node name="OpenSettingsButton" type="Button" parent="Header"]
+custom_minimum_size = Vector2(112, 64)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "설정"
 
 [node name="DeckListScroll" type="ScrollContainer" parent="."]
 layout_mode = 2
@@ -40,13 +52,6 @@ theme_override_font_sizes/font_size = 24
 text = "작업 완료"
 horizontal_alignment = 1
 autowrap_mode = 3
-
-[node name="PrivacyPolicyLink" type="LinkButton" parent="."]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 18
-text = "개인정보처리방침"
-underline = 1
 
 [node name="ImportDialog" type="FileDialog" parent="."]
 title = "가져올 Markdown 덱 선택"

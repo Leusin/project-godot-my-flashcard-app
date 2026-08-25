@@ -70,9 +70,18 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @onready var deck_list: HFlowContainer = $Margin/Page/LibraryContainer/DeckListScroll/DeckList
 @onready var empty_decks_label: Label = $Margin/Page/LibraryContainer/EmptyDecksLabel
 @onready var library_status_label: Label = $Margin/Page/LibraryContainer/LibraryStatusLabel
-@onready var privacy_policy_link: LinkButton = $Margin/Page/LibraryContainer/PrivacyPolicyLink
 @onready var import_dialog: FileDialog = $Margin/Page/LibraryContainer/ImportDialog
 @onready var export_dialog: FileDialog = $Margin/Page/LibraryContainer/ExportDialog
+@onready var settings_view: VBoxContainer = $Margin/Page/SettingsView
+@onready var settings_status_label: Label = $Margin/Page/SettingsView/SettingsStatusLabel
+@onready var privacy_policy_link: LinkButton = (
+	$Margin/Page/SettingsView/SettingsScroll/Content/InfoPanel/Margin/Content/PrivacyPolicyLink
+)
+@onready var app_version_label: Label = (
+	$Margin/Page/SettingsView/SettingsScroll/Content/InfoPanel/Margin/Content/AppVersionLabel
+)
+@onready var backup_dialog: FileDialog = $Margin/Page/SettingsView/BackupDialog
+@onready var restore_dialog: FileDialog = $Margin/Page/SettingsView/RestoreDialog
 @onready var add_deck_menu: Control = $AddDeckMenu
 @onready var add_deck_menu_panel: PanelContainer = $AddDeckMenu/AddDeckMenuPanel
 @onready var create_new_deck_button := (
@@ -112,6 +121,7 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @onready var delete_confirmation_overlay: Control = $DeleteConfirmationOverlay
 @onready var delete_confirmation_title := delete_confirmation_overlay.find_child("DialogTitle", true, false) as Label
 @onready var exit_confirmation_overlay: Control = $ExitConfirmationOverlay
+@onready var restore_backup_confirmation_overlay: Control = $RestoreBackupConfirmationOverlay
 @onready var create_deck_overlay: Control = $CreateDeckOverlay
 @onready var create_deck_title := create_deck_overlay.find_child("DialogTitle", true, false) as Label
 @onready var create_deck_description := create_deck_overlay.find_child("DialogDescription", true, false) as Label
@@ -218,6 +228,7 @@ var _study_input_locked := false
 var _study_input_lock_generation := 0
 var _create_deck_mode := CreateDeckMode.EMPTY
 var _pending_markdown := ""
+var _pending_restore_path := ""
 
 
 func _ready() -> void:
@@ -236,9 +247,29 @@ func _ready() -> void:
 	export_dialog.use_native_dialog = true
 	export_dialog.clear_filters()
 	export_dialog.add_filter("*.md", "Markdown", "text/markdown,text/plain")
+	backup_dialog.file_selected.connect(_on_backup_path_selected)
+	backup_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	backup_dialog.file_mode = FileDialog.FILE_MODE_SAVE_FILE
+	backup_dialog.use_native_dialog = true
+	backup_dialog.clear_filters()
+	backup_dialog.add_filter("*.zip", "Backup", "application/zip")
+	restore_dialog.file_selected.connect(_on_restore_path_selected)
+	restore_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	restore_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	restore_dialog.use_native_dialog = true
+	restore_dialog.clear_filters()
+	restore_dialog.add_filter("*.zip", "Backup", "application/zip")
 	create_new_deck_button.pressed.connect(_on_create_new_deck_pressed)
 	import_markdown_button.pressed.connect(_on_import_from_add_menu_pressed)
 	create_from_clipboard_button.pressed.connect(_on_create_from_clipboard_pressed)
+	$Margin/Page/LibraryContainer/Header/OpenSettingsButton.pressed.connect(show_settings)
+	$Margin/Page/SettingsView/Header/BackFromSettingsButton.pressed.connect(show_library)
+	$Margin/Page/SettingsView/SettingsScroll/Content/DataPanel/Margin/DataActions/CreateBackupButton.pressed.connect(
+		_on_create_backup_pressed
+	)
+	$Margin/Page/SettingsView/SettingsScroll/Content/DataPanel/Margin/DataActions/RestoreBackupButton.pressed.connect(
+		_on_restore_backup_pressed
+	)
 	privacy_policy_link.pressed.connect(_on_privacy_policy_pressed)
 	$AddDeckMenu/DismissAddDeckMenuButton.pressed.connect(_on_add_deck_menu_dismissed)
 	rename_deck_button.pressed.connect(_on_rename_pressed)
@@ -274,6 +305,12 @@ func _ready() -> void:
 	)
 	(exit_confirmation_overlay.find_child("PrimaryButton", true, false) as Button).pressed.connect(
 		_on_exit_confirmed
+	)
+	(restore_backup_confirmation_overlay.find_child("SecondaryButton", true, false) as Button).pressed.connect(
+		_on_restore_backup_canceled
+	)
+	(restore_backup_confirmation_overlay.find_child("PrimaryButton", true, false) as Button).pressed.connect(
+		_on_restore_backup_confirmed
 	)
 	$Margin/Page/StudyReadyView/Header/BackToLibraryButton.pressed.connect(show_library)
 	(ready_overview.get_node("OpenStudySetupButton") as Button).pressed.connect(
@@ -447,8 +484,11 @@ func show_library() -> void:
 	delete_confirmation_overlay.hide()
 	card_delete_confirmation_overlay.hide()
 	discard_card_changes_overlay.hide()
+	restore_backup_confirmation_overlay.hide()
+	_pending_restore_path = ""
 	library_status_label.visible = false
 	library_container.visible = true
+	settings_view.visible = false
 	study_ready_view.visible = false
 	card_list_view.visible = false
 	card_detail_view.visible = false
@@ -457,6 +497,17 @@ func show_library() -> void:
 	study_container.visible = false
 	study_result_view.visible = false
 	_refresh_deck_list()
+
+
+func show_settings() -> void:
+	show_library()
+	library_container.hide()
+	settings_view.show()
+	settings_status_label.hide()
+	app_version_label.text = "버전 %s" % ProjectSettings.get_setting(
+		"application/config/version",
+		""
+	)
 
 
 func show_study_ready(deck_file: String) -> bool:
@@ -1496,6 +1547,10 @@ func _on_deck_context_dismissed() -> void:
 
 
 func handle_back_request() -> bool:
+	if restore_backup_confirmation_overlay.visible:
+		_on_restore_backup_canceled()
+		return true
+
 	if card_delete_confirmation_overlay.visible:
 		_on_card_delete_canceled()
 		return true
@@ -1530,6 +1585,10 @@ func handle_back_request() -> bool:
 
 	if exit_confirmation_overlay.visible:
 		_on_exit_canceled()
+		return true
+
+	if settings_view.visible:
+		show_library()
 		return true
 
 	if library_container.visible:
@@ -1570,7 +1629,61 @@ func _on_exit_confirmed() -> void:
 func _on_privacy_policy_pressed() -> void:
 	var open_error := OS.shell_open(PRIVACY_POLICY_URL)
 	if open_error != OK:
-		_show_library_status("개인정보처리방침 페이지를 열 수 없습니다.")
+		_show_settings_status("개인정보처리방침 페이지를 열 수 없습니다.")
+
+
+func _on_create_backup_pressed() -> void:
+	settings_status_label.hide()
+	var backup_time := Time.get_time_string_from_system().replace(":", "")
+	backup_dialog.current_file = "my-flashcard-backup-%s-%s.zip" % [
+		Time.get_date_string_from_system(),
+		backup_time,
+	]
+	backup_dialog.popup_file_dialog()
+
+
+func _on_backup_path_selected(target_path: String) -> void:
+	_dismiss_virtual_keyboard()
+	# Native Android dialogs can return a Storage Access Framework path.
+	# It is an opaque address, so changing it after selection can make it invalid.
+	var result := AppBackup.create_backup(target_path)
+	if result == AppBackup.Result.OK:
+		_show_settings_status("전체 백업을 저장했습니다.")
+		return
+	_show_settings_status(AppBackup.result_message(result))
+
+
+func _on_restore_backup_pressed() -> void:
+	settings_status_label.hide()
+	restore_dialog.popup_file_dialog()
+
+
+func _on_restore_path_selected(source_path: String) -> void:
+	_dismiss_virtual_keyboard()
+	_pending_restore_path = source_path
+	restore_backup_confirmation_overlay.show()
+
+
+func _on_restore_backup_canceled() -> void:
+	restore_backup_confirmation_overlay.hide()
+	_pending_restore_path = ""
+
+
+func _on_restore_backup_confirmed() -> void:
+	restore_backup_confirmation_overlay.hide()
+	var source_path := _pending_restore_path
+	_pending_restore_path = ""
+	var result := AppBackup.restore_backup(source_path)
+	if result != AppBackup.Result.OK:
+		_show_settings_status(AppBackup.result_message(result))
+		return
+	show_settings()
+	_show_settings_status("전체 복원을 완료했습니다.")
+
+
+func _dismiss_virtual_keyboard() -> void:
+	get_viewport().gui_release_focus()
+	DisplayServer.virtual_keyboard_hide()
 
 
 func _on_create_new_deck_pressed() -> void:
@@ -1956,6 +2069,13 @@ func _show_library_status(message: String) -> void:
 
 	library_status_label.text = message
 	library_status_label.visible = true
+
+
+func _show_settings_status(message: String) -> void:
+	if not settings_view.visible:
+		show_settings()
+	settings_status_label.text = message
+	settings_status_label.show()
 
 
 func _restart_session() -> void:

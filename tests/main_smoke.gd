@@ -105,6 +105,7 @@ func run_tests() -> void:
 	app.show_library()
 
 	check(_view(app, "LibraryContainer").visible, "MVP: 덱 목록 화면 표시")
+	check(not _view(app, "SettingsView").visible, "Main Settings: 덱 목록에서 설정 화면 숨김")
 	check(not _view(app, "StudyReadyView").visible, "Main Ready: 덱 목록에서 준비 화면 숨김")
 	check(
 		not _view(app, "StudyContainer").visible
@@ -120,15 +121,54 @@ func run_tests() -> void:
 		and _view(app, "CardListTitle") == null,
 		"Main UI: 기능 없는 장식 문구 제거"
 	)
-	var privacy_policy_link := _view(app, "PrivacyPolicyLink") as LinkButton
 	check(
-		privacy_policy_link.text == "개인정보처리방침"
+		_view(_view(app, "LibraryContainer"), "PrivacyPolicyLink") == null,
+		"Main Privacy: 덱 목록 하단에서 개인정보처리방침 제거"
+	)
+	_view(app, "OpenSettingsButton").pressed.emit()
+	var settings_view := _view(app, "SettingsView") as VBoxContainer
+	var privacy_policy_link := _view(settings_view, "PrivacyPolicyLink") as LinkButton
+	check(
+		settings_view.visible
+		and not _view(app, "LibraryContainer").visible
+		and privacy_policy_link.text == "개인정보처리방침"
 		and privacy_policy_link.pressed.is_connected(
 			Callable(app, "_on_privacy_policy_pressed")
 		)
 		and MainApp.PRIVACY_POLICY_URL
 		== "https://leusin.github.io/privacy/my-simple-flash-card/",
-		"Main Privacy: 라이브러리에서 공개 개인정보처리방침 연결"
+		"Main Settings: 별도 설정 화면에서 공개 개인정보처리방침 연결"
+	)
+	check(
+		_view(settings_view, "AppVersionLabel").text == "버전 0.9.2"
+		and _view(settings_view, "CreateBackupButton").text == "전체 백업"
+		and _view(settings_view, "RestoreBackupButton").text == "전체 복원",
+		"Main Settings: 버전과 전체 백업·복원 작업 표시"
+	)
+	check(
+		_view(settings_view, "BackupDialog").access == FileDialog.ACCESS_FILESYSTEM
+		and _view(settings_view, "BackupDialog").file_mode == FileDialog.FILE_MODE_SAVE_FILE
+		and _view(settings_view, "BackupDialog").use_native_dialog
+		and _view(settings_view, "RestoreDialog").access == FileDialog.ACCESS_FILESYSTEM
+		and _view(settings_view, "RestoreDialog").file_mode == FileDialog.FILE_MODE_OPEN_FILE
+		and _view(settings_view, "RestoreDialog").use_native_dialog,
+		"Main Backup: Android 네이티브 저장창으로 Drive 백업·복원 지원"
+	)
+	app.call("_on_restore_path_selected", "user://backup.zip")
+	check(
+		_view(app, "RestoreBackupConfirmationOverlay").visible,
+		"Main Backup: 전체 복원 전에 교체 확인"
+	)
+	check(app.handle_back_request(), "Main Backup: 뒤로가기로 복원 확인 취소")
+	check(
+		not _view(app, "RestoreBackupConfirmationOverlay").visible
+		and settings_view.visible,
+		"Main Backup: 복원 취소 후 설정 화면 유지"
+	)
+	check(app.handle_back_request(), "Main Settings: 뒤로가기 요청 소비")
+	check(
+		_view(app, "LibraryContainer").visible and not settings_view.visible,
+		"Main Settings: 뒤로가기로 덱 목록 복귀"
 	)
 	var deck_buttons := _view(app, "DeckList").get_children()
 	check(deck_buttons.size() == 2, "Main: 저장된 덱 뒤에 추가 타일 표시")
@@ -313,6 +353,7 @@ func run_tests() -> void:
 		_dialog(app, "ExitConfirmationOverlay", "DialogPanel") as PanelContainer,
 		_dialog(app, "CardDeleteConfirmationOverlay", "DialogPanel") as PanelContainer,
 		_dialog(app, "DiscardCardChangesOverlay", "DialogPanel") as PanelContainer,
+		_dialog(app, "RestoreBackupConfirmationOverlay", "DialogPanel") as PanelContainer,
 	]
 	var dialogs_unified := true
 	for dialog_panel in dialog_panels:
@@ -333,6 +374,7 @@ func run_tests() -> void:
 		_view(app, "ExitConfirmationOverlay") as ColorRect,
 		_view(app, "CardDeleteConfirmationOverlay") as ColorRect,
 		_view(app, "DiscardCardChangesOverlay") as ColorRect,
+		_view(app, "RestoreBackupConfirmationOverlay") as ColorRect,
 	]
 	var shades_unified := true
 	for modal_shade in modal_shades:
@@ -349,6 +391,7 @@ func run_tests() -> void:
 		"ExitConfirmationOverlay",
 		"CardDeleteConfirmationOverlay",
 		"DiscardCardChangesOverlay",
+		"RestoreBackupConfirmationOverlay",
 	]:
 		var overlay := _view(app, overlay_name)
 		modal_scene_is_shared = (
@@ -357,7 +400,7 @@ func run_tests() -> void:
 			and _dialog(app, overlay_name, "KeyboardShift").get_script().resource_path
 			.ends_with("keyboard_avoider.gd")
 		)
-	check(modal_scene_is_shared, "Main UI: 여섯 팝업이 공용 ModalDialog scene 사용")
+	check(modal_scene_is_shared, "Main UI: 일곱 팝업이 공용 ModalDialog scene 사용")
 	check(
 		is_equal_approx(
 			_dialog(app, "CreateDeckOverlay", "DialogPanel").anchor_top,
