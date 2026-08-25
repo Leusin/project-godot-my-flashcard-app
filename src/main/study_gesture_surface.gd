@@ -59,12 +59,14 @@ const CARD_ASPECT_RATIO := 2.0 / 3.0
 const HAPTIC_DURATION_MS := 15
 const HAPTIC_AMPLITUDE := 0.25
 
-@onready var again_button: Button = $"../../Actions/AgainButton"
-@onready var good_button: Button = $"../../Actions/GoodButton"
+@onready var card_slot: Control = get_parent() as Control
+@onready var card_stage: Control = card_slot.get_parent() as Control
+@onready var again_button: Button = $"../../../Actions/AgainButton"
+@onready var good_button: Button = $"../../../Actions/GoodButton"
 @onready var question_scroll: ScrollContainer = $CardMargin/CardContent/QuestionScroll
 @onready var answer_scroll: ScrollContainer = $CardMargin/CardContent/AnswerScroll
-@onready var skip_hint: Label = $"../GestureHints/SkipHint"
-@onready var previous_hint: Label = $"../GestureHints/PreviousHint"
+@onready var skip_hint: Label = $"../../GestureHints/SkipHint"
+@onready var previous_hint: Label = $"../../GestureHints/PreviousHint"
 
 var input_enabled := true:
 	set(value):
@@ -79,19 +81,22 @@ var _pointer_id := -1
 var _drag_axis := DragAxis.UNDECIDED
 var _drag_start := Vector2.ZERO
 var _drag_position := Vector2.ZERO
-var _rest_position := Vector2.ZERO
 var _animating := false
 var _motion_tween: Tween
 var _active_hint_action := 0
 var _hint_rest_positions: Dictionary = {}
 var _hint_motion_tween: Tween
 var _haptic_action := 0
+var _held_action_buttons: Dictionary = {}
 
 
 func _ready() -> void:
 	visibility_changed.connect(_on_visibility_changed)
 	judgment_threshold_crossed.connect(_vibrate_for_judgment_threshold)
-	(get_parent() as Control).resized.connect(_on_stage_resized)
+	card_stage.resized.connect(_on_stage_resized)
+	for button in [again_button, good_button]:
+		button.button_down.connect(_on_action_button_down.bind(button))
+		button.button_up.connect(_on_action_button_up.bind(button))
 	_fit_to_stage()
 	_set_active_hint(0)
 
@@ -175,7 +180,6 @@ func commit(direction: int) -> void:
 	):
 		return
 
-	_rest_position = position
 	pivot_offset = size * 0.5
 	if not animations_enabled:
 		swiped.emit(direction)
@@ -207,14 +211,13 @@ func flip(midpoint: Callable, finished: Callable = Callable()) -> void:
 		return
 
 	_animating = true
-	_rest_position = position
 	pivot_offset = size * 0.5
 	_set_animation_controls_disabled(true)
 	_motion_tween = create_tween()
 	_motion_tween.tween_property(
 		self,
 		"position",
-		_rest_position + Vector2(0.0, -FLIP_LIFT_OFFSET),
+		Vector2(0.0, -FLIP_LIFT_OFFSET),
 		FLIP_LIFT_DURATION
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_motion_tween.parallel().tween_property(
@@ -279,7 +282,20 @@ func _handle_mouse_motion(event: InputEventMouseMotion) -> void:
 
 
 func _can_start_drag(at_position: Vector2) -> bool:
-	return get_global_rect().has_point(at_position)
+	return (
+		_held_action_buttons.is_empty()
+		and get_global_rect().has_point(at_position)
+	)
+
+
+func _on_action_button_down(button: Button) -> void:
+	_held_action_buttons[button] = true
+	if _dragging:
+		cancel_drag()
+
+
+func _on_action_button_up(button: Button) -> void:
+	_held_action_buttons.erase(button)
 
 
 func _begin_drag(at_position: Vector2, pointer_id: int) -> void:
@@ -288,7 +304,6 @@ func _begin_drag(at_position: Vector2, pointer_id: int) -> void:
 	_drag_axis = DragAxis.UNDECIDED
 	_drag_start = at_position
 	_drag_position = at_position
-	_rest_position = position
 	_haptic_action = 0
 	pivot_offset = size * 0.5
 
@@ -354,7 +369,7 @@ func _show_horizontal_preview(horizontal_delta: float) -> void:
 		-max_offset,
 		max_offset
 	)
-	position = _rest_position + Vector2(preview_offset, 0.0)
+	position = Vector2(preview_offset, 0.0)
 	var width := maxf(size.x, 1.0)
 	var rotation_degrees := clampf(
 		horizontal_delta / width * PREVIEW_MAX_ROTATION_DEGREES * 2.0,
@@ -381,7 +396,7 @@ func _show_vertical_preview(vertical_delta: float) -> void:
 		-max_offset,
 		max_offset
 	)
-	position = _rest_position + Vector2(0.0, preview_offset)
+	position = Vector2(0.0, preview_offset)
 	rotation = 0.0
 	_set_active_hint(
 		PREVIOUS if vertical_delta > 0.0 else SKIP,
@@ -429,7 +444,7 @@ func _play_swipe_exit(direction: int) -> void:
 	_complete_active_hint(direction)
 	var direction_vector := action_vector(direction)
 	var exit_distance := _travel_distance(direction_vector)
-	var target_position := _rest_position + direction_vector * exit_distance
+	var target_position := direction_vector * exit_distance
 	_motion_tween = create_tween()
 	_motion_tween.set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	_motion_tween.tween_property(self, "position", target_position, EXIT_DURATION)
@@ -454,13 +469,11 @@ func _on_swipe_exit_finished(direction: int) -> void:
 
 	var direction_vector := action_vector(direction)
 	var enter_distance := _travel_distance(direction_vector)
-	position = _rest_position - direction_vector * enter_distance
+	position = -direction_vector * enter_distance
 	rotation = deg_to_rad(-direction_vector.x * ENTER_ROTATION_DEGREES)
 	scale = Vector2(0.97, 0.97)
 	modulate.a = 0.25
-	var overshoot_position := (
-		_rest_position + direction_vector * ENTER_OVERSHOOT_DISTANCE
-	)
+	var overshoot_position := direction_vector * ENTER_OVERSHOOT_DISTANCE
 	_motion_tween = create_tween()
 	_motion_tween.tween_property(
 		self,
@@ -489,7 +502,7 @@ func _on_swipe_exit_finished(direction: int) -> void:
 	_motion_tween.tween_property(
 		self,
 		"position",
-		_rest_position,
+		Vector2.ZERO,
 		ENTER_SETTLE_DURATION
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_motion_tween.parallel().tween_property(
@@ -522,7 +535,7 @@ func _on_flip_midpoint(midpoint: Callable, finished: Callable) -> void:
 	_motion_tween.parallel().tween_property(
 		self,
 		"position",
-		_rest_position,
+		Vector2.ZERO,
 		FLIP_OPEN_DURATION
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_motion_tween.tween_property(
@@ -646,7 +659,7 @@ func _hint_entry_offset(
 	hint: Label,
 	rest_position: Vector2
 ) -> Vector2:
-	var stage_size := (get_parent() as Control).size
+	var stage_size := card_stage.size
 	match action:
 		SKIP:
 			return Vector2(
@@ -669,11 +682,10 @@ func _on_stage_resized() -> void:
 
 
 func _fit_to_stage() -> void:
-	var stage := get_parent() as Control
-	var card_rect := fitted_card_rect(stage.size)
-	position = card_rect.position
-	size = card_rect.size
-	_rest_position = position
+	var card_rect := fitted_card_rect(card_stage.size)
+	card_slot.position = card_rect.position
+	card_slot.size = card_rect.size
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	pivot_offset = size * 0.5
 
 
@@ -682,7 +694,7 @@ func _on_hint_motion_finished() -> void:
 
 
 func _reset_visual() -> void:
-	position = _rest_position
+	position = Vector2.ZERO
 	rotation = 0.0
 	scale = Vector2.ONE
 	modulate = Color.WHITE
@@ -735,4 +747,5 @@ func _set_active_action_button(action: int, strength: float = 1.0) -> void:
 
 func _on_visibility_changed() -> void:
 	if not is_visible_in_tree():
+		_held_action_buttons.clear()
 		cancel_drag()

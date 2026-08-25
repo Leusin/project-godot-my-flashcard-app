@@ -772,7 +772,7 @@ func run_tests() -> void:
 		"MVP 스타일: 제목을 큰 검은 글자로 표시"
 	)
 	var card_style := (
-		app.get_node("Margin/Page/StudyFlow/StudyContainer/CardStage/CardFrame").get_theme_stylebox("panel")
+		app.get_node("Margin/Page/StudyFlow/StudyContainer/CardStage/CardSlot/CardFrame").get_theme_stylebox("panel")
 		as StyleBoxFlat
 	)
 	check(
@@ -815,11 +815,50 @@ func run_tests() -> void:
 		and _view(app, "StatusBadge").text == "MASTERED",
 		"Main Study: 카드 tap으로 답·tally·상태 딱지를 함께 공개"
 	)
+	var card_slot := gesture_surface.get_parent() as Control
+	var expected_card_rect := StudyGestureSurface.fitted_card_rect(
+		_view(app, "CardStage").size
+	)
+	var card_slot_layout_matches := (
+		expected_card_rect.size == Vector2.ZERO
+		or (
+			card_slot.position.is_equal_approx(expected_card_rect.position)
+			and card_slot.size.is_equal_approx(expected_card_rect.size)
+			and gesture_surface.size.is_equal_approx(card_slot.size)
+		)
+	)
 	check(
 		gesture_surface._can_start_drag(
 			gesture_surface.get_global_rect().get_center()
-		),
-		"Main Study: 설정 버튼 없이 카드 전체를 drag 영역으로 사용"
+		)
+		and card_slot.name == "CardSlot"
+		and card_slot_layout_matches
+		and gesture_surface.position == Vector2.ZERO,
+		"Main Study: CardSlot이 layout을 맡고 카드는 local zero에서 gesture 시작"
+	)
+	var gesture_center := gesture_surface.get_global_rect().get_center()
+	gesture_surface._begin_drag(gesture_center, 0)
+	gesture_surface._update_drag(gesture_center + Vector2(100.0, 0.0))
+	_view(app, "AgainButton").button_down.emit()
+	check(
+		not gesture_surface._dragging
+		and gesture_surface.position == Vector2.ZERO
+		and not gesture_surface._can_start_drag(gesture_center),
+		"Main Study: 판정 버튼을 누르면 진행 중인 카드 drag를 취소하고 소유권 고정"
+	)
+	var blocked_touch := InputEventScreenTouch.new()
+	blocked_touch.index = 0
+	blocked_touch.position = gesture_center
+	blocked_touch.pressed = true
+	gesture_surface._handle_touch(blocked_touch)
+	check(
+		not gesture_surface._dragging,
+		"Main Study: 판정 버튼을 누른 손가락 이동 중 카드가 drag를 다시 시작하지 않음"
+	)
+	_view(app, "AgainButton").button_up.emit()
+	check(
+		gesture_surface._can_start_drag(gesture_center),
+		"Main Study: 판정 버튼에서 손을 떼면 다음 카드 gesture 허용"
 	)
 	check(
 		_view(study_card_content, "AnswerCaption") == null

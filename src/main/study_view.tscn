@@ -90,41 +90,49 @@ custom_minimum_size = Vector2(0, 540)
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="CardFrame" type="PanelContainer" parent="StudyContainer/CardStage" unique_id=871367939]
-z_index = 2
+[node name="CardSlot" type="Control" parent="StudyContainer/CardStage"]
 layout_mode = 0
 offset_right = 656.0
 offset_bottom = 984.0
+
+[node name="CardFrame" type="PanelContainer" parent="StudyContainer/CardStage/CardSlot" unique_id=871367939]
+z_index = 2
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxStudyCard")
 script = ExtResource("3_gesture")
 action_active_style = SubResource("StyleBoxActionActive")
 
-[node name="CardMargin" type="MarginContainer" parent="StudyContainer/CardStage/CardFrame" unique_id=770412333]
+[node name="CardMargin" type="MarginContainer" parent="StudyContainer/CardStage/CardSlot/CardFrame" unique_id=770412333]
 layout_mode = 2
 theme_override_constants/margin_left = 32
 theme_override_constants/margin_top = 30
 theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 30
 
-[node name="CardContent" type="VBoxContainer" parent="StudyContainer/CardStage/CardFrame/CardMargin" unique_id=1658595310]
+[node name="CardContent" type="VBoxContainer" parent="StudyContainer/CardStage/CardSlot/CardFrame/CardMargin" unique_id=1658595310]
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="CardProperties" type="HBoxContainer" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent" unique_id=671315536]
+[node name="CardProperties" type="HBoxContainer" parent="StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent" unique_id=671315536]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="WrongTally" type="Control" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties" unique_id=1362740289]
+[node name="WrongTally" type="Control" parent="StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/CardProperties" unique_id=1362740289]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 script = ExtResource("2_tally")
 
-[node name="Spacer" type="Control" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties" unique_id=1818353796]
+[node name="Spacer" type="Control" parent="StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/CardProperties" unique_id=1818353796]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 
-[node name="StatusBadge" type="Label" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent/CardProperties"]
+[node name="StatusBadge" type="Label" parent="StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/CardProperties"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
@@ -136,12 +144,12 @@ horizontal_alignment = 1
 vertical_alignment = 1
 tooltip_text = "카드 상태"
 
-[node name="QuestionScroll" type="ScrollContainer" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent" unique_id=1980546292]
+[node name="QuestionScroll" type="ScrollContainer" parent="StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent" unique_id=1980546292]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="QuestionLabel" type="Label" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent/QuestionScroll" unique_id=1335517739]
+[node name="QuestionLabel" type="Label" parent="StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/QuestionScroll" unique_id=1335517739]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -151,13 +159,13 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 
-[node name="AnswerScroll" type="ScrollContainer" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent" unique_id=1726778592]
+[node name="AnswerScroll" type="ScrollContainer" parent="StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent" unique_id=1726778592]
 visible = false
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="AnswerLabel" type="Label" parent="StudyContainer/CardStage/CardFrame/CardMargin/CardContent/AnswerScroll" unique_id=1501853469]
+[node name="AnswerLabel" type="Label" parent="StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/AnswerScroll" unique_id=1501853469]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
