@@ -1,6 +1,6 @@
 # My Simple Flash Card
 
-Markdown으로 카드를 작성하고, 스와이프와 버튼으로 복습하는 모바일 중심 플래시카드 앱. Google Play 테스트 배포 버전은 0.9.1이다 (패키지 `com.leusin.mysimpleflashcard`).
+Markdown으로 카드를 작성하고, 스와이프와 버튼으로 복습하는 모바일 중심 플래시카드 앱. Google Play 테스트 배포 버전은 0.9.2이다 (패키지 `com.leusin.mysimpleflashcard`).
 
 - Engine: Godot 4.7.1
 - Language: GDScript
@@ -28,9 +28,9 @@ $godot = "C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windo
 | 프리셋 | 용도 | 출력 |
 | --- | --- | --- |
 | Android | 개발용 debug APK (기기 설치 테스트) | `build/android/my-simple-flash-card-debug.apk` |
-| Android Release AAB | Play 업로드용 release AAB, target SDK 36 | `build/android/my-simple-flash-card-0.9.1.aab` |
+| Android Release AAB | Play 업로드용 release AAB, target SDK 36 | `build/android/my-simple-flash-card-0.9.2.aab` |
 
-- 앱 이름 **My Simple Flash Card**, 패키지 `com.leusin.mysimpleflashcard`, versionName `0.9.1`, versionCode `2`.
+- 앱 이름 **My Simple Flash Card**, 패키지 `com.leusin.mysimpleflashcard`, versionName `0.9.2`, versionCode `3`.
 - `package/unique_name`은 첫 Play Console 업로드 후 바꿀 수 없다. 업로드 전에 반드시 최종 확인한다.
 - target SDK 36은 2026-08-31부터 Play 신규 제출에 필요한 기준이다.
 - AAB export는 Gradle 빌드를 쓴다. Godot Editor에서 **Project > Install Android Build Template**을 한 번 실행하고, Editor Settings에 Android SDK/JDK 경로가 설정되어 있어야 한다.
@@ -42,7 +42,7 @@ $godot = "C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windo
 업로드 키 생성 (저장소 밖 경로에서 한 번만):
 
 ```powershell
-keytool -genkeypair -v -keystore my-simple-flash-card-upload.keystore -alias upload -keyalg RSA -keysize 2048 -validity 10000
+keytool -genkeypair -v -keystore my-simple-flash-card-upload.jks -alias my-simple-flash-card-upload -keyalg RSA -keysize 2048 -validity 10000
 ```
 
 - 보관: 키스토어는 저장소 밖(예: 클라우드 드라이브 + 로컬 백업 2곳), 비밀번호는 패스워드 매니저에 둔다. Play App Signing 사용 시 이 키는 업로드 키이므로 분실해도 Play Console에서 재설정할 수 있지만, 백업이 원칙이다.
@@ -56,7 +56,7 @@ keytool -genkeypair -v -keystore my-simple-flash-card-upload.keystore -alias upl
 ```powershell
 $godot = "C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe"
 & $godot --headless --path . --export-debug "Android" build/android/my-simple-flash-card-debug.apk
-& $godot --headless --path . --export-release "Android Release AAB" build/android/my-simple-flash-card-0.9.1.aab
+& $godot --headless --path . --export-release "Android Release AAB" build/android/my-simple-flash-card-0.9.2.aab
 ```
 
 ### 버전 올릴 때 함께 바꾸는 곳

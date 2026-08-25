@@ -809,11 +809,21 @@ func run_tests() -> void:
 		"Main Android: debug와 release에서 시스템 상태·내비게이션 bar 유지"
 	)
 	check(
-		ProjectSettings.get_setting("application/config/version") == "0.9.1"
-		and export_presets_text.count("version/name=\"0.9.1\"") == 2
-		and export_presets_text.count("version/code=2") == 2
-		and export_presets_text.contains("my-simple-flash-card-0.9.1.aab"),
-		"Main Release: 0.9.1 versionName과 versionCode 2 일치"
+		ProjectSettings.get_setting("application/config/version") == "0.9.2"
+		and export_presets_text.count("version/name=\"0.9.2\"") == 2
+		and export_presets_text.count("version/code=3") == 2
+		and export_presets_text.contains("my-simple-flash-card-0.9.2.aab"),
+		"Main Release: 0.9.2 versionName과 versionCode 3 일치"
+	)
+	check(
+		export_presets_text.count("export_filter=\"all_resources\"") == 2,
+		"Main Android: preload 리소스 누락 방지를 위해 전체 리소스 export"
+	)
+	check(
+		export_presets_text.count(
+			"exclude_filter=\"store-listing/*,tests/*,tools/*\""
+		) == 2,
+		"Main Android: 배포와 무관한 스토어 자료·테스트·도구 제외"
 	)
 	gesture_surface._reset_visual()
 	gesture_surface._show_horizontal_preview(-gesture_surface.size.x * 0.25)
