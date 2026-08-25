@@ -12,7 +12,6 @@
 [ext_resource type="PackedScene" path="res://src/main/add_deck_menu.tscn" id="14_add_menu"]
 [ext_resource type="PackedScene" path="res://src/main/card_detail_view.tscn" id="16_card_detail"]
 [ext_resource type="PackedScene" path="res://src/main/card_context_menu.tscn" id="17_card_context"]
-[ext_resource type="PackedScene" path="res://src/main/study_progress_bar.tscn" id="18_study_progress"]
 
 [node name="Main" type="Control" unique_id=1978189679]
 layout_mode = 3
@@ -67,8 +66,6 @@ visible = false
 [node name="StudyFlow" parent="Margin/Page" unique_id=884868553 instance=ExtResource("4_study")]
 visible = false
 layout_mode = 2
-
-[node name="StudyProgressBar" parent="." unique_id=1412801175 instance=ExtResource("18_study_progress")]
 
 [node name="AddDeckMenu" parent="." unique_id=1212683312 instance=ExtResource("14_add_menu")]
 visible = false

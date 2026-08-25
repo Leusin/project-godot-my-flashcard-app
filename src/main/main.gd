@@ -165,7 +165,6 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @onready var study_flow: VBoxContainer = $Margin/Page/StudyFlow
 @onready var deck_label: Label = $Margin/Page/StudyFlow/Header/DeckLabel
 @onready var remaining_label: Label = $Margin/Page/StudyFlow/Header/RemainingLabel
-@onready var study_progress_bar: ProgressBar = $StudyProgressBar
 @onready var study_gesture_surface: StudyGestureSurface = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardSlot/CardFrame
 @onready var card_properties: HBoxContainer = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/CardProperties
 @onready var wrong_tally: WrongTallyView = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/CardProperties/WrongTally
@@ -457,7 +456,6 @@ func show_library() -> void:
 	study_flow.visible = false
 	study_container.visible = false
 	study_result_view.visible = false
-	study_progress_bar.hide()
 	_refresh_deck_list()
 
 
@@ -483,7 +481,6 @@ func show_study_ready(deck_file: String) -> bool:
 	card_detail_view.visible = false
 	card_editor_view.visible = false
 	study_flow.visible = false
-	study_progress_bar.hide()
 	study_ready_view.visible = true
 	ready_status_label.hide()
 	_update_study_ready_summary()
@@ -662,7 +659,6 @@ func _open_card_list(deck_file: String) -> bool:
 	library_container.hide()
 	study_ready_view.hide()
 	study_flow.hide()
-	study_progress_bar.hide()
 	card_detail_view.hide()
 	card_editor_view.hide()
 	card_list_view.show()
@@ -728,7 +724,6 @@ func _show_card_detail(
 	card_list_view.hide()
 	card_editor_view.hide()
 	study_flow.hide()
-	study_progress_bar.hide()
 	card_detail_view.show()
 
 
@@ -899,7 +894,6 @@ func _on_edit_study_card_pressed() -> void:
 	_study_edit_source_index = _source_cards.find(current_card)
 	_study_edit_return_show_answer = answer_scroll.visible
 	study_flow.hide()
-	study_progress_bar.hide()
 	card_list_view.hide()
 	_open_card_editor(deck_index)
 
@@ -1676,7 +1670,6 @@ func _begin_new_deck(display_name: String) -> bool:
 	library_container.hide()
 	study_ready_view.hide()
 	study_flow.hide()
-	study_progress_bar.hide()
 	card_list_view.hide()
 	_open_card_editor(-1)
 	return true
@@ -1988,7 +1981,6 @@ func _show_current() -> void:
 	var card := _session.current()
 	study_container.visible = true
 	study_result_view.visible = false
-	study_progress_bar.show()
 	var wrong_count := _progress.get_wrong_count(card.question)
 	wrong_tally.set_count(wrong_count)
 	card_status_badge.text = card_status_text(_progress.get_status(card.question))
@@ -1999,8 +1991,6 @@ func _show_current() -> void:
 	_set_answer_visible(false)
 	study_gesture_surface.previous_enabled = _session.position() > 0
 	remaining_label.text = "%d장 남음" % _session.remaining()
-	study_progress_bar.max_value = maxi(_session_cards.size(), 1)
-	study_progress_bar.value = _session_cards.size() - _session.remaining()
 
 
 static func card_status_text(status: CardStatus.Value) -> String:
@@ -2019,10 +2009,7 @@ func _show_study_results() -> void:
 	remaining_label.get_parent().hide()
 	study_container.visible = false
 	study_result_view.visible = true
-	study_progress_bar.hide()
 	remaining_label.text = "0장 남음"
-	study_progress_bar.max_value = maxi(_session_cards.size(), 1)
-	study_progress_bar.value = _session_cards.size()
 
 	for child in result_rows.get_children():
 		child.free()

@@ -108,8 +108,8 @@ func run_tests() -> void:
 	check(not _view(app, "StudyReadyView").visible, "Main Ready: 덱 목록에서 준비 화면 숨김")
 	check(
 		not _view(app, "StudyContainer").visible
-		and not _view(app, "StudyProgressBar").visible,
-		"MVP: 덱 목록에서 학습 화면과 XP bar 숨김"
+		and _view(app, "StudyProgressBar") == null,
+		"MVP: 덱 목록에서 학습 화면과 중복 progress bar 제거"
 	)
 	check(
 		not app.has_node("Margin/Page/Title")
@@ -723,18 +723,10 @@ func run_tests() -> void:
 		_view(study_card_content, "QuestionCaption") == null,
 		"Main Study: QUESTION 장식 문구 제거"
 	)
-	var xp_bar := _view(app, "StudyProgressBar") as ProgressBar
 	check(
-		xp_bar.visible
-		and xp_bar.value == 0
-		and xp_bar.max_value == 2
-		and xp_bar.custom_minimum_size.y == 2.0
-		and xp_bar.get_parent() == app
-		and xp_bar.scene_file_path.ends_with("study_progress_bar.tscn")
-		and is_equal_approx(xp_bar.get_global_rect().position.x, 0.0)
-		and is_equal_approx(xp_bar.get_global_rect().end.x, app.get_global_rect().end.x)
-		and is_equal_approx(xp_bar.get_global_rect().end.y, app.get_global_rect().end.y),
-		"Main Study: 학습 진행 bar를 화면 좌우·아래 edge에 붙인 XP strip으로 표시"
+		_view(app, "StudyProgressBar") == null
+		and _view(app, "RemainingLabel").text == "2장 남음",
+		"Main Study: 남은 카드 수만 표시하고 중복 XP strip 제거"
 	)
 	check(
 		StudyGestureSurface.drag_direction(Vector2(120, 10))
@@ -809,6 +801,12 @@ func run_tests() -> void:
 			"permissions/vibrate=true"
 		),
 		"Main Android: 햅틱용 VIBRATE 권한 포함"
+	)
+	var export_presets_text := FileAccess.get_file_as_string("res://export_presets.cfg")
+	check(
+		export_presets_text.count("screen/immersive_mode=false") == 2
+		and export_presets_text.count("screen/edge_to_edge=false") == 2,
+		"Main Android: debug와 release에서 시스템 상태·내비게이션 bar 유지"
 	)
 	gesture_surface._reset_visual()
 	gesture_surface._show_horizontal_preview(-gesture_surface.size.x * 0.25)
@@ -992,7 +990,6 @@ func run_tests() -> void:
 		"Main Study: 다음 카드 질문은 검은색으로 복구"
 	)
 	check(_view(app, "RemainingLabel").text == "1장 남음", "MVP: Again 후 남은 수 감소")
-	check(_view(app, "StudyProgressBar").value == 1, "Main Study: 다음 카드에서 진행 bar 갱신")
 	check(
 		DeckStorage.load_progress(TEST_DECK).get_wrong_count("A") == 1
 		and DeckStorage.load_progress(TEST_DECK).get_status("A")
@@ -1016,8 +1013,7 @@ func run_tests() -> void:
 	_view(app, "GoodButton").pressed.emit()
 	check(
 		_view(app, "StudyResultView").visible
-		and not _view(app, "StudyContainer").visible
-		and not _view(app, "StudyProgressBar").visible,
+		and not _view(app, "StudyContainer").visible,
 		"Main Result: 마지막 카드 후 학습 화면 대신 결과 화면 표시"
 	)
 	check(
