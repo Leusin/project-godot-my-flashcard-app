@@ -808,6 +808,13 @@ func run_tests() -> void:
 		and export_presets_text.count("screen/edge_to_edge=false") == 2,
 		"Main Android: debug와 release에서 시스템 상태·내비게이션 bar 유지"
 	)
+	check(
+		ProjectSettings.get_setting("application/config/version") == "0.9.1"
+		and export_presets_text.count("version/name=\"0.9.1\"") == 2
+		and export_presets_text.count("version/code=2") == 2
+		and export_presets_text.contains("my-simple-flash-card-0.9.1.aab"),
+		"Main Release: 0.9.1 versionName과 versionCode 2 일치"
+	)
 	gesture_surface._reset_visual()
 	gesture_surface._show_horizontal_preview(-gesture_surface.size.x * 0.25)
 	var again_partial_style := (
