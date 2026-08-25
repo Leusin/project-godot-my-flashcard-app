@@ -107,17 +107,17 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 	card_context_menu.find_child("FavoriteCardActionButton", true, false) as Button
 )
 @onready var rename_deck_overlay: Control = $RenameDeckOverlay
-@onready var rename_deck_input: LineEdit = $RenameDeckOverlay/RenameDeckPanel/Margin/Content/RenameDeckInput
-@onready var rename_error_label: Label = $RenameDeckOverlay/RenameDeckPanel/Margin/Content/RenameErrorLabel
+@onready var rename_deck_input := rename_deck_overlay.find_child("DialogInput", true, false) as LineEdit
+@onready var rename_error_label := rename_deck_overlay.find_child("DialogError", true, false) as Label
 @onready var delete_confirmation_overlay: Control = $DeleteConfirmationOverlay
-@onready var delete_confirmation_title: Label = $DeleteConfirmationOverlay/DeleteConfirmationPanel/Margin/Content/DeleteConfirmationTitle
+@onready var delete_confirmation_title := delete_confirmation_overlay.find_child("DialogTitle", true, false) as Label
 @onready var exit_confirmation_overlay: Control = $ExitConfirmationOverlay
 @onready var create_deck_overlay: Control = $CreateDeckOverlay
-@onready var create_deck_title: Label = $CreateDeckOverlay/CreateDeckPanel/Margin/Content/CreateDeckTitle
-@onready var create_deck_description: Label = $CreateDeckOverlay/CreateDeckPanel/Margin/Content/CreateDeckDescription
-@onready var create_deck_input: LineEdit = $CreateDeckOverlay/CreateDeckPanel/Margin/Content/CreateDeckInput
-@onready var create_deck_error_label: Label = $CreateDeckOverlay/CreateDeckPanel/Margin/Content/CreateDeckErrorLabel
-@onready var confirm_create_deck_button: Button = $CreateDeckOverlay/CreateDeckPanel/Margin/Content/Buttons/ConfirmCreateDeckButton
+@onready var create_deck_title := create_deck_overlay.find_child("DialogTitle", true, false) as Label
+@onready var create_deck_description := create_deck_overlay.find_child("DialogDescription", true, false) as Label
+@onready var create_deck_input := create_deck_overlay.find_child("DialogInput", true, false) as LineEdit
+@onready var create_deck_error_label := create_deck_overlay.find_child("DialogError", true, false) as Label
+@onready var confirm_create_deck_button := create_deck_overlay.find_child("PrimaryButton", true, false) as Button
 @onready var study_ready_view: VBoxContainer = $Margin/Page/StudyReadyView
 @onready var ready_overview: VBoxContainer = $Margin/Page/StudyReadyView/DeckStage/DeckStack/DeckCover/Margin/OverviewContent
 @onready var new_study_content: VBoxContainer = $Margin/Page/StudyReadyView/DeckStage/DeckStack/DeckCover/Margin/NewStudyContent
@@ -250,20 +250,32 @@ func _ready() -> void:
 	$CardContextMenu/DismissCardContextMenuButton.pressed.connect(_on_card_context_dismissed)
 	edit_card_action_button.pressed.connect(_on_card_context_edit_pressed)
 	favorite_card_action_button.pressed.connect(_on_card_context_favorite_pressed)
-	$RenameDeckOverlay/RenameDeckPanel/Margin/Content/Buttons/CancelRenameButton.pressed.connect(_on_rename_canceled)
-	$RenameDeckOverlay/RenameDeckPanel/Margin/Content/Buttons/ConfirmRenameButton.pressed.connect(_on_rename_confirmed)
+	(rename_deck_overlay.find_child("SecondaryButton", true, false) as Button).pressed.connect(
+		_on_rename_canceled
+	)
+	(rename_deck_overlay.find_child("PrimaryButton", true, false) as Button).pressed.connect(
+		_on_rename_confirmed
+	)
 	rename_deck_input.text_submitted.connect(_on_rename_submitted)
-	$CreateDeckOverlay/CreateDeckPanel/Margin/Content/Buttons/CancelCreateDeckButton.pressed.connect(
+	(create_deck_overlay.find_child("SecondaryButton", true, false) as Button).pressed.connect(
 		_on_create_deck_canceled
 	)
-	$CreateDeckOverlay/CreateDeckPanel/Margin/Content/Buttons/ConfirmCreateDeckButton.pressed.connect(
+	confirm_create_deck_button.pressed.connect(
 		_on_create_deck_confirmed
 	)
 	create_deck_input.text_submitted.connect(_on_create_deck_submitted)
-	$DeleteConfirmationOverlay/DeleteConfirmationPanel/Margin/Content/Buttons/CancelDeleteButton.pressed.connect(_on_delete_canceled)
-	$DeleteConfirmationOverlay/DeleteConfirmationPanel/Margin/Content/Buttons/ConfirmDeleteButton.pressed.connect(_on_delete_confirmed)
-	$ExitConfirmationOverlay/ExitConfirmationPanel/Margin/Content/Buttons/CancelExitButton.pressed.connect(_on_exit_canceled)
-	$ExitConfirmationOverlay/ExitConfirmationPanel/Margin/Content/Buttons/ConfirmExitButton.pressed.connect(_on_exit_confirmed)
+	(delete_confirmation_overlay.find_child("SecondaryButton", true, false) as Button).pressed.connect(
+		_on_delete_canceled
+	)
+	(delete_confirmation_overlay.find_child("PrimaryButton", true, false) as Button).pressed.connect(
+		_on_delete_confirmed
+	)
+	(exit_confirmation_overlay.find_child("SecondaryButton", true, false) as Button).pressed.connect(
+		_on_exit_canceled
+	)
+	(exit_confirmation_overlay.find_child("PrimaryButton", true, false) as Button).pressed.connect(
+		_on_exit_confirmed
+	)
 	$Margin/Page/StudyReadyView/Header/BackToLibraryButton.pressed.connect(show_library)
 	(ready_overview.get_node("OpenStudySetupButton") as Button).pressed.connect(
 		_on_open_study_setup
@@ -296,16 +308,16 @@ func _ready() -> void:
 	reset_card_progress_button.pressed.connect(_on_reset_card_progress_pressed)
 	card_status_option.item_selected.connect(_on_card_status_selected)
 	$Margin/Page/CardEditorView/SaveCardButton.pressed.connect(_on_save_card_pressed)
-	$CardDeleteConfirmationOverlay/Panel/Margin/Content/Buttons/CancelCardDeleteButton.pressed.connect(
+	(card_delete_confirmation_overlay.find_child("SecondaryButton", true, false) as Button).pressed.connect(
 		_on_card_delete_canceled
 	)
-	$CardDeleteConfirmationOverlay/Panel/Margin/Content/Buttons/ConfirmCardDeleteButton.pressed.connect(
+	(card_delete_confirmation_overlay.find_child("PrimaryButton", true, false) as Button).pressed.connect(
 		_on_card_delete_confirmed
 	)
-	$DiscardCardChangesOverlay/Panel/Margin/Content/Buttons/KeepEditingButton.pressed.connect(
+	(discard_card_changes_overlay.find_child("SecondaryButton", true, false) as Button).pressed.connect(
 		_on_discard_card_changes_canceled
 	)
-	$DiscardCardChangesOverlay/Panel/Margin/Content/Buttons/DiscardChangesButton.pressed.connect(
+	(discard_card_changes_overlay.find_child("PrimaryButton", true, false) as Button).pressed.connect(
 		_on_discard_card_changes_confirmed
 	)
 	$Margin/Page/StudyFlow/Header/BackToReadyButton.pressed.connect(_return_to_study_ready)

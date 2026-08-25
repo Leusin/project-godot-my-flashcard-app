@@ -1,20 +1,15 @@
-[gd_scene load_steps=19 format=3 uid="uid://bh17ip0fnu6v3"]
+[gd_scene format=3 uid="uid://bh17ip0fnu6v3"]
 
 [ext_resource type="Script" uid="uid://c6jw5vgiox3f5" path="res://src/main/main.gd" id="1_main"]
-[ext_resource type="Theme" path="res://src/main/main_theme.tres" id="2_theme"]
+[ext_resource type="Theme" uid="uid://bu5jyw4ehw6ya" path="res://src/main/main_theme.tres" id="2_theme"]
 [ext_resource type="PackedScene" path="res://src/main/library_view.tscn" id="3_library"]
-[ext_resource type="PackedScene" path="res://src/main/study_view.tscn" id="4_study"]
-[ext_resource type="PackedScene" path="res://src/main/exit_confirmation.tscn" id="5_exit"]
-[ext_resource type="PackedScene" path="res://src/main/deck_context_menu.tscn" id="6_context"]
-[ext_resource type="PackedScene" path="res://src/main/delete_confirmation.tscn" id="7_delete"]
-[ext_resource type="PackedScene" path="res://src/main/rename_deck_dialog.tscn" id="8_rename"]
+[ext_resource type="PackedScene" uid="uid://dxsva43l2lvu6" path="res://src/main/study_view.tscn" id="4_study"]
+[ext_resource type="PackedScene" path="res://src/main/modal_dialog.tscn" id="5_modal"]
+[ext_resource type="PackedScene" uid="uid://bdds61ydptmja" path="res://src/main/deck_context_menu.tscn" id="6_context"]
 [ext_resource type="PackedScene" path="res://src/main/study_ready_view.tscn" id="9_ready"]
 [ext_resource type="PackedScene" path="res://src/main/card_list_view.tscn" id="10_card_list"]
 [ext_resource type="PackedScene" path="res://src/main/card_editor_view.tscn" id="11_card_editor"]
-[ext_resource type="PackedScene" path="res://src/main/card_delete_confirmation.tscn" id="12_card_delete"]
-[ext_resource type="PackedScene" path="res://src/main/discard_card_changes_confirmation.tscn" id="13_discard"]
 [ext_resource type="PackedScene" path="res://src/main/add_deck_menu.tscn" id="14_add_menu"]
-[ext_resource type="PackedScene" path="res://src/main/create_deck_dialog.tscn" id="15_create_deck"]
 [ext_resource type="PackedScene" path="res://src/main/card_detail_view.tscn" id="16_card_detail"]
 [ext_resource type="PackedScene" path="res://src/main/card_context_menu.tscn" id="17_card_context"]
 [ext_resource type="PackedScene" path="res://src/main/study_progress_bar.tscn" id="18_study_progress"]
@@ -55,63 +50,80 @@ grow_vertical = 2
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="LibraryContainer" parent="Margin/Page" instance=ExtResource("3_library")]
-layout_mode = 2
+[node name="LibraryContainer" parent="Margin/Page" unique_id=1342003132 instance=ExtResource("3_library")]
 
-[node name="StudyReadyView" parent="Margin/Page" instance=ExtResource("9_ready")]
+[node name="StudyReadyView" parent="Margin/Page" unique_id=1934807985 instance=ExtResource("9_ready")]
+visible = false
+
+[node name="CardListView" parent="Margin/Page" unique_id=628087517 instance=ExtResource("10_card_list")]
+visible = false
+
+[node name="CardDetailView" parent="Margin/Page" unique_id=80627094 instance=ExtResource("16_card_detail")]
+visible = false
+
+[node name="CardEditorView" parent="Margin/Page" unique_id=1975507747 instance=ExtResource("11_card_editor")]
+visible = false
+
+[node name="StudyFlow" parent="Margin/Page" unique_id=884868553 instance=ExtResource("4_study")]
 visible = false
 layout_mode = 2
 
-[node name="CardListView" parent="Margin/Page" instance=ExtResource("10_card_list")]
-visible = false
-layout_mode = 2
+[node name="StudyProgressBar" parent="." unique_id=1412801175 instance=ExtResource("18_study_progress")]
 
-[node name="CardDetailView" parent="Margin/Page" instance=ExtResource("16_card_detail")]
-visible = false
-layout_mode = 2
-
-[node name="CardEditorView" parent="Margin/Page" instance=ExtResource("11_card_editor")]
-visible = false
-layout_mode = 2
-
-[node name="StudyFlow" parent="Margin/Page" instance=ExtResource("4_study")]
-visible = false
-layout_mode = 2
-
-[node name="StudyProgressBar" parent="." instance=ExtResource("18_study_progress")]
-
-[node name="AddDeckMenu" parent="." instance=ExtResource("14_add_menu")]
+[node name="AddDeckMenu" parent="." unique_id=1212683312 instance=ExtResource("14_add_menu")]
 visible = false
 layout_mode = 1
 
-[node name="DeckContextMenu" parent="." instance=ExtResource("6_context")]
+[node name="DeckContextMenu" parent="." unique_id=801605264 instance=ExtResource("6_context")]
 visible = false
 layout_mode = 1
 
-[node name="CardContextMenu" parent="." instance=ExtResource("17_card_context")]
+[node name="CardContextMenu" parent="." unique_id=1187236134 instance=ExtResource("17_card_context")]
 visible = false
 layout_mode = 1
 
-[node name="CreateDeckOverlay" parent="." instance=ExtResource("15_create_deck")]
+[node name="CreateDeckOverlay" parent="." unique_id=1277028575 instance=ExtResource("5_modal")]
 visible = false
 layout_mode = 1
+title_text = "새 덱 만들기"
+description_text = "이름을 정한 뒤 첫 카드를 작성합니다."
+input_visible = true
+input_placeholder = "덱 이름"
+primary_button_text = "첫 카드 작성"
+panel_height = 430.0
 
-[node name="RenameDeckOverlay" parent="." instance=ExtResource("8_rename")]
+[node name="RenameDeckOverlay" parent="." unique_id=1792945415 instance=ExtResource("5_modal")]
 visible = false
 layout_mode = 1
+title_text = "덱 이름 변경"
+input_visible = true
+input_placeholder = "덱 이름"
+primary_button_text = "변경"
+panel_height = 400.0
 
-[node name="DeleteConfirmationOverlay" parent="." instance=ExtResource("7_delete")]
+[node name="DeleteConfirmationOverlay" parent="." unique_id=407182076 instance=ExtResource("5_modal")]
 visible = false
 layout_mode = 1
+title_text = "덱을 삭제할까요?"
+description_text = "학습 기록도 함께 삭제되며 되돌릴 수 없습니다."
+primary_button_text = "삭제"
 
-[node name="ExitConfirmationOverlay" parent="." instance=ExtResource("5_exit")]
+[node name="ExitConfirmationOverlay" parent="." unique_id=1336333327 instance=ExtResource("5_modal")]
 visible = false
 layout_mode = 1
+title_text = "앱 종료"
+description_text = "앱을 종료할까요?"
+primary_button_text = "종료"
 
-[node name="CardDeleteConfirmationOverlay" parent="." instance=ExtResource("12_card_delete")]
+[node name="CardDeleteConfirmationOverlay" parent="." unique_id=1403179071 instance=ExtResource("5_modal")]
 visible = false
-layout_mode = 1
+title_text = "이 카드를 삭제할까요?"
+description_text = "카드와 해당 학습 기록이 함께 삭제됩니다."
+primary_button_text = "삭제"
 
-[node name="DiscardCardChangesOverlay" parent="." instance=ExtResource("13_discard")]
+[node name="DiscardCardChangesOverlay" parent="." unique_id=18728453 instance=ExtResource("5_modal")]
 visible = false
-layout_mode = 1
+title_text = "변경사항을 버릴까요?"
+description_text = "저장하지 않은 질문과 답은 복구할 수 없습니다."
+secondary_button_text = "계속 편집"
+primary_button_text = "버리기"

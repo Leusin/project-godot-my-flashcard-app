@@ -1,6 +1,8 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=7 format=3]
 
-[ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
+[ext_resource type="Script" path="res://src/main/modal_dialog.gd" id="1_dialog"]
+[ext_resource type="Script" path="res://src/main/keyboard_avoider.gd" id="2_keyboard"]
+[ext_resource type="Theme" path="res://src/main/main_theme.tres" id="3_theme"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxDialog"]
 bg_color = Color(1, 1, 1, 1)
@@ -45,18 +47,29 @@ corner_radius_bottom_left = 8
 content_margin_left = 15.0
 content_margin_right = 15.0
 
-[node name="CreateDeckOverlay" type="ColorRect"]
+[node name="ModalDialog" type="ColorRect"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme = ExtResource("1_theme")
+theme = ExtResource("3_theme")
 color = Color(0, 0, 0, 0.18)
+script = ExtResource("1_dialog")
 
-[node name="CreateDeckPanel" type="PanelContainer" parent="."]
-custom_minimum_size = Vector2(600, 430)
+[node name="KeyboardShift" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_keyboard")
+
+[node name="DialogPanel" type="PanelContainer" parent="KeyboardShift"]
+custom_minimum_size = Vector2(600, 360)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -64,40 +77,43 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -300.0
-offset_top = -215.0
+offset_top = -180.0
 offset_right = 300.0
-offset_bottom = 215.0
+offset_bottom = 180.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 0
 theme_override_styles/panel = SubResource("StyleBoxDialog")
 
-[node name="Margin" type="MarginContainer" parent="CreateDeckPanel"]
+[node name="Margin" type="MarginContainer" parent="KeyboardShift/DialogPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 32
 theme_override_constants/margin_top = 28
 theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 28
 
-[node name="Content" type="VBoxContainer" parent="CreateDeckPanel/Margin"]
+[node name="Content" type="VBoxContainer" parent="KeyboardShift/DialogPanel/Margin"]
 layout_mode = 2
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="CreateDeckTitle" type="Label" parent="CreateDeckPanel/Margin/Content"]
+[node name="DialogTitle" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
-text = "새 덱 만들기"
+text = "확인"
 horizontal_alignment = 1
+autowrap_mode = 3
 
-[node name="CreateDeckDescription" type="Label" parent="CreateDeckPanel/Margin/Content"]
+[node name="DialogDescription" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.32, 0.32, 0.32, 1)
 theme_override_font_sizes/font_size = 24
-text = "이름을 정한 뒤 첫 카드를 작성합니다."
+text = "설명"
 horizontal_alignment = 1
+autowrap_mode = 3
 
-[node name="CreateDeckInput" type="LineEdit" parent="CreateDeckPanel/Margin/Content"]
-unique_name_in_owner = true
+[node name="DialogInput" type="LineEdit" parent="KeyboardShift/DialogPanel/Margin/Content"]
+visible = false
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
@@ -106,34 +122,31 @@ theme_override_colors/selection_color = Color(0.7, 0.7, 0.7, 1)
 theme_override_font_sizes/font_size = 28
 theme_override_styles/normal = SubResource("StyleBoxInput")
 theme_override_styles/focus = SubResource("StyleBoxInputFocus")
-placeholder_text = "덱 이름"
+placeholder_text = "입력"
 select_all_on_focus = true
 
-[node name="CreateDeckErrorLabel" type="Label" parent="CreateDeckPanel/Margin/Content"]
-unique_name_in_owner = true
+[node name="DialogError" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content"]
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "이름을 확인하세요."
+text = "오류"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="Buttons" type="HBoxContainer" parent="CreateDeckPanel/Margin/Content"]
+[node name="Buttons" type="HBoxContainer" parent="KeyboardShift/DialogPanel/Margin/Content"]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="CancelCreateDeckButton" type="Button" parent="CreateDeckPanel/Margin/Content/Buttons"]
-unique_name_in_owner = true
+[node name="SecondaryButton" type="Button" parent="KeyboardShift/DialogPanel/Margin/Content/Buttons"]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
 text = "취소"
 
-[node name="ConfirmCreateDeckButton" type="Button" parent="CreateDeckPanel/Margin/Content/Buttons"]
-unique_name_in_owner = true
+[node name="PrimaryButton" type="Button" parent="KeyboardShift/DialogPanel/Margin/Content/Buttons"]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
-text = "첫 카드 작성"
+text = "확인"

@@ -2,6 +2,7 @@ extends TestCase
 
 const MAIN_SCENE := preload("res://src/main/main.tscn")
 const CARD_DETAIL_SURFACE := preload("res://src/main/card_detail_surface.gd")
+const KEYBOARD_AVOIDER := preload("res://src/main/keyboard_avoider.gd")
 const TEST_DECKS_DIR := "user://__gd_main_decks"
 const TEST_DECK := "__gd_main.md"
 const TEST_TEXT := "# A\n1\n# B\n2\n"
@@ -65,6 +66,28 @@ func run_tests() -> void:
 		MainApp.safe_insets_in_viewport(Rect2i(), Vector2i.ZERO, Vector2.ZERO)
 		== Vector4.ZERO,
 		"MVP Safe Area: 창 크기가 없으면 추가 여백 없음"
+	)
+	check(
+		is_equal_approx(
+			KEYBOARD_AVOIDER.scaled_keyboard_height(
+				1000, Vector2i(1080, 2000), Vector2(720, 1000)
+			),
+			500.0
+		),
+		"Main Keyboard: Android 키보드 높이를 viewport 좌표로 환산"
+	)
+	check(
+		is_equal_approx(
+			KEYBOARD_AVOIDER.required_shift(850.0, 100.0, 300.0, 1000.0),
+			84.0
+		)
+		and is_equal_approx(
+			KEYBOARD_AVOIDER.required_shift(1500.0, 1100.0, 700.0, 1760.0),
+			464.0
+		)
+		and KEYBOARD_AVOIDER.required_shift(500.0, 100.0, 300.0, 1000.0)
+		== 0.0,
+		"Main Keyboard: 입력창을 키보드 위로 올리되 화면 상단을 넘지 않음"
 	)
 	var tall_card_rect := StudyGestureSurface.fitted_card_rect(Vector2(600, 1200))
 	var wide_card_rect := StudyGestureSurface.fitted_card_rect(Vector2(900, 900))
@@ -278,12 +301,12 @@ func run_tests() -> void:
 		"Main Deck Actions: 네 가지 큰 작업을 담은 320px context list 표시"
 	)
 	var dialog_panels: Array[PanelContainer] = [
-		_view(app, "CreateDeckPanel") as PanelContainer,
-		_view(app, "RenameDeckPanel") as PanelContainer,
-		_view(app, "DeleteConfirmationPanel") as PanelContainer,
-		_view(app, "ExitConfirmationPanel") as PanelContainer,
-		app.get_node("CardDeleteConfirmationOverlay/Panel") as PanelContainer,
-		app.get_node("DiscardCardChangesOverlay/Panel") as PanelContainer,
+		_dialog(app, "CreateDeckOverlay", "DialogPanel") as PanelContainer,
+		_dialog(app, "RenameDeckOverlay", "DialogPanel") as PanelContainer,
+		_dialog(app, "DeleteConfirmationOverlay", "DialogPanel") as PanelContainer,
+		_dialog(app, "ExitConfirmationOverlay", "DialogPanel") as PanelContainer,
+		_dialog(app, "CardDeleteConfirmationOverlay", "DialogPanel") as PanelContainer,
+		_dialog(app, "DiscardCardChangesOverlay", "DialogPanel") as PanelContainer,
 	]
 	var dialogs_unified := true
 	for dialog_panel in dialog_panels:
@@ -302,8 +325,8 @@ func run_tests() -> void:
 		_view(app, "RenameDeckOverlay") as ColorRect,
 		_view(app, "DeleteConfirmationOverlay") as ColorRect,
 		_view(app, "ExitConfirmationOverlay") as ColorRect,
-		app.get_node("CardDeleteConfirmationOverlay/Shade") as ColorRect,
-		app.get_node("DiscardCardChangesOverlay/Shade") as ColorRect,
+		_view(app, "CardDeleteConfirmationOverlay") as ColorRect,
+		_view(app, "DiscardCardChangesOverlay") as ColorRect,
 	]
 	var shades_unified := true
 	for modal_shade in modal_shades:
@@ -312,6 +335,44 @@ func run_tests() -> void:
 		dialogs_unified and shades_unified,
 		"Main UI: 모든 다이얼로그의 표면과 배경 dim 규격 통일"
 	)
+	var modal_scene_is_shared := true
+	for overlay_name in [
+		"CreateDeckOverlay",
+		"RenameDeckOverlay",
+		"DeleteConfirmationOverlay",
+		"ExitConfirmationOverlay",
+		"CardDeleteConfirmationOverlay",
+		"DiscardCardChangesOverlay",
+	]:
+		var overlay := _view(app, overlay_name)
+		modal_scene_is_shared = (
+			modal_scene_is_shared
+			and overlay.scene_file_path.ends_with("modal_dialog.tscn")
+			and _dialog(app, overlay_name, "KeyboardShift").get_script().resource_path
+			.ends_with("keyboard_avoider.gd")
+		)
+	check(modal_scene_is_shared, "Main UI: 여섯 팝업이 공용 ModalDialog scene 사용")
+	check(
+		is_equal_approx(
+			_dialog(app, "CreateDeckOverlay", "DialogPanel").anchor_top,
+			0.28
+		)
+		and is_equal_approx(
+			_dialog(app, "RenameDeckOverlay", "DialogPanel").anchor_top,
+			0.28
+		)
+		and is_equal_approx(
+			_dialog(app, "DeleteConfirmationOverlay", "DialogPanel").anchor_top,
+			0.5
+		),
+		"Main Keyboard: 입력 field 팝업만 IME 측정과 무관하게 상단 배치"
+	)
+	check(
+		_view(app, "CardEditorView").get_script().resource_path.ends_with(
+			"keyboard_avoider.gd"
+		),
+		"Main Keyboard: 카드 편집 입력창도 공용 키보드 회피 사용"
+	)
 	_view(app, "RenameDeckButton").pressed.emit()
 	var rename_overlay := _view(app, "RenameDeckOverlay") as Control
 	check(
@@ -319,17 +380,18 @@ func run_tests() -> void:
 		"Main Rename: context list에서 이름 변경창으로 전환"
 	)
 	check(
-		_view(app, "RenameDeckInput").text == "__gd_main",
+		_dialog(app, "RenameDeckOverlay", "DialogInput").text == "__gd_main",
 		"Main Rename: 현재 덱 이름을 입력창에 표시"
 	)
-	_view(app, "RenameDeckInput").text = ""
-	_view(app, "ConfirmRenameButton").pressed.emit()
+	_dialog(app, "RenameDeckOverlay", "DialogInput").text = ""
+	_dialog(app, "RenameDeckOverlay", "PrimaryButton").pressed.emit()
 	check(
-		_view(app, "RenameErrorLabel").visible
-		and _view(app, "RenameErrorLabel").text == MainApp.RENAME_EMPTY_MESSAGE,
+		_dialog(app, "RenameDeckOverlay", "DialogError").visible
+		and _dialog(app, "RenameDeckOverlay", "DialogError").text
+		== MainApp.RENAME_EMPTY_MESSAGE,
 		"Main Rename: 빈 이름 오류를 입력창 안에 표시"
 	)
-	_view(app, "CancelRenameButton").pressed.emit()
+	_dialog(app, "RenameDeckOverlay", "SecondaryButton").pressed.emit()
 	check(not rename_overlay.visible, "Main Rename: 취소하면 이름 변경창 닫기")
 	_view(deck_buttons[0], "DeckMenuButton").pressed.emit()
 	_view(app, "DeleteDeckButton").pressed.emit()
@@ -339,12 +401,17 @@ func run_tests() -> void:
 		"Main Delete: 삭제 선택 후 확인창으로 전환"
 	)
 	check(
-		_view(app, "DeleteConfirmationTitle").text == "'__gd_main' 덱을 삭제할까요?",
+		_dialog(app, "DeleteConfirmationOverlay", "DialogTitle").text
+		== "'__gd_main' 덱을 삭제할까요?",
 		"Main Delete: 삭제할 덱 이름 표시"
 	)
 	check(
-		_view(app, "DeleteWarningLabel").text.contains("학습 기록")
-		and _view(app, "DeleteWarningLabel").text.contains("되돌릴 수 없습니다"),
+		_dialog(app, "DeleteConfirmationOverlay", "DialogDescription").text.contains(
+			"학습 기록"
+		)
+		and _dialog(app, "DeleteConfirmationOverlay", "DialogDescription").text.contains(
+			"되돌릴 수 없습니다"
+		),
 		"Main Delete: 학습 기록 삭제와 복구 불가 안내"
 	)
 	check(app.handle_back_request(), "Main Delete: 확인창에서 뒤로가기 요청 소비")
@@ -496,13 +563,21 @@ func run_tests() -> void:
 	var exit_overlay := _view(app, "ExitConfirmationOverlay") as Control
 	check(exit_overlay.visible, "MVP Android Back: 덱 목록에서 종료 확인창 표시")
 	check(
-		_view(app, "ExitWarningLabel").text == "앱을 종료할까요?",
+		_dialog(app, "ExitConfirmationOverlay", "DialogDescription").text
+		== "앱을 종료할까요?",
 		"MVP Android Back: 종료 질문 표시"
 	)
-	check(_view(app, "ConfirmExitButton").text == "종료", "MVP Android Back: 종료 버튼 표시")
-	check(_view(app, "CancelExitButton").text == "취소", "MVP Android Back: 취소 버튼 표시")
+	check(
+		_dialog(app, "ExitConfirmationOverlay", "PrimaryButton").text == "종료",
+		"MVP Android Back: 종료 버튼 표시"
+	)
+	check(
+		_dialog(app, "ExitConfirmationOverlay", "SecondaryButton").text == "취소",
+		"MVP Android Back: 취소 버튼 표시"
+	)
 	var exit_panel_style := (
-		_view(app, "ExitConfirmationPanel").get_theme_stylebox("panel") as StyleBoxFlat
+		_dialog(app, "ExitConfirmationOverlay", "DialogPanel").get_theme_stylebox("panel")
+		as StyleBoxFlat
 	)
 	check(
 		exit_panel_style != null
@@ -511,8 +586,11 @@ func run_tests() -> void:
 		"MVP Android Back: 종료 확인창은 흰 배경과 검은 테두리"
 	)
 	check(
-		_view(app, "ConfirmExitButton").custom_minimum_size.y == 88.0
-		and _view(app, "CancelExitButton").custom_minimum_size.y == 88.0,
+		_dialog(app, "ExitConfirmationOverlay", "PrimaryButton").custom_minimum_size.y
+		== 88.0
+		and _dialog(
+			app, "ExitConfirmationOverlay", "SecondaryButton"
+		).custom_minimum_size.y == 88.0,
 		"MVP Android Back: 종료 확인 버튼을 모바일 크기로 표시"
 	)
 	check(app.handle_back_request(), "MVP Android Back: 확인창에서 뒤로가기 요청 소비")
@@ -1079,15 +1157,16 @@ func run_tests() -> void:
 	if rename_tile != null:
 		_view(rename_tile, "DeckMenuButton").pressed.emit()
 		_view(app, "RenameDeckButton").pressed.emit()
-		_view(app, "RenameDeckInput").text = "__gd_main"
-		_view(app, "ConfirmRenameButton").pressed.emit()
+		_dialog(app, "RenameDeckOverlay", "DialogInput").text = "__gd_main"
+		_dialog(app, "RenameDeckOverlay", "PrimaryButton").pressed.emit()
 		check(
-			_view(app, "RenameErrorLabel").text == MainApp.RENAME_DUPLICATE_MESSAGE
+			_dialog(app, "RenameDeckOverlay", "DialogError").text
+			== MainApp.RENAME_DUPLICATE_MESSAGE
 			and DeckStorage.deck_exists(RENAME_DECK),
 			"Main Rename: 중복 이름을 거부하고 원본 유지"
 		)
-		_view(app, "RenameDeckInput").text = "__gd_main_renamed"
-		_view(app, "ConfirmRenameButton").pressed.emit()
+		_dialog(app, "RenameDeckOverlay", "DialogInput").text = "__gd_main_renamed"
+		_dialog(app, "RenameDeckOverlay", "PrimaryButton").pressed.emit()
 	check(not DeckStorage.deck_exists(RENAME_DECK), "Main Rename: 이전 덱 파일 제거")
 	check(DeckStorage.deck_exists(RENAMED_DECK), "Main Rename: 새 덱 파일 생성")
 	check(
@@ -1143,7 +1222,7 @@ func run_tests() -> void:
 	if delete_tile != null:
 		_view(delete_tile, "DeckMenuButton").pressed.emit()
 		_view(app, "DeleteDeckButton").pressed.emit()
-		_view(app, "ConfirmDeleteButton").pressed.emit()
+		_dialog(app, "DeleteConfirmationOverlay", "PrimaryButton").pressed.emit()
 	check(not DeckStorage.deck_exists(DELETE_DECK), "Main Delete: 덱 파일 제거")
 	check(
 		DeckStorage.load_settings().last_deck_file.is_empty(),
@@ -1380,10 +1459,10 @@ func run_tests() -> void:
 		_view(app, "DiscardCardChangesOverlay").visible,
 		"Main Card Edit: 저장하지 않은 학습 정보 변경사항 취소 확인"
 	)
-	_view(app, "KeepEditingButton").pressed.emit()
+	_dialog(app, "DiscardCardChangesOverlay", "SecondaryButton").pressed.emit()
 	check(_view(app, "CardEditorView").visible, "Main Card Edit: 계속 편집 선택")
 	_view(app, "CancelCardEditButton").pressed.emit()
-	_view(app, "DiscardChangesButton").pressed.emit()
+	_dialog(app, "DiscardCardChangesOverlay", "PrimaryButton").pressed.emit()
 	check(
 		_view(app, "CardDetailView").visible
 		and DeckStorage.load_progress(EDIT_DECK).get_wrong_count("New") == 4,
@@ -1395,7 +1474,7 @@ func run_tests() -> void:
 	_view(app, "EditCardActionButton").pressed.emit()
 	_view(app, "DeleteCardButton").pressed.emit()
 	check(_view(app, "CardDeleteConfirmationOverlay").visible, "Main Card Edit: 카드 삭제 확인")
-	_view(app, "ConfirmCardDeleteButton").pressed.emit()
+	_dialog(app, "CardDeleteConfirmationOverlay", "PrimaryButton").pressed.emit()
 	check(
 		DeckParser.parse(DeckStorage.read_deck(EDIT_DECK)).size() == 2
 		and app.card_rows.get_child_count() == 2,
@@ -1477,33 +1556,34 @@ func run_tests() -> void:
 		_view(app, "CreateDeckOverlay").visible
 		and not _view(app, "AddDeckMenu").visible
 		and _view(app, "CreateDeckOverlay").scene_file_path.ends_with(
-			"create_deck_dialog.tscn"
+			"modal_dialog.tscn"
 		)
-		and _view(app, "ConfirmCreateDeckButton").custom_minimum_size.y == 88.0,
+		and _dialog(app, "CreateDeckOverlay", "PrimaryButton").custom_minimum_size.y
+		== 88.0,
 		"Main Create: 새 덱 이름 입력 scene으로 전환"
 	)
-	_view(app, "ConfirmCreateDeckButton").pressed.emit()
+	_dialog(app, "CreateDeckOverlay", "PrimaryButton").pressed.emit()
 	check(
-		_view(app, "CreateDeckErrorLabel").text
+		_dialog(app, "CreateDeckOverlay", "DialogError").text
 		== MainApp.CREATE_DECK_EMPTY_MESSAGE,
 		"Main Create: 빈 덱 이름 오류 안내"
 	)
-	_view(app, "CreateDeckInput").text = "bad/name"
-	_view(app, "ConfirmCreateDeckButton").pressed.emit()
+	_dialog(app, "CreateDeckOverlay", "DialogInput").text = "bad/name"
+	_dialog(app, "CreateDeckOverlay", "PrimaryButton").pressed.emit()
 	check(
-		_view(app, "CreateDeckErrorLabel").text
+		_dialog(app, "CreateDeckOverlay", "DialogError").text
 		== MainApp.CREATE_DECK_INVALID_MESSAGE,
 		"Main Create: 파일명에 쓸 수 없는 덱 이름 차단"
 	)
-	_view(app, "CreateDeckInput").text = "__gd_main"
-	_view(app, "ConfirmCreateDeckButton").pressed.emit()
+	_dialog(app, "CreateDeckOverlay", "DialogInput").text = "__gd_main"
+	_dialog(app, "CreateDeckOverlay", "PrimaryButton").pressed.emit()
 	check(
-		_view(app, "CreateDeckErrorLabel").text
+		_dialog(app, "CreateDeckOverlay", "DialogError").text
 		== MainApp.CREATE_DECK_DUPLICATE_MESSAGE,
 		"Main Create: 기존 덱과 중복되는 이름 차단"
 	)
-	_view(app, "CreateDeckInput").text = "  __gd_main_created  "
-	_view(app, "ConfirmCreateDeckButton").pressed.emit()
+	_dialog(app, "CreateDeckOverlay", "DialogInput").text = "  __gd_main_created  "
+	_dialog(app, "CreateDeckOverlay", "PrimaryButton").pressed.emit()
 	check(
 		_view(app, "CardEditorView").visible
 		and _view(app, "CardEditorTitle").text == "첫 카드 추가"
@@ -1513,7 +1593,7 @@ func run_tests() -> void:
 	)
 	_view(app, "CardQuestionInput").text = "Draft"
 	_view(app, "CancelCardEditButton").pressed.emit()
-	_view(app, "DiscardChangesButton").pressed.emit()
+	_dialog(app, "DiscardCardChangesOverlay", "PrimaryButton").pressed.emit()
 	check(
 		_view(app, "LibraryContainer").visible
 		and not DeckStorage.deck_exists(CREATED_DECK),
@@ -1522,8 +1602,8 @@ func run_tests() -> void:
 	create_add_tile = _view(app, "DeckList").get_children()[-1]
 	_view(create_add_tile, "AddDeckButton").pressed.emit()
 	_view(app, "CreateNewDeckButton").pressed.emit()
-	_view(app, "CreateDeckInput").text = "__gd_main_created"
-	_view(app, "ConfirmCreateDeckButton").pressed.emit()
+	_dialog(app, "CreateDeckOverlay", "DialogInput").text = "__gd_main_created"
+	_dialog(app, "CreateDeckOverlay", "PrimaryButton").pressed.emit()
 	_view(app, "CardQuestionInput").text = "Created question"
 	_view(app, "CardAnswerInput").text = "Created answer"
 	_view(app, "SaveCardButton").pressed.emit()
@@ -1568,14 +1648,15 @@ func run_tests() -> void:
 	)
 	check(
 		_view(app, "CreateDeckOverlay").visible
-		and _view(app, "CreateDeckTitle").text == "클립보드로 덱 만들기"
-		and _view(app, "CreateDeckDescription").text
+		and _dialog(app, "CreateDeckOverlay", "DialogTitle").text
+		== "클립보드로 덱 만들기"
+		and _dialog(app, "CreateDeckOverlay", "DialogDescription").text
 		== "복사한 Markdown에서 2장의 카드를 찾았습니다."
-		and _view(app, "ConfirmCreateDeckButton").text == "덱 만들기",
+		and _dialog(app, "CreateDeckOverlay", "PrimaryButton").text == "덱 만들기",
 		"Main Clipboard: 카드 수를 확인하고 덱 이름 입력"
 	)
-	_view(app, "CreateDeckInput").text = "__gd_main_clipboard"
-	_view(app, "ConfirmCreateDeckButton").pressed.emit()
+	_dialog(app, "CreateDeckOverlay", "DialogInput").text = "__gd_main_clipboard"
+	_dialog(app, "CreateDeckOverlay", "PrimaryButton").pressed.emit()
 	check(
 		_view(app, "CardListView").visible
 		and DeckStorage.read_deck(CLIPBOARD_DECK) == CLIPBOARD_TEXT
@@ -1603,6 +1684,10 @@ func run_tests() -> void:
 
 func _view(app: Node, node_name: String) -> Node:
 	return app.find_child(node_name, true, false)
+
+
+func _dialog(app: Node, overlay_name: String, node_name: String) -> Node:
+	return _view(app, overlay_name).find_child(node_name, true, false)
 
 
 func _find_deck_tile(app: Node, display_name: String) -> Node:
