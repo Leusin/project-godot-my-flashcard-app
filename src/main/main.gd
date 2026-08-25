@@ -1457,10 +1457,6 @@ func _on_add_deck_menu_dismissed() -> void:
 func _on_deck_menu_requested(deck_file: String, anchor: Control) -> void:
 	add_deck_menu.hide()
 	_menu_deck_file = deck_file
-	export_dialog.current_file = "%s%s" % [
-		DeckNaming.display_name(deck_file),
-		DeckNaming.EXTENSION,
-	]
 	deck_context_menu.show()
 	deck_context_menu_panel.reset_size()
 	_position_deck_context_menu(anchor)
@@ -1726,6 +1722,10 @@ func _on_export_pressed() -> void:
 		return
 
 	deck_context_menu.hide()
+	export_dialog.current_file = "%s%s" % [
+		DeckNaming.display_name(_menu_deck_file),
+		DeckNaming.EXTENSION,
+	]
 	export_dialog.popup_file_dialog()
 
 

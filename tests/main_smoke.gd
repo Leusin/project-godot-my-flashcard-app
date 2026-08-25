@@ -235,8 +235,8 @@ func run_tests() -> void:
 		"Main Deck Actions: 장식용 덱 제목 없이 context list만 표시"
 	)
 	check(
-		_view(app, "ExportDialog").current_file == "__gd_main.md",
-		"Main Export: 기본 파일명에 덱 이름 사용"
+		_view(app, "ExportDialog").current_file.is_empty(),
+		"Main Export: ⋮ 메뉴만 열 때 숨은 파일명 입력 field를 건드리지 않음"
 	)
 	var deck_context_style := (
 		_view(app, "DeckContextMenuPanel").get_theme_stylebox("panel") as StyleBoxFlat
@@ -300,6 +300,12 @@ func run_tests() -> void:
 		and _view(app, "DeleteDeckButton").get_theme_font_size("font_size") == 30,
 		"Main Deck Actions: 네 가지 큰 작업을 담은 320px context list 표시"
 	)
+	_view(app, "ExportDeckButton").pressed.emit()
+	check(
+		_view(app, "ExportDialog").current_file == "__gd_main.md",
+		"Main Export: 실제 내보내기 요청 때 기본 파일명 준비"
+	)
+	_view(app, "ExportDialog").hide()
 	var dialog_panels: Array[PanelContainer] = [
 		_dialog(app, "CreateDeckOverlay", "DialogPanel") as PanelContainer,
 		_dialog(app, "RenameDeckOverlay", "DialogPanel") as PanelContainer,
@@ -824,6 +830,10 @@ func run_tests() -> void:
 			"exclude_filter=\"store-listing/*,tests/*,tools/*\""
 		) == 2,
 		"Main Android: 배포와 무관한 스토어 자료·테스트·도구 제외"
+	)
+	check(
+		export_presets_text.count("include_filter=\"sample_deck.md\"") == 2,
+		"Main Android: 일반 파일인 Markdown 샘플 덱도 export에 포함"
 	)
 	gesture_surface._reset_visual()
 	gesture_surface._show_horizontal_preview(-gesture_surface.size.x * 0.25)

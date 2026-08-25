@@ -14,6 +14,7 @@ const STUDY_RESUME_DIR := "user://study_resume"
 const SETTINGS_PATH := "user://settings.json"
 const SAMPLE_DECK_PATH := "res://sample_deck.md"
 const SAMPLE_SEEDED_MARKER := "user://.sample_deck_seeded"
+const SAMPLE_SEED_VERSION := "seeded-v2"
 const LEGACY_SAMPLE_DECK_SHA256 := "0c6a1f24394c6caaf52a2962c38f3ccdfa80337a80b95640b01c87a1969d23da"
 
 static var _decks_dir := DEFAULT_DECKS_DIR
@@ -153,26 +154,42 @@ static func seed_sample_if_empty() -> void:
 	if _decks_dir != DEFAULT_DECKS_DIR:
 		return
 
-	_refresh_untouched_legacy_sample()
-	if FileAccess.file_exists(SAMPLE_SEEDED_MARKER):
+	var sample_text := FileAccess.get_file_as_string(SAMPLE_DECK_PATH)
+	if sample_text.strip_edges().is_empty():
+		push_warning("Bundled sample deck is missing or empty.")
 		return
 
+	_refresh_untouched_legacy_sample(sample_text)
+	var marker_version := (
+		FileAccess.get_file_as_string(SAMPLE_SEEDED_MARKER)
+		if FileAccess.file_exists(SAMPLE_SEEDED_MARKER)
+		else ""
+	).strip_edges()
+	if marker_version == SAMPLE_SEED_VERSION:
+		return
+
+	var sample_file := SAMPLE_DECK_PATH.get_file()
+	if (
+		marker_version == "seeded"
+		and deck_exists(sample_file)
+		and read_deck(sample_file).strip_edges().is_empty()
+	):
+		write_deck(sample_file, sample_text)
+
 	if list_deck_files().is_empty():
-		write_deck(
-			SAMPLE_DECK_PATH.get_file(),
-			FileAccess.get_file_as_string(SAMPLE_DECK_PATH)
-		)
+		if not write_deck(sample_file, sample_text):
+			return
 
 	var marker := FileAccess.open(SAMPLE_SEEDED_MARKER, FileAccess.WRITE)
 	if marker != null:
-		marker.store_string("seeded")
+		marker.store_string(SAMPLE_SEED_VERSION)
 
 
 static func is_legacy_sample_text(content: String) -> bool:
 	return _normalized_deck_text(content).sha256_text() == LEGACY_SAMPLE_DECK_SHA256
 
 
-static func _refresh_untouched_legacy_sample() -> void:
+static func _refresh_untouched_legacy_sample(sample_text: String) -> void:
 	var sample_file := SAMPLE_DECK_PATH.get_file()
 	if not deck_exists(sample_file):
 		return
@@ -181,7 +198,7 @@ static func _refresh_untouched_legacy_sample() -> void:
 	if not is_legacy_sample_text(existing):
 		return
 
-	write_deck(sample_file, FileAccess.get_file_as_string(SAMPLE_DECK_PATH))
+	write_deck(sample_file, sample_text)
 
 
 static func _normalized_deck_text(content: String) -> String:
