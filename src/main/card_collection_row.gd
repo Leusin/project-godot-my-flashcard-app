@@ -1,11 +1,15 @@
-class_name CardListRow
+class_name CardCollectionRow
 extends PanelContainer
 
 signal selected(index: int)
 
 const FALLBACK_DRAG_THRESHOLD := 12.0
 
-var card_index: int
+@export var good_badge_style: StyleBoxFlat
+@export var again_badge_style: StyleBoxFlat
+@export var skip_badge_style: StyleBoxFlat
+
+var card_index := -1
 var _pointer_down := false
 var _dragged := false
 var _scrolling := false
@@ -13,8 +17,10 @@ var _drag_distance := Vector2.ZERO
 var _scroll_start := 0
 var _scroll_container: ScrollContainer
 
-@onready var question_label: Label = $Margin/Content/QuestionLabel
+@onready var question_label: Label = $Margin/Content/Top/QuestionLabel
 @onready var answer_label: Label = $Margin/Content/AnswerLabel
+@onready var outcome_badge: PanelContainer = $Margin/Content/Top/OutcomeBadge
+@onready var outcome_label: Label = $Margin/Content/Top/OutcomeBadge/Margin/OutcomeLabel
 
 
 func _ready() -> void:
@@ -37,10 +43,25 @@ func activate() -> void:
 	selected.emit(card_index)
 
 
-func setup(index: int, card: FlashCard) -> void:
+func setup(index: int, card: FlashCard, outcome: String = "") -> void:
 	card_index = index
 	question_label.text = card.question
-	answer_label.text = "답 없음" if card.answer.is_empty() else card.answer.replace("\n", "  ·  ")
+	answer_label.text = (
+		"답 없음"
+		if card.answer.is_empty()
+		else card.answer.replace("\n", "  ·  ")
+	)
+	outcome_badge.visible = not outcome.is_empty()
+	if outcome.is_empty():
+		return
+	outcome_label.text = outcome
+	match outcome:
+		"GOOD":
+			_apply_badge(good_badge_style, Color.WHITE)
+		"AGAIN":
+			_apply_badge(again_badge_style, Color.BLACK)
+		_:
+			_apply_badge(skip_badge_style, Color(0.25, 0.25, 0.25, 1))
 
 
 func _handle_mouse_button(event: InputEventMouseButton) -> void:
@@ -91,6 +112,12 @@ func _drag_threshold() -> float:
 	if _scroll_container != null and _scroll_container.scroll_deadzone > 0:
 		return float(_scroll_container.scroll_deadzone)
 	return FALLBACK_DRAG_THRESHOLD
+
+
+func _apply_badge(style: StyleBoxFlat, text_color: Color) -> void:
+	if style != null:
+		outcome_badge.add_theme_stylebox_override("panel", style)
+	outcome_label.add_theme_color_override("font_color", text_color)
 
 
 func _on_scroll_started() -> void:

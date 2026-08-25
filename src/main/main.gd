@@ -61,8 +61,7 @@ const PRIVACY_POLICY_URL := "https://leusin.github.io/privacy/my-simple-flash-ca
 const STUDY_INPUT_LOCK_SECONDS := 0.22
 const DECK_TILE_SCENE := preload("res://src/main/deck_tile.tscn")
 const ADD_DECK_TILE_SCENE := preload("res://src/main/add_deck_tile.tscn")
-const CARD_LIST_ROW_SCENE := preload("res://src/main/card_list_row.tscn")
-const STUDY_RESULT_ROW_SCENE := preload("res://src/main/study_result_row.tscn")
+const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.tscn")
 
 @export var auto_start := true
 
@@ -138,7 +137,7 @@ const STUDY_RESULT_ROW_SCENE := preload("res://src/main/study_result_row.tscn")
 @onready var card_list_view: VBoxContainer = $Margin/Page/CardListView
 @onready var card_list_deck_label: Label = $Margin/Page/CardListView/Header/CardListDeckLabel
 @onready var card_list_status_label: Label = $Margin/Page/CardListView/CardListStatusLabel
-@onready var card_rows: VBoxContainer = $Margin/Page/CardListView/CardListScroll/CardRows
+@onready var card_rows: VBoxContainer = $Margin/Page/CardListView/CardListScroll/Rows
 @onready var card_detail_view: VBoxContainer = $Margin/Page/CardDetailView
 @onready var card_detail_surface: PanelContainer = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame
 @onready var card_detail_deck_label: Label = $Margin/Page/CardDetailView/Header/CardDetailDeckLabel
@@ -183,7 +182,7 @@ const STUDY_RESULT_ROW_SCENE := preload("res://src/main/study_result_row.tscn")
 @onready var result_good_count_label: Label = $Margin/Page/StudyFlow/StudyResultView/ResultSummary/Good/Margin/Content/ResultGoodCountLabel
 @onready var result_again_count_label: Label = $Margin/Page/StudyFlow/StudyResultView/ResultSummary/Again/Margin/Content/ResultAgainCountLabel
 @onready var result_skip_count_label: Label = $Margin/Page/StudyFlow/StudyResultView/ResultSummary/Skip/Margin/Content/ResultSkipCountLabel
-@onready var result_rows: VBoxContainer = $Margin/Page/StudyFlow/StudyResultView/ResultListScroll/ResultRows
+@onready var result_rows: VBoxContainer = $Margin/Page/StudyFlow/StudyResultView/ResultListScroll/Rows
 @onready var retry_again_button: Button = $Margin/Page/StudyFlow/StudyResultView/Actions/RetryAgainButton
 @onready var result_return_to_ready_button: Button = $Margin/Page/StudyFlow/StudyResultView/Actions/ReturnToReadyButton
 
@@ -669,7 +668,7 @@ func _refresh_card_rows() -> void:
 	for child in card_rows.get_children():
 		child.free()
 	for index in _editing_cards.size():
-		var row := CARD_LIST_ROW_SCENE.instantiate() as CardListRow
+		var row = CARD_COLLECTION_ROW_SCENE.instantiate()
 		card_rows.add_child(row)
 		var card := _editing_cards[index]
 		row.setup(index, card)
@@ -2033,7 +2032,7 @@ func _show_study_results() -> void:
 			StudyOutcome.SKIP:
 				skip_count += 1
 
-		var row := STUDY_RESULT_ROW_SCENE.instantiate() as StudyResultRow
+		var row = CARD_COLLECTION_ROW_SCENE.instantiate()
 		result_rows.add_child(row)
 		row.setup(index, _session_cards[index], study_outcome_text(outcome))
 		row.selected.connect(_on_result_card_selected)

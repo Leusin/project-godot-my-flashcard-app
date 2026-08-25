@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
+[ext_resource type="PackedScene" path="res://src/main/card_collection_view.tscn" id="2_collection"]
 
 [node name="CardListView" type="VBoxContainer"]
 layout_mode = 2
@@ -39,16 +40,8 @@ theme_override_font_sizes/font_size = 24
 text = "안내"
 autowrap_mode = 3
 
-[node name="CardListScroll" type="ScrollContainer" parent="."]
+[node name="CardListScroll" parent="." instance=ExtResource("2_collection")]
 layout_mode = 2
-size_flags_vertical = 3
-horizontal_scroll_mode = 0
-scroll_deadzone = 12
-
-[node name="CardRows" type="VBoxContainer" parent="CardListScroll"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 12
 
 [node name="AddCardButton" type="Button" parent="."]
 custom_minimum_size = Vector2(0, 82)

@@ -908,7 +908,7 @@ func run_tests() -> void:
 		== CardStatus.Value.MASTERED,
 		"Main Ready: Good이 완료 상태를 저장"
 	)
-	var first_result_rows := _view(app, "ResultRows") as VBoxContainer
+	var first_result_rows := app.result_rows as VBoxContainer
 	check(
 		_view(app, "ResultGoodCountLabel").text == "1"
 		and _view(app, "ResultAgainCountLabel").text == "1"
@@ -928,9 +928,12 @@ func run_tests() -> void:
 			"study_result_view.tscn"
 		)
 		and first_result_rows.get_child(0).scene_file_path.ends_with(
-			"study_result_row.tscn"
+			"card_collection_row.tscn"
+		)
+		and (_view(app, "ResultListScroll") as ScrollContainer).scene_file_path.ends_with(
+			"card_collection_view.tscn"
 		),
-		"Main Result: 결과 화면과 행을 개별 편집 가능한 scene으로 분리"
+		"Main Result: 카드 목록과 공용 view·row scene 사용"
 	)
 	check(
 		_view(app, "StudyResultView").get_theme_constant("separation") == 26
@@ -941,7 +944,32 @@ func run_tests() -> void:
 		) == 18,
 		"Main Result: 결과 목록의 행간과 카드 안쪽 여백 확보"
 	)
-	_view(first_result_rows.get_child(0), "OpenResultCardButton").pressed.emit()
+	var first_result_row = first_result_rows.get_child(0)
+	var result_selection_count := [0]
+	first_result_row.selected.connect(
+		func(_index: int) -> void: result_selection_count[0] += 1
+	)
+	var result_row_press := InputEventMouseButton.new()
+	result_row_press.button_index = MOUSE_BUTTON_LEFT
+	result_row_press.pressed = true
+	first_result_row._gui_input(result_row_press)
+	var result_row_drag := InputEventMouseMotion.new()
+	result_row_drag.button_mask = MOUSE_BUTTON_MASK_LEFT
+	result_row_drag.relative = Vector2(0, -24)
+	first_result_row._gui_input(result_row_drag)
+	var result_row_release := InputEventMouseButton.new()
+	result_row_release.button_index = MOUSE_BUTTON_LEFT
+	first_result_row._gui_input(result_row_release)
+	check(
+		result_selection_count[0] == 0
+		and _view(app, "StudyResultView").visible
+		and first_result_row.mouse_filter == Control.MOUSE_FILTER_PASS
+		and _view(first_result_row, "OpenResultCardButton") == null
+		and (_view(app, "ResultListScroll") as ScrollContainer).scroll_deadzone == 12,
+		"Main Result: 투명 버튼 없이 drag는 스크롤로 전달하고 카드를 열지 않음"
+	)
+	first_result_row._gui_input(result_row_press)
+	first_result_row._gui_input(result_row_release)
 	check(
 		_view(app, "CardDetailView").visible
 		and not _view(app, "StudyResultView").is_visible_in_tree()
@@ -1113,10 +1141,10 @@ func run_tests() -> void:
 	_view(app, "ManageCardsButton").pressed.emit()
 	check(
 		_view(app, "CardListView").visible
-		and _view(app, "CardRows").get_child_count() == 2,
+		and app.card_rows.get_child_count() == 2,
 		"Main Card Edit: Study Ready에서 카드 목록 진입"
 	)
-	var first_card_row := _view(app, "CardRows").get_child(0) as CardListRow
+	var first_card_row = app.card_rows.get_child(0)
 	check(
 		_view(first_card_row, "ListWrongTally") == null
 		and _view(first_card_row, "ListStatusLabel") == null
@@ -1131,7 +1159,11 @@ func run_tests() -> void:
 		and first_card_row.mouse_filter == Control.MOUSE_FILTER_PASS
 		and (_view(app, "CardListScroll") as ScrollContainer).vertical_scroll_mode
 		== ScrollContainer.SCROLL_MODE_AUTO
-		and (_view(app, "CardListScroll") as ScrollContainer).scroll_deadzone == 12,
+		and (_view(app, "CardListScroll") as ScrollContainer).scroll_deadzone == 12
+		and (_view(app, "CardListScroll") as ScrollContainer).scene_file_path.ends_with(
+			"card_collection_view.tscn"
+		)
+		and not _view(first_card_row, "OutcomeBadge").visible,
 		"Main Card List: 버튼 대신 pass-through 카드 행과 touch drag deadzone 사용"
 	)
 	var row_selection_count := [0]
@@ -1300,7 +1332,7 @@ func run_tests() -> void:
 		DeckParser.parse(DeckStorage.read_deck(EDIT_DECK)).size() == 3,
 		"Main Card Edit: 새 카드 추가"
 	)
-	(_view(app, "CardRows").get_child(0) as CardListRow).activate()
+	app.card_rows.get_child(0).activate()
 	_view(app, "CardDetailMenuButton").pressed.emit()
 	_view(app, "EditCardActionButton").pressed.emit()
 	_view(app, "WrongMinusButton").pressed.emit()
@@ -1319,7 +1351,7 @@ func run_tests() -> void:
 		"Main Card Edit: 학습 정보 변경사항 버리고 카드 보기 복귀"
 	)
 	_view(app, "BackFromCardDetailButton").pressed.emit()
-	(_view(app, "CardRows").get_child(2) as CardListRow).activate()
+	app.card_rows.get_child(2).activate()
 	_view(app, "CardDetailMenuButton").pressed.emit()
 	_view(app, "EditCardActionButton").pressed.emit()
 	_view(app, "DeleteCardButton").pressed.emit()
@@ -1327,7 +1359,7 @@ func run_tests() -> void:
 	_view(app, "ConfirmCardDeleteButton").pressed.emit()
 	check(
 		DeckParser.parse(DeckStorage.read_deck(EDIT_DECK)).size() == 2
-		and _view(app, "CardRows").get_child_count() == 2,
+		and app.card_rows.get_child_count() == 2,
 		"Main Card Edit: 카드 삭제 후 목록과 Markdown 갱신"
 	)
 	_view(app, "BackFromCardListButton").pressed.emit()
@@ -1366,7 +1398,7 @@ func run_tests() -> void:
 	)
 	app._reset_study_input_lock()
 	_view(app, "AgainButton").pressed.emit()
-	var indexed_result_rows := _view(app, "ResultRows") as VBoxContainer
+	var indexed_result_rows := app.result_rows as VBoxContainer
 	check(
 		_view(app, "StudyResultView").visible
 		and _view(app, "ResultGoodCountLabel").text == "1"
@@ -1393,7 +1425,7 @@ func run_tests() -> void:
 		and _view(app, "ResultSkipCountLabel").text == "1"
 		and _view(app, "ResultAgainCountLabel").text == "0"
 		and _view(app, "RetryAgainButton").disabled
-		and _view(_view(app, "ResultRows").get_child(0), "OutcomeLabel").text
+		and _view(app.result_rows.get_child(0), "OutcomeLabel").text
 		== "SKIP",
 		"Main Result: SKIP 판정 표시 및 AGAIN이 없으면 재학습 비활성화"
 	)
@@ -1463,7 +1495,7 @@ func run_tests() -> void:
 		and created_cards.size() == 1
 		and created_cards[0].question == "Created question"
 		and created_cards[0].answer == "Created answer"
-		and _view(app, "CardRows").get_child_count() == 1,
+		and app.card_rows.get_child_count() == 1,
 		"Main Create: 첫 카드 저장 순간 유효한 Markdown 덱 생성"
 	)
 	check(
@@ -1508,7 +1540,7 @@ func run_tests() -> void:
 	check(
 		_view(app, "CardListView").visible
 		and DeckStorage.read_deck(CLIPBOARD_DECK) == CLIPBOARD_TEXT
-		and _view(app, "CardRows").get_child_count() == 2,
+		and app.card_rows.get_child_count() == 2,
 		"Main Clipboard: 복사한 Markdown 원문 그대로 덱 저장"
 	)
 	check(
