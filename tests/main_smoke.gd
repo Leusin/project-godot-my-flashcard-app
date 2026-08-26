@@ -278,6 +278,10 @@ func run_tests() -> void:
 	var deck_buttons := _view(app, "DeckList").get_children()
 	check(deck_buttons.size() == 1, "Main: 덱 목록에는 저장된 덱만 표시")
 	check(
+		DeckStorage.load_settings().deck_order.has(TEST_DECK),
+		"Main: 화면에 그린 덱 차례를 설정에 남긴다"
+	)
+	check(
 		_view(app, "DeckList").alignment == FlowContainer.ALIGNMENT_BEGIN,
 		"Main: 덱 목록을 왼쪽부터 정렬"
 	)

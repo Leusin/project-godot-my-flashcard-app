@@ -612,8 +612,18 @@ func _start_cards(
 
 
 func _refresh_deck_list() -> void:
+	var settings := DeckStorage.load_settings()
+	var ordered := DeckLibraryOrder.apply(
+		settings.deck_order,
+		DeckStorage.list_deck_files()
+	)
+	# 새로 생긴 덱이 앞에 놓인 결과를 그대로 굳혀 다음에도 같은 자리에 있게 한다.
+	if ordered != settings.deck_order:
+		settings.deck_order = ordered
+		_save_settings_or_warn(settings)
+
 	var decks: Array[DeckInfo] = []
-	for deck_file in DeckStorage.list_deck_files():
+	for deck_file in ordered:
 		decks.append(DeckInfo.new(
 			deck_file,
 			DeckNaming.display_name(deck_file),

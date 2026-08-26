@@ -5,6 +5,8 @@ var last_deck_file := ""
 var deck_dir := ""
 var shuffle_study := false
 var haptics_enabled := true
+# 덱 목록에 보여 줄 차례. 앞이 위다.
+var deck_order: Array[String] = []
 
 func to_json() -> String:
 	return JSON.stringify(
@@ -13,6 +15,7 @@ func to_json() -> String:
 			"DeckDir": deck_dir,
 			"ShuffleStudy": shuffle_study,
 			"HapticsEnabled": haptics_enabled,
+			"DeckOrder": deck_order,
 		},
 		"\t"
 	)
@@ -46,5 +49,11 @@ static func from_json(json: String) -> AppSettings:
 
 	if data.get("HapticsEnabled", true) is bool:
 		settings.haptics_enabled = data.get("HapticsEnabled", true)
+
+	var stored_order: Variant = data.get("DeckOrder")
+	if stored_order is Array:
+		for entry: Variant in stored_order as Array:
+			if entry is String and not (entry as String).is_empty():
+				settings.deck_order.append(entry as String)
 
 	return settings

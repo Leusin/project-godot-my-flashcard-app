@@ -20,6 +20,7 @@ func run_tests() -> void:
 	_test_progress_json()
 	_test_progress_fixtures()
 	_test_card_ordering()
+	_test_deck_library_order()
 
 
 func _test_queue_progression() -> void:
@@ -467,4 +468,54 @@ func _test_card_ordering() -> void:
 		CardOrdering.moved(cards, 5, 0).size() == 3
 		and CardOrdering.moved(cards, 5, 0)[0].question == "A",
 		"카드 순서: 없는 카드를 옮기면 아무 일도 없다"
+	)
+
+
+func _test_deck_library_order() -> void:
+	var stored: Array[String] = ["b.md", "a.md"]
+	var files: Array[String] = ["a.md", "b.md"]
+	check(
+		DeckLibraryOrder.apply(stored, files) == ["b.md", "a.md"],
+		"덱 차례: 저장된 순서를 그대로 따른다"
+	)
+
+	var with_new: Array[String] = ["a.md", "b.md", "새덱.md"]
+	check(
+		DeckLibraryOrder.apply(stored, with_new) == ["새덱.md", "b.md", "a.md"],
+		"덱 차례: 차례에 없는 새 덱은 맨 앞에 온다"
+	)
+
+	var removed: Array[String] = ["a.md"]
+	check(
+		DeckLibraryOrder.apply(stored, removed) == ["a.md"],
+		"덱 차례: 사라진 덱은 차례에서 빠진다"
+	)
+
+	var duplicated_order: Array[String] = ["a.md", "a.md", "b.md"]
+	check(
+		DeckLibraryOrder.apply(duplicated_order, files) == ["a.md", "b.md"],
+		"덱 차례: 차례에 중복이 있어도 한 번만 놓는다"
+	)
+
+	check(
+		DeckLibraryOrder.apply([], files) == ["a.md", "b.md"],
+		"덱 차례: 저장된 차례가 없으면 받은 목록 그대로"
+	)
+
+	check(
+		DeckLibraryOrder.moved(stored, 0, 1) == ["a.md", "b.md"]
+		and DeckLibraryOrder.moved(stored, 1, 0) == ["a.md", "b.md"]
+		and stored == ["b.md", "a.md"],
+		"덱 차례: 자리를 옮겨도 원본 배열은 그대로 둔다"
+	)
+
+	var settings := AppSettings.new()
+	settings.deck_order = ["b.md", "a.md"]
+	check(
+		AppSettings.from_json(settings.to_json()).deck_order == ["b.md", "a.md"],
+		"설정: 덱 차례 직렬화 왕복"
+	)
+	check(
+		AppSettings.from_json("{}").deck_order.is_empty(),
+		"설정: 덱 차례 기본값은 빈 목록"
 	)

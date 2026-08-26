@@ -45,16 +45,8 @@ static func list_deck_files() -> Array[String]:
 		if DeckNaming.is_deck_file(file_name):
 			decks.append(file_name)
 
-	# 새로 만들거나 방금 고친 덱을 위에 둔다. 시각이 같으면 이름순으로 안정적으로 정렬한다.
-	var changed_at := {}
-	for file_name in decks:
-		changed_at[file_name] = FileAccess.get_modified_time(deck_path(file_name))
-	decks.sort_custom(
-		func(left: String, right: String) -> bool:
-			if changed_at[left] == changed_at[right]:
-				return left.naturalnocasecmp_to(right) < 0
-			return changed_at[left] > changed_at[right]
-	)
+	# 보여 주는 차례는 App이 정한다. 여기서는 늘 같은 순서로만 돌려준다.
+	decks.sort()
 	return decks
 
 
