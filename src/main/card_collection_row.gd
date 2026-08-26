@@ -7,8 +7,8 @@ signal reorder_started(index: int)
 signal reorder_ended(index: int, pointer_y: float)
 
 const FALLBACK_DRAG_THRESHOLD := 12.0
-const PICKED_SCALE := 1.03
-const PICK_TWEEN_SECONDS := 0.12
+const PICKED_SHADOW_SIZE := 12
+const PICKED_SHADOW_OFFSET := Vector2(0, 6)
 
 @export var good_badge_style: StyleBoxFlat
 @export var again_badge_style: StyleBoxFlat
@@ -18,6 +18,7 @@ var card_index := -1
 var _reordering := false
 var _press_pointer := Vector2.ZERO
 var _rest_position := Vector2.ZERO
+var _rest_style: StyleBox
 var _pointer_down := false
 var _dragged := false
 var _scrolling := false
@@ -195,17 +196,22 @@ func _on_scroll_ended() -> void:
 	_scrolling = false
 
 
-# 집은 카드는 살짝 커지고 다른 행 위로 떠서, 지금 무엇을 옮기는지 보이게 한다.
+# 행은 프레임 폭을 꽉 채워 키울 수 없다. 그림자를 키워 들어올린 티를 낸다.
 func _pick_visual() -> void:
 	_rest_position = position
-	pivot_offset = size * 0.5
 	z_index = 1
-	create_tween().set_ease(Tween.EASE_OUT).tween_property(
-		self, "scale", Vector2.ONE * PICKED_SCALE, PICK_TWEEN_SECONDS
-	)
+	_rest_style = get_theme_stylebox("panel")
+	var lifted := _rest_style.duplicate() as StyleBoxFlat
+	if lifted == null:
+		return
+	lifted.shadow_size = PICKED_SHADOW_SIZE
+	lifted.shadow_offset = PICKED_SHADOW_OFFSET
+	add_theme_stylebox_override("panel", lifted)
 
 
 func _release_visual() -> void:
 	z_index = 0
-	scale = Vector2.ONE
 	position = _rest_position
+	# 씬이 이미 override로 스타일을 준다. 지우지 말고 원래 것으로 되돌린다.
+	if _rest_style != null:
+		add_theme_stylebox_override("panel", _rest_style)

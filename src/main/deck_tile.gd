@@ -123,9 +123,12 @@ func _pick_visual() -> void:
 	_rest_position = position
 	pivot_offset = size * 0.5
 	z_index = 1
-	create_tween().set_ease(Tween.EASE_OUT).tween_property(
-		self, "scale", Vector2.ONE * PICKED_SCALE, PICK_TWEEN_SECONDS
-	)
+	var tween := create_tween().set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "scale", Vector2.ONE * PICKED_SCALE, PICK_TWEEN_SECONDS)
+	# 커지고 나면 가장자리 타일은 프레임 밖으로 삐져나온다. 다 커진 뒤 안으로 들인다.
+	await tween.finished
+	if _reordering:
+		position = DragBounds.clamped(position, self, _clip)
 
 
 func _release_visual() -> void:

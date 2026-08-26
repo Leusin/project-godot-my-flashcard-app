@@ -1641,18 +1641,26 @@ func run_tests() -> void:
 	handle_press.button_index = MOUSE_BUTTON_LEFT
 	handle_press.pressed = true
 	row_reorder_handle.gui_input.emit(handle_press)
+	var lifted_shadow := (first_card_row as Control).get_theme_stylebox(
+		"panel"
+	) as StyleBoxFlat
 	check(
 		handle_pick_started[0] == 1
 		and first_card_row.get("_reordering")
-		and (first_card_row as Control).z_index == 1,
-		"Main Card List: 손잡이를 누르면 카드를 집어 올린다"
+		and (first_card_row as Control).z_index == 1
+		and (first_card_row as Control).scale == Vector2.ONE
+		and lifted_shadow != null
+		and lifted_shadow.shadow_size == 12,
+		"Main Card List: 손잡이를 누르면 카드를 그림자로 들어올린다"
 	)
 	var handle_release := InputEventMouseButton.new()
 	handle_release.button_index = MOUSE_BUTTON_LEFT
 	row_reorder_handle.gui_input.emit(handle_release)
 	check(
 		not first_card_row.get("_reordering")
-		and (first_card_row as Control).z_index == 0,
+		and (first_card_row as Control).z_index == 0
+		and ((first_card_row as Control).get_theme_stylebox("panel") as StyleBoxFlat)
+		.shadow_size == 3,
 		"Main Card List: 손잡이에서 손을 떼면 카드를 내려놓는다"
 	)
 	check(
