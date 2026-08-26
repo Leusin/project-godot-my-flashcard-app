@@ -204,11 +204,10 @@ func run_tests() -> void:
 	check(
 		_view(deck_buttons[-1], "BackCardFar") == null
 		and _view(deck_buttons[-1], "BackCardNear") == null
-		and _view(deck_buttons[-1], "FrontCard") != null
-		and _view(deck_buttons[-1], "AddDeckButton").text == "+"
-		and _view(deck_buttons[-1], "AddDeckButton").custom_minimum_size
-		== Vector2(64, 32),
-		"Main Create: 추가 타일을 단일 카드와 우상단 + 버튼으로 표시"
+		and (_view(deck_buttons[-1], "AddDeckButton") as Button).anchor_right == 1.0
+		and (_view(deck_buttons[-1], "AddDeckButton") as Button).anchor_bottom == 1.0
+		and (_view(deck_buttons[-1], "AddDeckPlusLabel") as Label).text == "+",
+		"Main Create: 추가 타일 전체를 하나의 버튼으로 표시"
 	)
 	check(
 		_view(deck_buttons[0], "DeckMenuButton").custom_minimum_size == Vector2(64, 64),
