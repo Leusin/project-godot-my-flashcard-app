@@ -2,9 +2,9 @@
 
 [ext_resource type="Script" uid="uid://c6jw5vgiox3f5" path="res://src/main/main.gd" id="1_main"]
 [ext_resource type="Theme" uid="uid://bu5jyw4ehw6ya" path="res://src/main/main_theme.tres" id="2_theme"]
-[ext_resource type="PackedScene" path="res://src/main/library_view.tscn" id="3_library"]
+[ext_resource type="PackedScene" uid="uid://bsgwt125mqmrw" path="res://src/main/library_view.tscn" id="3_library"]
 [ext_resource type="PackedScene" uid="uid://dxsva43l2lvu6" path="res://src/main/study_view.tscn" id="4_study"]
-[ext_resource type="PackedScene" path="res://src/main/modal_dialog.tscn" id="5_modal"]
+[ext_resource type="PackedScene" uid="uid://ci2qn2pq2a26x" path="res://src/main/modal_dialog.tscn" id="5_modal"]
 [ext_resource type="PackedScene" uid="uid://bdds61ydptmja" path="res://src/main/deck_context_menu.tscn" id="6_context"]
 [ext_resource type="PackedScene" path="res://src/main/study_ready_view.tscn" id="9_ready"]
 [ext_resource type="PackedScene" path="res://src/main/card_list_view.tscn" id="10_card_list"]
@@ -47,36 +47,45 @@ offset_bottom = -32.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Page" type="VBoxContainer" parent="Margin" unique_id=87873192]
+[node name="Page" type="TabContainer" parent="Margin" unique_id=87873192]
 layout_mode = 2
-theme_override_constants/separation = 18
+current_tab = 0
+tabs_visible = false
 
 [node name="LibraryContainer" parent="Margin/Page" unique_id=1342003132 instance=ExtResource("3_library")]
+layout_mode = 2
+metadata/_tab_index = 0
 
-[node name="SettingsView" parent="Margin/Page" instance=ExtResource("18_settings")]
+[node name="SettingsView" parent="Margin/Page" unique_id=869316785 instance=ExtResource("18_settings")]
 visible = false
+metadata/_tab_index = 1
 
 [node name="StudyReadyView" parent="Margin/Page" unique_id=1934807985 instance=ExtResource("9_ready")]
 visible = false
+metadata/_tab_index = 2
 
 [node name="CardListView" parent="Margin/Page" unique_id=628087517 instance=ExtResource("10_card_list")]
 visible = false
+metadata/_tab_index = 3
 
 [node name="CardDetailView" parent="Margin/Page" unique_id=80627094 instance=ExtResource("16_card_detail")]
 visible = false
+metadata/_tab_index = 4
 
 [node name="CardEditorView" parent="Margin/Page" unique_id=1975507747 instance=ExtResource("11_card_editor")]
 visible = false
+metadata/_tab_index = 5
 
 [node name="StudyFlow" parent="Margin/Page" unique_id=884868553 instance=ExtResource("4_study")]
 visible = false
 layout_mode = 2
+metadata/_tab_index = 6
 
 [node name="AddDeckMenu" parent="." unique_id=1212683312 instance=ExtResource("14_add_menu")]
 visible = false
 layout_mode = 1
 
-[node name="LibraryContextMenu" parent="." instance=ExtResource("19_library_menu")]
+[node name="LibraryContextMenu" parent="." unique_id=1507669702 instance=ExtResource("19_library_menu")]
 visible = false
 layout_mode = 1
 
@@ -123,20 +132,25 @@ primary_button_text = "종료"
 
 [node name="CardDeleteConfirmationOverlay" parent="." unique_id=1403179071 instance=ExtResource("5_modal")]
 visible = false
+layout_mode = 0
+anchors_preset = 0
 title_text = "이 카드를 삭제할까요?"
 description_text = "카드와 해당 학습 기록이 함께 삭제됩니다."
 primary_button_text = "삭제"
 
 [node name="DiscardCardChangesOverlay" parent="." unique_id=18728453 instance=ExtResource("5_modal")]
 visible = false
+layout_mode = 0
+anchors_preset = 0
 title_text = "변경사항을 버릴까요?"
 description_text = "저장하지 않은 질문과 답은 복구할 수 없습니다."
 secondary_button_text = "계속 편집"
 primary_button_text = "버리기"
 
-[node name="RestoreBackupConfirmationOverlay" parent="." instance=ExtResource("5_modal")]
+[node name="RestoreBackupConfirmationOverlay" parent="." unique_id=1567319902 instance=ExtResource("5_modal")]
 visible = false
+layout_mode = 0
+anchors_preset = 0
 title_text = "전체 데이터를 복원할까요?"
 description_text = "현재 덱과 학습 기록을 백업 파일의 데이터로 교체합니다."
-secondary_button_text = "취소"
 primary_button_text = "복원"

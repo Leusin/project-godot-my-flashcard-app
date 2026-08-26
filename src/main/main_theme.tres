@@ -4,6 +4,8 @@
 [ext_resource type="Texture2D" uid="uid://boedh2l27wvrk" path="res://assets/icons/radio_checked.svg" id="2_checked"]
 [ext_resource type="Texture2D" uid="uid://dcq55eljcy15l" path="res://assets/icons/radio_unchecked.svg" id="3_unchecked"]
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxPageHost"]
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxWhite"]
 bg_color = Color(1, 1, 1, 1)
 border_width_left = 3
@@ -156,4 +158,5 @@ PopupMenu/icons/radio_checked = ExtResource("2_checked")
 PopupMenu/icons/radio_unchecked = ExtResource("3_unchecked")
 PopupMenu/styles/hover = SubResource("StyleBoxPopupHover")
 PopupMenu/styles/panel = SubResource("StyleBoxPopupPanel")
+TabContainer/styles/panel = SubResource("StyleBoxPageHost")
 TextEdit/font_sizes/font_size = 28

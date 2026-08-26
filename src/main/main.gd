@@ -72,6 +72,7 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @export var auto_start := true
 
 @onready var page_margin: MarginContainer = $Margin
+@onready var page_container: TabContainer = $Margin/Page
 @onready var library_view: LibraryView = $Margin/Page/LibraryContainer
 @onready var settings_view: VBoxContainer = $Margin/Page/SettingsView
 @onready var settings_status_label: Label = $Margin/Page/SettingsView/SettingsStatusLabel
@@ -431,6 +432,14 @@ func start_default_deck() -> void:
 	_show_startup_view()
 
 
+func _show_page(page: Control) -> void:
+	var tab_index := page_container.get_tab_idx_from_control(page)
+	if tab_index < 0:
+		push_error("Page is not a child of the page container: %s" % page.name)
+		return
+	page_container.current_tab = tab_index
+
+
 func _show_startup_view() -> void:
 	DeckStorage.seed_sample_if_empty()
 	var settings := DeckStorage.load_settings()
@@ -510,13 +519,7 @@ func show_library() -> void:
 	restore_backup_confirmation_overlay.hide()
 	_pending_restore_path = ""
 	library_view.hide_status()
-	library_view.visible = true
-	settings_view.visible = false
-	study_ready_view.visible = false
-	card_list_view.visible = false
-	card_detail_view.visible = false
-	card_editor_view.visible = false
-	study_flow.visible = false
+	_show_page(library_view)
 	study_container.visible = false
 	study_result_view.visible = false
 	_refresh_deck_list()
@@ -524,8 +527,7 @@ func show_library() -> void:
 
 func show_settings() -> void:
 	show_library()
-	library_view.hide()
-	settings_view.show()
+	_show_page(settings_view)
 	settings_status_label.hide()
 	app_version_label.text = "버전 %s" % ProjectSettings.get_setting(
 		"application/config/version",
@@ -550,12 +552,7 @@ func show_study_ready(deck_file: String) -> bool:
 	_menu_deck_file = ""
 	deck_context_menu.hide()
 	card_context_menu.hide()
-	library_view.visible = false
-	card_list_view.visible = false
-	card_detail_view.visible = false
-	card_editor_view.visible = false
-	study_flow.visible = false
-	study_ready_view.visible = true
+	_show_page(study_ready_view)
 	study_ready_view.hide_status()
 	_update_study_ready_summary()
 	_update_continue_action()
@@ -602,13 +599,8 @@ func _start_cards(
 	_progress = DeckStorage.load_progress(deck_file)
 	_source_cards = cards.duplicate()
 	_active_card_indices.clear()
-	library_view.visible = false
 	card_context_menu.hide()
-	study_ready_view.visible = false
-	card_list_view.visible = false
-	card_detail_view.visible = false
-	card_editor_view.visible = false
-	study_flow.visible = true
+	_show_page(study_flow)
 	_restart_session()
 
 
@@ -721,12 +713,7 @@ func _open_card_list(deck_file: String) -> bool:
 	_study_edit_return_show_answer = false
 	card_list_deck_label.text = DeckNaming.display_name(deck_file)
 	_refresh_card_rows()
-	library_view.hide()
-	study_ready_view.hide()
-	study_flow.hide()
-	card_detail_view.hide()
-	card_editor_view.hide()
-	card_list_view.show()
+	_show_page(card_list_view)
 	return true
 
 
@@ -846,12 +833,7 @@ func _show_card_detail(
 		if origin == CardDetailOrigin.STUDY_RESULT
 		else "카드 목록으로 돌아가기"
 	)
-	library_view.hide()
-	study_ready_view.hide()
-	card_list_view.hide()
-	card_editor_view.hide()
-	study_flow.hide()
-	card_detail_view.show()
+	_show_page(card_detail_view)
 
 
 func _render_card_detail(card: FlashCard, progress: Progress) -> void:
@@ -1000,12 +982,11 @@ func _on_card_context_delete_pressed() -> void:
 
 func _close_card_detail() -> void:
 	card_context_menu.hide()
-	card_detail_view.hide()
 	if _card_detail_origin == CardDetailOrigin.STUDY_RESULT:
-		study_flow.show()
+		_show_page(study_flow)
 		_show_study_results()
 	else:
-		card_list_view.show()
+		_show_page(card_list_view)
 	_card_detail_index = -1
 	_card_detail_result_index = -1
 
@@ -1037,8 +1018,6 @@ func _on_edit_study_card_pressed() -> void:
 	_card_editor_origin = CardEditorOrigin.STUDY
 	_study_edit_source_index = _source_cards.find(current_card)
 	_study_edit_return_show_answer = answer_scroll.visible
-	study_flow.hide()
-	card_list_view.hide()
 	_open_card_editor(deck_index)
 
 
@@ -1115,9 +1094,7 @@ func _open_card_editor(index: int) -> void:
 	_update_card_editor_learning_fields()
 	card_question_input.text = _editing_original_question
 	card_answer_input.text = _editing_original_answer
-	card_list_view.hide()
-	card_detail_view.hide()
-	card_editor_view.show()
+	_show_page(card_editor_view)
 	card_question_input.call_deferred("grab_focus")
 
 
@@ -1193,27 +1170,23 @@ func _close_card_editor_without_save() -> void:
 	var restore_answer := _study_edit_return_show_answer
 	card_delete_confirmation_overlay.hide()
 	discard_card_changes_overlay.hide()
-	card_editor_view.hide()
 	if return_to_study:
-		card_list_view.hide()
-		study_flow.show()
+		_show_page(study_flow)
 		if _session != null and not _session.is_finished():
 			_show_current()
 			if restore_answer:
 				_set_answer_visible(true)
 	elif return_to_library:
-		card_list_view.hide()
 		show_library()
 	elif return_to_detail:
-		card_list_view.hide()
 		if _card_detail_index >= 0 and _card_detail_index < _editing_cards.size():
 			_render_card_detail(
 				_editing_cards[_card_detail_index],
 				DeckStorage.load_progress(_editing_deck_file)
 			)
-		card_detail_view.show()
+		_show_page(card_detail_view)
 	else:
-		card_list_view.show()
+		_show_page(card_list_view)
 	_editing_card_index = -1
 	_card_editor_origin = CardEditorOrigin.CARD_LIST
 	_study_edit_source_index = -1
@@ -1343,8 +1316,7 @@ func _on_card_delete_confirmed() -> void:
 		if card_editor_view.visible:
 			_show_card_editor_error(CARD_SAVE_FAILED_MESSAGE)
 		else:
-			card_detail_view.hide()
-			card_list_view.show()
+			_show_page(card_list_view)
 			push_warning("Card delete save failed: %s" % _editing_deck_file)
 		return
 
@@ -1361,18 +1333,16 @@ func _on_card_delete_confirmed() -> void:
 	DeckStorage.delete_study_resume(_editing_deck_file)
 	_editing_cards = updated
 	if deleting_from_detail:
-		card_editor_view.hide()
-		card_detail_view.hide()
 		_editing_card_index = -1
 		_card_editor_origin = CardEditorOrigin.CARD_LIST
 		_card_detail_index = -1
 		_card_detail_result_index = -1
 		_refresh_card_rows()
 		if detail_origin == CardDetailOrigin.STUDY_RESULT:
-			study_flow.show()
+			_show_page(study_flow)
 			_show_study_results()
 		else:
-			card_list_view.show()
+			_show_page(card_list_view)
 		return
 	_close_card_editor_without_save()
 	_refresh_card_rows()
@@ -1506,9 +1476,7 @@ func _begin_indexed_study(
 	_order = DeckOrdering.StudyOrder.SEQUENTIAL
 	_progress = DeckStorage.load_progress(_deck_file)
 	_source_cards = cards
-	library_view.visible = false
-	study_ready_view.visible = false
-	study_flow.visible = true
+	_show_page(study_flow)
 	_restart_session()
 
 
@@ -1892,10 +1860,6 @@ func _begin_new_deck(display_name: String) -> bool:
 	_study_edit_source_index = -1
 	_study_edit_return_show_answer = false
 	card_list_deck_label.text = trimmed_name
-	library_view.hide()
-	study_ready_view.hide()
-	study_flow.hide()
-	card_list_view.hide()
 	_open_card_editor(-1)
 	return true
 
