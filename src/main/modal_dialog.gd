@@ -16,11 +16,11 @@ extends ColorRect
 var bottom_inset := 0.0
 
 @onready var dialog_panel: PanelContainer = $KeyboardShift/DialogPanel
-@onready var title_label: Label = $KeyboardShift/DialogPanel/Margin/Content/DialogTitle
-@onready var description_label: Label = $KeyboardShift/DialogPanel/Margin/Content/DialogDescription
-@onready var dialog_input: LineEdit = $KeyboardShift/DialogPanel/Margin/Content/DialogInput
-@onready var counter_label: Label = $KeyboardShift/DialogPanel/Margin/Content/DialogCounter
-@onready var error_label: Label = $KeyboardShift/DialogPanel/Margin/Content/DialogError
+@onready var title_label: Label = $KeyboardShift/DialogPanel/Margin/Content/Body/DialogTitle
+@onready var description_label: Label = $KeyboardShift/DialogPanel/Margin/Content/Body/DialogDescription
+@onready var dialog_input: LineEdit = $KeyboardShift/DialogPanel/Margin/Content/Body/DialogInput
+@onready var counter_label: Label = $KeyboardShift/DialogPanel/Margin/Content/Body/DialogCounter
+@onready var error_label: Label = $KeyboardShift/DialogPanel/Margin/Content/Body/DialogError
 @onready var secondary_button: Button = $KeyboardShift/DialogPanel/Margin/Content/Buttons/SecondaryButton
 @onready var primary_button: Button = $KeyboardShift/DialogPanel/Margin/Content/Buttons/PrimaryButton
 

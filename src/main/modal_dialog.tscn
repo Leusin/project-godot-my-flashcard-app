@@ -90,7 +90,6 @@ script = ExtResource("2_keyboard")
 avoid_target = NodePath("DialogPanel")
 
 [node name="DialogPanel" type="PanelContainer" parent="KeyboardShift" unique_id=1788935778]
-custom_minimum_size = Vector2(600, 360)
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -115,16 +114,22 @@ theme_override_constants/margin_bottom = 28
 [node name="Content" type="VBoxContainer" parent="KeyboardShift/DialogPanel/Margin" unique_id=636679622]
 layout_mode = 2
 theme_override_constants/separation = 24
-alignment = 1
 
-[node name="DialogTitle" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content" unique_id=1679844548]
+[node name="Body" type="VBoxContainer" parent="KeyboardShift/DialogPanel/Margin/Content" unique_id=1610961664]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="DialogTitle" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content/Body" unique_id=1679844548]
+custom_minimum_size = Vector2(1, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
 text = "확인"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="DialogDescription" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content" unique_id=1607736997]
+[node name="DialogDescription" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content/Body" unique_id=1607736997]
+custom_minimum_size = Vector2(1, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.32, 0.32, 0.32, 1)
 theme_override_font_sizes/font_size = 24
@@ -132,8 +137,15 @@ text = "설명"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="DialogInput" type="LineEdit" parent="KeyboardShift/DialogPanel/Margin/Content" unique_id=1995334835]
-visible = false
+[node name="DialogError" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content/Body" unique_id=636837575]
+custom_minimum_size = Vector2(1, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "오류"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="DialogInput" type="LineEdit" parent="KeyboardShift/DialogPanel/Margin/Content/Body" unique_id=1995334835]
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
@@ -145,21 +157,12 @@ theme_override_styles/focus = SubResource("StyleBoxInputFocus")
 placeholder_text = "입력"
 select_all_on_focus = true
 
-[node name="DialogCounter" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content" unique_id=1562501647]
-visible = false
+[node name="DialogCounter" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content/Body" unique_id=1562501647]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.45, 0.45, 0.45, 1)
 theme_override_font_sizes/font_size = 21
 text = "0/40"
 horizontal_alignment = 2
-
-[node name="DialogError" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content" unique_id=636837575]
-visible = false
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "오류"
-horizontal_alignment = 1
-autowrap_mode = 3
 
 [node name="Buttons" type="HBoxContainer" parent="KeyboardShift/DialogPanel/Margin/Content" unique_id=1350125699]
 layout_mode = 2

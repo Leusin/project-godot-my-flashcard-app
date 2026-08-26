@@ -97,7 +97,6 @@ input_visible = true
 input_placeholder = "덱 이름"
 input_max_length = 40
 primary_button_text = "첫 카드 작성"
-panel_height = 470.0
 
 [node name="RenameDeckOverlay" parent="." unique_id=1792945415 instance=ExtResource("5_modal")]
 visible = false
@@ -107,7 +106,6 @@ input_visible = true
 input_placeholder = "덱 이름"
 input_max_length = 40
 primary_button_text = "변경"
-panel_height = 440.0
 
 [node name="DeleteConfirmationOverlay" parent="." unique_id=407182076 instance=ExtResource("5_modal")]
 visible = false
