@@ -49,16 +49,42 @@ static func unique_file_name(file_name: String, existing: Array) -> String:
 	
 	if not taken.has(file_name.to_lower()):
 		return file_name
-	
-	var stem := display_name(file_name)
+
+	var stem := base_display_name(display_name(file_name))
 	var number := 2
-	var candidate := "%s (%d)%s" % [stem, number, EXTENSION]
-	
+	var candidate := numbered_file_name(stem, number)
+
 	while taken.has(candidate.to_lower()):
-		number += 1	
-		candidate = "%s (%d)%s" % [stem, number, EXTENSION]
-		
+		number += 1
+		candidate = numbered_file_name(stem, number)
+
 	return candidate
+
+
+# "이름 (2)"처럼 이미 붙은 번호는 떼고 센다.
+# 그러지 않으면 복제한 덱을 다시 복제할 때 "이름 (2) (2)"가 된다.
+static func base_display_name(display: String) -> String:
+	var trimmed := display.strip_edges()
+	if not trimmed.ends_with(")"):
+		return trimmed
+
+	var open_index := trimmed.rfind(" (")
+	if open_index <= 0:
+		return trimmed
+
+	var inside := trimmed.substr(open_index + 2, trimmed.length() - open_index - 3)
+	if inside.is_empty() or not inside.is_valid_int():
+		return trimmed
+
+	return trimmed.left(open_index).strip_edges()
+
+
+# 번호를 붙여도 이름 길이 상한을 넘지 않도록 밑동을 줄인다.
+static func numbered_file_name(stem: String, number: int) -> String:
+	var suffix := " (%d)" % number
+	var room := MAX_DISPLAY_NAME_LENGTH - suffix.length()
+	var shortened := stem if stem.length() <= room else stem.left(room).strip_edges()
+	return "%s%s%s" % [shortened, suffix, EXTENSION]
 			
 # 덱 파일명에서 진행도 파일명 만들기
 static func progress_file_name(deck_file_name: String) -> String:

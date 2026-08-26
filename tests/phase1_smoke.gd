@@ -37,6 +37,27 @@ func _test_unique_file_name() -> void:
 		DeckNaming.unique_file_name("b.md", existing) == "b.md",
 		"고유 이름: 충돌이 없으면 원본 유지"
 	)
+	var numbered: Array[String] = ["a.md", "a (2).md", "a (3).md"]
+	check(
+		DeckNaming.unique_file_name("a (2).md", numbered) == "a (4).md",
+		"고유 이름: 이미 번호가 붙은 덱을 복제해도 번호를 겹쳐 붙이지 않는다"
+	)
+	check(
+		DeckNaming.base_display_name("영어 단어 (2)") == "영어 단어"
+		and DeckNaming.base_display_name("영어 단어") == "영어 단어"
+		and DeckNaming.base_display_name("괄호 (없는 숫자)") == "괄호 (없는 숫자)"
+		and DeckNaming.base_display_name("(3)") == "(3)",
+		"고유 이름: 끝에 붙은 번호만 밑동에서 떼어 낸다"
+	)
+	var long_stem := "가".repeat(DeckNaming.MAX_DISPLAY_NAME_LENGTH)
+	var long_existing: Array[String] = [long_stem + ".md"]
+	var long_copy := DeckNaming.unique_file_name(long_stem + ".md", long_existing)
+	check(
+		DeckNaming.display_name(long_copy).length()
+		<= DeckNaming.MAX_DISPLAY_NAME_LENGTH
+		and long_copy.ends_with(" (2).md"),
+		"고유 이름: 번호를 붙여도 이름 길이 상한을 지킨다"
+	)
 
 
 func _test_progress_file_name() -> void:
