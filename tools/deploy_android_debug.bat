@@ -5,7 +5,7 @@ setlocal
 set "GODOT=C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe"
 set "ADB=%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe"
 set "APK=build\android\my-simple-flash-card-debug.apk"
-set "PACKAGE=com.leusin.mysimpleflashcard"
+set "PACKAGE=com.leusin.mysimpleflashcard.debug"
 
 pushd "%~dp0.."
 
