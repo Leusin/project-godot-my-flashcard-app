@@ -4,11 +4,9 @@ extends PanelContainer
 signal selected(index: int)
 signal menu_requested(index: int, anchor: Control)
 signal reorder_started(index: int)
-signal reorder_moved(index: int, pointer_y: float)
-signal reorder_ended(index: int)
+signal reorder_ended(index: int, pointer_y: float)
 
 const FALLBACK_DRAG_THRESHOLD := 12.0
-const LONG_PRESS_SECONDS := 0.45
 const PICKED_SCALE := 1.03
 const PICK_TWEEN_SECONDS := 0.12
 
@@ -18,7 +16,8 @@ const PICK_TWEEN_SECONDS := 0.12
 
 var card_index := -1
 var _reordering := false
-var _press_generation := 0
+var _press_pointer := Vector2.ZERO
+var _rest_position := Vector2.ZERO
 var _pointer_down := false
 var _dragged := false
 var _scrolling := false
@@ -57,25 +56,6 @@ func set_index(index: int) -> void:
 	card_index = index
 
 
-func _arm_long_press() -> void:
-	_press_generation += 1
-	var generation := _press_generation
-	get_tree().create_timer(LONG_PRESS_SECONDS).timeout.connect(
-		func() -> void: _on_long_press(generation)
-	)
-
-
-func _on_long_press(generation: int) -> void:
-	# 길게 누르는 동안 스크롤이나 드래그가 시작됐다면 집지 않는다.
-	if generation != _press_generation:
-		return
-	if not _pointer_down or _reordering or _dragged:
-		return
-	_reordering = true
-	_apply_pick_visual(true)
-	reorder_started.emit(card_index)
-
-
 func _on_reorder_handle_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var button_event := event as InputEventMouseButton
@@ -83,17 +63,27 @@ func _on_reorder_handle_input(event: InputEvent) -> void:
 			return
 		if button_event.pressed:
 			_reordering = true
-			_apply_pick_visual(true)
+			_press_pointer = button_event.global_position
+			_pick_visual()
 			reorder_started.emit(card_index)
 		elif _reordering:
 			_reordering = false
-			_apply_pick_visual(false)
-			reorder_ended.emit(card_index)
+			_release_visual()
+			reorder_ended.emit(card_index, button_event.global_position.y)
 		accept_event()
 		return
 
 	if event is InputEventMouseMotion and _reordering:
-		reorder_moved.emit(card_index, (event as InputEventMouseMotion).global_position.y)
+		var motion := event as InputEventMouseMotion
+		# 손을 뗀 사실이 유실되면 카드가 떠 있는 채로 남는다. 버튼 상태로 확인해 마무리한다.
+		if (motion.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
+			_finish_reorder(motion.global_position.y)
+		else:
+			position = DragBounds.clamped(
+				_rest_position + (motion.global_position - _press_pointer),
+				self,
+				_scroll_container
+			)
 		accept_event()
 
 
@@ -140,27 +130,23 @@ func _handle_mouse_button(event: InputEventMouseButton) -> void:
 		_drag_distance = Vector2.ZERO
 		_scroll_start = _scroll_container.scroll_vertical if _scroll_container != null else 0
 		grab_focus()
-		_arm_long_press()
 		return
 	if not _pointer_down:
 		return
 	_pointer_down = false
-	if _reordering:
-		_reordering = false
-		_apply_pick_visual(false)
-		reorder_ended.emit(card_index)
-		return
 	if not _dragged:
 		activate()
 
 
+func _finish_reorder(pointer_y: float) -> void:
+	_pointer_down = false
+	_reordering = false
+	_release_visual()
+	reorder_ended.emit(card_index, pointer_y)
+
+
 func _handle_mouse_motion(event: InputEventMouseMotion) -> void:
 	if not _pointer_down or (event.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
-		return
-
-	# 집어 올린 뒤에는 목록을 스크롤하지 않고 카드 자리만 옮긴다.
-	if _reordering:
-		reorder_moved.emit(card_index, event.global_position.y)
 		return
 
 	_drag_distance += event.relative
@@ -209,11 +195,17 @@ func _on_scroll_ended() -> void:
 	_scrolling = false
 
 
-# 집어 올린 항목은 살짝 커지고 다른 항목 위로 떠서, 지금 무엇을 옮기는지 보이게 한다.
-func _apply_pick_visual(picked: bool) -> void:
+# 집은 카드는 살짝 커지고 다른 행 위로 떠서, 지금 무엇을 옮기는지 보이게 한다.
+func _pick_visual() -> void:
+	_rest_position = position
 	pivot_offset = size * 0.5
-	z_index = 1 if picked else 0
-	var target := Vector2.ONE * PICKED_SCALE if picked else Vector2.ONE
+	z_index = 1
 	create_tween().set_ease(Tween.EASE_OUT).tween_property(
-		self, "scale", target, PICK_TWEEN_SECONDS
+		self, "scale", Vector2.ONE * PICKED_SCALE, PICK_TWEEN_SECONDS
 	)
+
+
+func _release_visual() -> void:
+	z_index = 0
+	scale = Vector2.ONE
+	position = _rest_position

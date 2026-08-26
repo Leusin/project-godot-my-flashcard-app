@@ -221,7 +221,6 @@ var _card_detail_result_index := -1
 var _card_menu_from_study := false
 var _card_menu_from_list := false
 var _reordering_cards := false
-var _card_rows_settled := true
 var _reorder_original_cards: Array[FlashCard] = []
 var _study_edit_source_index := -1
 var _study_edit_return_show_answer := false
@@ -749,44 +748,20 @@ func _refresh_card_rows() -> void:
 		row.selected.connect(_on_card_row_selected)
 		row.menu_requested.connect(_on_card_row_menu_requested)
 		row.reorder_started.connect(_on_card_row_reorder_started)
-		row.reorder_moved.connect(_on_card_row_reorder_moved)
 		row.reorder_ended.connect(_on_card_row_reorder_ended)
 
 
 func _on_card_row_reorder_started(_index: int) -> void:
 	_reordering_cards = true
-	_card_rows_settled = true
 	_reorder_original_cards = _copy_cards(_editing_cards)
 
 
-func _on_card_row_reorder_moved(index: int, pointer_y: float) -> void:
-	_move_card_row(index, _card_row_index_at(pointer_y))
-
-
-func _move_card_row(index: int, target: int) -> void:
-	if not _reordering_cards or not _card_rows_settled:
-		return
-	if target < 0 or target == index or index < 0 or index >= _editing_cards.size():
-		return
-
-	_editing_cards = CardOrdering.moved(_editing_cards, index, target)
-	card_rows.move_child(card_rows.get_child(index), target)
-	for row_index in card_rows.get_child_count():
-		(card_rows.get_child(row_index) as CardCollectionRow).set_index(row_index)
-	# 옮긴 직후에는 행 좌표가 아직 그대로라, 그 좌표로 또 옮기면 자리가 튄다.
-	_card_rows_settled = false
-	_settle_card_rows()
-
-
-func _settle_card_rows() -> void:
-	await get_tree().process_frame
-	_card_rows_settled = true
-
-
-func _on_card_row_reorder_ended(_index: int) -> void:
+# 놓은 자리에 있는 행과 자리를 바꾼다. 끄는 동안에는 아무것도 움직이지 않았다.
+func _on_card_row_reorder_ended(index: int, pointer_y: float) -> void:
 	if not _reordering_cards:
 		return
 	_reordering_cards = false
+	_move_card_row(index, _card_row_index_at(pointer_y, index))
 	if not _card_order_changed(_reorder_original_cards, _editing_cards):
 		return
 
@@ -803,8 +778,20 @@ func _on_card_row_reorder_ended(_index: int) -> void:
 	DeckStorage.delete_study_resume(_editing_deck_file)
 
 
-func _card_row_index_at(pointer_y: float) -> int:
+func _move_card_row(index: int, target: int) -> void:
+	if target < 0 or target == index or index < 0 or index >= _editing_cards.size():
+		return
+
+	_editing_cards = CardOrdering.moved(_editing_cards, index, target)
+	card_rows.move_child(card_rows.get_child(index), target)
 	for row_index in card_rows.get_child_count():
+		(card_rows.get_child(row_index) as CardCollectionRow).set_index(row_index)
+
+
+func _card_row_index_at(pointer_y: float, moving_index: int) -> int:
+	for row_index in card_rows.get_child_count():
+		if row_index == moving_index:
+			continue
 		var rect := (card_rows.get_child(row_index) as Control).get_global_rect()
 		if pointer_y >= rect.position.y and pointer_y <= rect.end.y:
 			return row_index

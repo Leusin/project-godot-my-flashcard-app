@@ -15,7 +15,6 @@ signal export_canceled
 const DECK_TILE_SCENE := preload("res://src/main/deck_tile.tscn")
 
 var _dragging_tile := false
-var _layout_settled := true
 
 @onready var deck_list: HFlowContainer = $DeckListScroll/DeckList
 @onready var empty_decks_label: Label = $EmptyDecksLabel
@@ -49,7 +48,6 @@ func render(decks: Array[DeckInfo]) -> void:
 		deck_tile.setup(deck.file_name, deck.display_name, deck.card_count)
 		deck_tile.selected.connect(_on_deck_tile_selected)
 		deck_tile.reorder_started.connect(_on_tile_reorder_started)
-		deck_tile.reorder_moved.connect(_on_tile_reorder_moved)
 		deck_tile.reorder_ended.connect(_on_tile_reorder_ended)
 
 
@@ -85,37 +83,24 @@ func _on_deck_tile_selected(deck_file: String) -> void:
 
 func _on_tile_reorder_started(_deck_file: String) -> void:
 	_dragging_tile = true
-	_layout_settled = true
 
 
-func _on_tile_reorder_moved(deck_file: String, pointer: Vector2) -> void:
-	if not _dragging_tile:
-		return
-
-	# 옮긴 직후에는 격자 배치가 아직 그대로라, 그 좌표로 또 옮기면 자리가 튄다.
-	if not _layout_settled:
-		return
-
-	var moving := _tile_of(deck_file)
-	var target := _tile_index_at(pointer)
-	if moving == null or target < 0 or target == moving.get_index():
-		return
-
-	deck_list.move_child(moving, target)
-	_layout_settled = false
-	_settle_layout()
-
-
-func _on_tile_reorder_ended(_deck_file: String) -> void:
+# 놓은 자리에 있는 타일과 자리를 바꾼다. 끄는 동안에는 아무것도 움직이지 않았다.
+func _on_tile_reorder_ended(deck_file: String, pointer: Vector2) -> void:
 	if not _dragging_tile:
 		return
 	_dragging_tile = false
+
+	var moving := _tile_of(deck_file)
+	if moving == null:
+		return
+
+	var target := _tile_index_at(pointer, moving)
+	if target < 0 or target == moving.get_index():
+		return
+
+	deck_list.move_child(moving, target)
 	deck_order_changed.emit(current_order())
-
-
-func _settle_layout() -> void:
-	await get_tree().process_frame
-	_layout_settled = true
 
 
 func current_order() -> Array[String]:
@@ -133,9 +118,13 @@ func _tile_of(deck_file: String) -> DeckTileView:
 	return null
 
 
-func _tile_index_at(pointer: Vector2) -> int:
+# 집은 타일은 손끝을 따라 나와 있으므로 자리 판정에서 뺀다.
+func _tile_index_at(pointer: Vector2, moving: Control) -> int:
 	for index in deck_list.get_child_count():
-		if (deck_list.get_child(index) as Control).get_global_rect().has_point(pointer):
+		var tile := deck_list.get_child(index) as Control
+		if tile == moving:
+			continue
+		if tile.get_global_rect().has_point(pointer):
 			return index
 	return -1
 

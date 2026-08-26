@@ -1560,7 +1560,7 @@ func run_tests() -> void:
 	var reorder_deck_before := DeckParser.parse(DeckStorage.read_deck(EDIT_DECK))
 	app.call("_on_card_row_reorder_started", 0)
 	app.call("_move_card_row", 0, 1)
-	app.call("_on_card_row_reorder_ended", 1)
+	app.call("_on_card_row_reorder_ended", 1, 0.0)
 	var reorder_deck_after := DeckParser.parse(DeckStorage.read_deck(EDIT_DECK))
 	check(
 		reorder_deck_before.size() == reorder_deck_after.size()
@@ -1578,7 +1578,7 @@ func run_tests() -> void:
 	)
 	app.call("_on_card_row_reorder_started", 0)
 	app.call("_move_card_row", 0, 1)
-	app.call("_on_card_row_reorder_ended", 1)
+	app.call("_on_card_row_reorder_ended", 1, 0.0)
 	row_menu_button.pressed.emit()
 	check(
 		_view(app, "CardContextMenu").visible
@@ -1627,25 +1627,33 @@ func run_tests() -> void:
 	first_card_row._gui_input(row_press)
 	first_card_row._gui_input(row_release)
 	check(row_selection_count[0] == 1, "Main Card List: 짧은 tap은 카드 열기로 유지")
-	var long_press_started := [0]
-	first_card_row.reorder_started.connect(
-		func(_index: int) -> void: long_press_started[0] += 1
-	)
 	first_card_row._gui_input(row_press)
-	first_card_row.call("_on_long_press", first_card_row.get("_press_generation"))
-	check(
-		long_press_started[0] == 1 and first_card_row.get("_reordering"),
-		"Main Card List: 행을 길게 누르면 카드를 집어 올린다"
-	)
-	check(
-		(first_card_row as Control).z_index == 1,
-		"Main Card List: 집어 올린 카드를 다른 행 위로 띄운다"
-	)
 	first_card_row._gui_input(row_release)
 	check(
-		row_selection_count[0] == 1 and not first_card_row.get("_reordering")
+		row_selection_count[0] == 2 and not first_card_row.get("_reordering"),
+		"Main Card List: 행 본체는 눌러도 집히지 않고 카드를 연다"
+	)
+	var handle_pick_started := [0]
+	first_card_row.reorder_started.connect(
+		func(_index: int) -> void: handle_pick_started[0] += 1
+	)
+	var handle_press := InputEventMouseButton.new()
+	handle_press.button_index = MOUSE_BUTTON_LEFT
+	handle_press.pressed = true
+	row_reorder_handle.gui_input.emit(handle_press)
+	check(
+		handle_pick_started[0] == 1
+		and first_card_row.get("_reordering")
+		and (first_card_row as Control).z_index == 1,
+		"Main Card List: 손잡이를 누르면 카드를 집어 올린다"
+	)
+	var handle_release := InputEventMouseButton.new()
+	handle_release.button_index = MOUSE_BUTTON_LEFT
+	row_reorder_handle.gui_input.emit(handle_release)
+	check(
+		not first_card_row.get("_reordering")
 		and (first_card_row as Control).z_index == 0,
-		"Main Card List: 집어 올린 뒤 손을 떼도 카드를 열지 않는다"
+		"Main Card List: 손잡이에서 손을 떼면 카드를 내려놓는다"
 	)
 	check(
 		_view(app, "CardDetailView").visible
