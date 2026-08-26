@@ -87,5 +87,5 @@ static func numbered_file_name(stem: String, number: int) -> String:
 	return "%s%s%s" % [shortened, suffix, EXTENSION]
 			
 # 덱 파일명에서 진행도 파일명 만들기
-static func progress_file_name(deck_file_name: String) -> String:
-	return "%s.json" % display_name(deck_file_name)
+static func progress_file_name(file_name: String) -> String:
+	return "%s.json" % display_name(file_name)

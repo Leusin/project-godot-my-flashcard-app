@@ -71,7 +71,7 @@ func popup_export(file_name: String) -> void:
 
 func _configure_markdown_dialog(dialog: FileDialog, file_mode: int) -> void:
 	dialog.access = FileDialog.ACCESS_FILESYSTEM
-	dialog.file_mode = file_mode
+	dialog.file_mode = file_mode as FileDialog.FileMode
 	dialog.use_native_dialog = true
 	dialog.clear_filters()
 	dialog.add_filter("*.md", "Markdown", "text/markdown,text/plain")

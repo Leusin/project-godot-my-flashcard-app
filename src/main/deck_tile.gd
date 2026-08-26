@@ -34,8 +34,8 @@ func _ready() -> void:
 	_clip = DragBounds.clip_ancestor(self)
 
 
-func setup(deck_file: String, display_name: String, card_count: int) -> void:
-	_deck_file = deck_file
+func setup(file_name: String, display_name: String, card_count: int) -> void:
+	_deck_file = file_name
 	name_label.text = display_name
 	count_label.text = "%d장" % card_count if card_count > 0 else "카드 없음"
 

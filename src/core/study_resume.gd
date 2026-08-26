@@ -45,7 +45,7 @@ static func from_json(json: String) -> StudyResume:
 
 	var order_value: Variant = data.get("order", DeckOrdering.StudyOrder.SEQUENTIAL)
 	if order_value is int or order_value is float:
-		resume.order = int(order_value)
+		resume.order = int(order_value) as DeckOrdering.StudyOrder
 
 	var scope_value: Variant = data.get("scope", 0)
 	if scope_value is int or scope_value is float:

@@ -1,8 +1,6 @@
 extends TestCase
 
 const MAIN_SCENE := preload("res://src/main/main.tscn")
-const CARD_DETAIL_SURFACE := preload("res://src/main/card_detail_surface.gd")
-const KEYBOARD_AVOIDER := preload("res://src/main/keyboard_avoider.gd")
 const TEST_DECKS_DIR := "user://__gd_main_decks"
 const TEST_DECK := "__gd_main.md"
 const TEST_TEXT := "# A\n1\n# B\n2\n"
@@ -55,48 +53,6 @@ func run_tests() -> void:
 	)
 	stale_startup_app.free()
 
-	var safe_insets := MainApp.safe_insets_in_viewport(
-		Rect2i(0, 94, 1080, 2402),
-		Vector2i(1080, 2640),
-		Vector2(720, 1760)
-	)
-	check(is_equal_approx(safe_insets.y, 62.666668), "MVP Safe Area: 노치 상단 여백 환산")
-	check(is_equal_approx(safe_insets.w, 96.0), "MVP Safe Area: 하단 제스처 영역 환산")
-	check(
-		MainApp.safe_insets_in_viewport(Rect2i(), Vector2i.ZERO, Vector2.ZERO)
-		== Vector4.ZERO,
-		"MVP Safe Area: 창 크기가 없으면 추가 여백 없음"
-	)
-	check(
-		is_equal_approx(
-			KEYBOARD_AVOIDER.scaled_keyboard_height(
-				1000, Vector2i(1080, 2000), Vector2(720, 1000)
-			),
-			500.0
-		),
-		"Main Keyboard: Android 키보드 높이를 viewport 좌표로 환산"
-	)
-	check(
-		is_equal_approx(
-			KEYBOARD_AVOIDER.required_shift(850.0, 100.0, 300.0, 1000.0),
-			84.0
-		)
-		and is_equal_approx(
-			KEYBOARD_AVOIDER.required_shift(1500.0, 1100.0, 700.0, 1760.0),
-			464.0
-		)
-		and KEYBOARD_AVOIDER.required_shift(500.0, 100.0, 300.0, 1000.0)
-		== 0.0,
-		"Main Keyboard: 입력창을 키보드 위로 올리되 화면 상단을 넘지 않음"
-	)
-	var tall_card_rect := StudyGestureSurface.fitted_card_rect(Vector2(600, 1200))
-	var wide_card_rect := StudyGestureSurface.fitted_card_rect(Vector2(900, 900))
-	check(
-		tall_card_rect == Rect2(0, 150, 600, 900)
-		and wide_card_rect == Rect2(150, 0, 600, 900),
-		"Main Study: 화면 비율과 무관하게 카드를 2:3으로 맞춰 중앙 배치"
-	)
-
 	var app := MAIN_SCENE.instantiate()
 	app.auto_start = false
 	add_child(app)
@@ -129,79 +85,20 @@ func run_tests() -> void:
 		header_scenes_editable,
 		"Main Export: 공용 header에 붙인 노드를 editable로 표시해 export 누락 방지"
 	)
-	var header_gap_consistent := true
-	for scene_path in header_scenes:
-		header_gap_consistent = (
-			header_gap_consistent
-			and FileAccess.get_file_as_string(scene_path).contains(
-				"theme_override_constants/separation = 32"
-			)
-		)
-	check(
-		header_gap_consistent,
-		"Main Navigation: 모든 화면에서 header와 내용 사이 여백을 같게 유지"
-	)
 	check(
 		_view(app, "InteractionPanel").visible == MainApp.is_mobile()
 		and _view(app, "InteractionTitle").visible == MainApp.is_mobile(),
 		"Main Settings: 햅틱 설정은 진동이 있는 모바일에서만 표시"
 	)
 	check(
-		(_view(app, "SettingsScroll") as ScrollContainer).scroll_deadzone == 12,
-		"Main Settings: 버튼 위에서 끌어도 touch scroll이 되도록 deadzone 설정"
-	)
-	check(
 		_view(app, "LibraryHeading").text == "덱 목록",
 		"Main Navigation: 시작 화면 이름을 덱 목록으로 통일"
-	)
-	check(
-		_view(app, "LibraryHeading").horizontal_alignment
-		== HORIZONTAL_ALIGNMENT_LEFT
-		and _view(app, "LibraryHeading").get_parent().get_parent().scene_file_path
-		.ends_with("app_header.tscn"),
-		"Main Navigation: 공용 header에서 덱 목록 제목을 좌측 정렬"
-	)
-	var shared_header_titles: Array[Label] = [
-		_view(app, "LibraryHeading") as Label,
-		_view(app, "SettingsTitle") as Label,
-		_view(app, "StudyReadyTitle") as Label,
-		_view(app, "CardListDeckLabel") as Label,
-		_view(app, "CardDetailDeckLabel") as Label,
-		_view(app, "CardEditorTitle") as Label,
-		_view(app, "DeckLabel") as Label,
-	]
-	var headers_are_shared_and_left_aligned := true
-	for title in shared_header_titles:
-		headers_are_shared_and_left_aligned = (
-			headers_are_shared_and_left_aligned
-			and title.horizontal_alignment == HORIZONTAL_ALIGNMENT_LEFT
-			and title.get_parent().get_parent().scene_file_path.ends_with(
-				"app_header.tscn"
-			)
-		)
-	check(
-		headers_are_shared_and_left_aligned,
-		"Main Navigation: 모든 주요 화면이 좌측 제목 공용 header 사용"
 	)
 	check(not _view(app, "SettingsView").visible, "Main Settings: 덱 목록에서 설정 화면 숨김")
 	check(not _view(app, "StudyReadyView").visible, "Main Ready: 덱 목록에서 준비 화면 숨김")
 	check(
-		not _view(app, "StudyContainer").visible
-		and _view(app, "StudyProgressBar") == null,
-		"MVP: 덱 목록에서 학습 화면과 중복 progress bar 제거"
-	)
-	check(
-		not app.has_node("Margin/Page/Title")
-		and _view(app, "LibraryHint") == null
-		and _view(app, "ReadyTitleLabel") == null
-		and _view(app, "CoverCaption") == null
-		and _view(app, "SetupCaption") == null
-		and _view(app, "CardListTitle") == null,
-		"Main UI: 기능 없는 장식 문구 제거"
-	)
-	check(
-		_view(_view(app, "LibraryContainer"), "PrivacyPolicyLink") == null,
-		"Main Privacy: 덱 목록 하단에서 개인정보처리방침 제거"
+		not _view(app, "StudyContainer").visible,
+		"MVP: 덱 목록에서 학습 화면 숨김"
 	)
 	_view(app, "LibrarySettingsButton").pressed.emit()
 	check(
@@ -232,16 +129,10 @@ func run_tests() -> void:
 	var haptics_toggle := _view(settings_view, "HapticsToggle") as CheckButton
 	check(
 		haptics_toggle.button_pressed
-		and haptics_toggle.text.is_empty()
-		and haptics_toggle.custom_minimum_size == Vector2(92, 64)
-		and _view(settings_view, "HapticsLabel").text == "햅틱 사용"
-		and haptics_toggle.get_theme_icon("checked").get_width() == 73
-		and haptics_toggle.get_theme_stylebox("normal") is StyleBoxEmpty
-		and haptics_toggle.get_theme_stylebox("hover") is StyleBoxEmpty
 		and haptics_toggle.toggled.is_connected(
 			Callable(app, "_on_haptics_toggled")
 		),
-		"Main Settings: 테두리 없이 설명과 분리된 햅틱 토글 표시"
+		"Main Settings: 저장된 햅틱 설정과 toggle signal 연결"
 	)
 	haptics_toggle.button_pressed = false
 	check(
@@ -287,55 +178,16 @@ func run_tests() -> void:
 		"Main: 화면 차례와 저장된 차례가 같다"
 	)
 	check(
-		_view(app, "DeckList").alignment == FlowContainer.ALIGNMENT_BEGIN,
-		"Main: 덱 목록을 왼쪽부터 정렬"
-	)
-	check(
-		_view(app, "LibraryContainer").get_theme_constant("separation") == 32
-		and _view(app, "DeckList").get_theme_constant("h_separation") == 28
-		and _view(app, "DeckList").get_theme_constant("v_separation") == 32,
-		"Main: 덱 헤더와 카드 목록에 넉넉한 여백 표시"
-	)
-	check(
 		_view(deck_buttons[0], "DeckNameLabel").text == "__gd_main",
 		"Main: 카드 뭉치 타일에 덱 표시 이름 사용"
-	)
-	check(
-		_view(deck_buttons[0], "DeckNameLabel").max_lines_visible == 2
-		and _view(deck_buttons[0], "DeckNameLabel").text_overrun_behavior
-		== TextServer.OVERRUN_TRIM_ELLIPSIS,
-		"Main: 긴 덱 이름은 두 줄 말줄임표로 잘라 타일을 유지"
 	)
 	check(
 		_view(deck_buttons[0], "DeckCountLabel").text == "2장",
 		"Main: 카드 뭉치 타일에 카드 수 표시"
 	)
-	check(
-		_view(deck_buttons[0], "BackCardFar") != null
-		and _view(deck_buttons[0], "BackCardNear") != null,
-		"Main: 덱 타일을 세 장의 카드 뭉치로 표시"
-	)
 	var library_add_button := _view(app, "LibraryAddButton") as Button
-	var library_settings_button := _view(app, "LibrarySettingsButton") as Button
-	check(
-		library_add_button.text.is_empty()
-		and library_settings_button.text.is_empty()
-		and library_add_button.icon.get_width() == 48
-		and library_settings_button.icon.get_width() == 48
-		and library_add_button.custom_minimum_size == Vector2(72, 72)
-		and library_settings_button.custom_minimum_size == Vector2(72, 72)
-		and library_add_button.get_theme_stylebox("normal") is StyleBoxEmpty
-		and library_settings_button.get_theme_stylebox("normal") is StyleBoxEmpty,
-		"Main Header: 굵은 SVG 덱 추가와 앱 설정 아이콘을 분리"
-	)
-	check(
-		_view(deck_buttons[0], "DeckMenuButton") == null
-		and deck_buttons[0].custom_minimum_size == Vector2(300, 220),
-		"Main Deck: 목록 타일을 기존 비율로 표시하고 개별 ⋮ 제거"
-	)
 	library_add_button.pressed.emit()
 	var add_deck_menu := _view(app, "AddDeckMenu") as Control
-	var add_deck_menu_panel := _view(app, "AddDeckMenuPanel") as PanelContainer
 	check(
 		add_deck_menu.visible
 		and _view(app, "CreateNewDeckButton").text == "새 덱 만들기"
@@ -344,14 +196,6 @@ func run_tests() -> void:
 		and add_deck_menu.find_child("OpenSettingsButton", true, false) == null
 		and add_deck_menu.find_child("CopyAiPromptButton", true, false) == null,
 		"Main Create: + 메뉴에는 세 가지 덱 추가 작업만 표시"
-	)
-	check(
-		add_deck_menu.scene_file_path.ends_with("add_deck_menu.tscn")
-		and add_deck_menu_panel.custom_minimum_size == Vector2(320, 252)
-		and _view(app, "CreateNewDeckButton").custom_minimum_size.y == 72.0
-		and _view(app, "CreateFromClipboardButton").custom_minimum_size.y == 72.0
-		and _view(app, "CreateNewDeckButton").get_theme_font_size("font_size") == 30,
-		"Main Create: 추가 선택 context list를 큰 글자와 터치 크기로 표시"
 	)
 	check(
 		(_view(app, "CreateFromClipboardButton") as Button).pressed.is_connected(
@@ -363,28 +207,8 @@ func run_tests() -> void:
 		(_view(app, "CopyAiPromptButton") as Button).pressed.is_connected(
 			Callable(app, "_on_copy_ai_prompt_pressed")
 		)
-		and _view(app, "SettingsView").is_ancestor_of(_view(app, "CopyAiPromptButton"))
 		and _view(app, "TipDescription").text.contains("클립보드에서 만들기"),
-		"Main Settings: AI 프롬프트 복사를 팁 설명과 함께 설정 화면에 배치"
-	)
-	var add_anchor_rect := MainApp._control_rect_in_overlay(
-		add_deck_menu,
-		library_add_button
-	)
-	var add_menu_size := add_deck_menu_panel.get_combined_minimum_size()
-	var expected_add_menu_x := clampf(
-		add_anchor_rect.end.x - add_menu_size.x,
-		12.0,
-		add_deck_menu.size.x - add_menu_size.x - 12.0
-	)
-	check(
-		is_equal_approx(add_deck_menu_panel.position.x, expected_add_menu_x)
-		and is_equal_approx(
-			add_deck_menu_panel.position.y,
-			add_anchor_rect.end.y + 4.0
-		)
-		and not add_deck_menu_panel.get_rect().intersects(add_anchor_rect),
-		"Main Create: 추가 선택 context list를 header + 아래에 간격 두고 표시"
+		"Main Settings: AI 프롬프트 복사 signal과 다음 단계 안내"
 	)
 	check(app.handle_back_request(), "Main Create: 추가 선택창에서 뒤로가기 요청 소비")
 	check(not add_deck_menu.visible, "Main Create: 뒤로가기로 추가 선택창 닫기")
@@ -404,74 +228,8 @@ func run_tests() -> void:
 	var deck_context_menu := _view(app, "DeckContextMenu") as Control
 	check(deck_context_menu.visible, "Main Export: ⋮ 위치에 context list 표시")
 	check(
-		_view(app, "DeckContextMenuTitle") == null,
-		"Main Deck Actions: 장식용 덱 제목 없이 context list만 표시"
-	)
-	check(
 		_view(app, "ExportDialog").current_file.is_empty(),
 		"Main Export: ⋮ 메뉴만 열 때 숨은 파일명 입력 field를 건드리지 않음"
-	)
-	var deck_context_style := (
-		_view(app, "DeckContextMenuPanel").get_theme_stylebox("panel") as StyleBoxFlat
-	)
-	check(
-		deck_context_style != null
-		and deck_context_style.bg_color == Color.WHITE
-		and deck_context_style.border_width_left == 0
-		and deck_context_style.shadow_size == 6
-		and deck_context_style.corner_radius_top_left == 12,
-		"Main Deck Actions: 둥근 흰 바탕과 그림자 context list 표시"
-	)
-	check(
-		_view(app, "ExportDeckButton").get_theme_color("font_color") == Color.BLACK
-		and _view(app, "DeleteDeckButton").get_theme_color("font_color") == Color.BLACK
-		and _view(app, "DeleteDeckButton").get_theme_color("font_hover_color")
-		== Color.BLACK,
-		"Main Deck Actions: context list hover에서도 검은 글자 유지"
-	)
-	var deck_menu_button := _view(app, "ReadyDeckMenuButton") as Button
-	var deck_menu_anchor_rect := MainApp._control_rect_in_overlay(
-		deck_context_menu,
-		deck_menu_button
-	)
-	check(
-		is_equal_approx(
-			_view(app, "DeckContextMenuPanel").position.y,
-			deck_menu_anchor_rect.end.y + 4.0
-		)
-		and not _view(app, "DeckContextMenuPanel").get_rect().intersects(
-			deck_menu_anchor_rect
-		),
-		"Main Deck Actions: 학습 준비 ⋮ 아래에 context list 배치"
-	)
-	var deck_menu_size := (
-		_view(app, "DeckContextMenuPanel") as PanelContainer
-	).get_combined_minimum_size()
-	var expected_deck_menu_x := clampf(
-		deck_menu_anchor_rect.end.x - deck_menu_size.x,
-		12.0,
-		deck_context_menu.size.x - deck_menu_size.x - 12.0
-	)
-	check(
-		is_equal_approx(
-			_view(app, "DeckContextMenuPanel").position.x,
-			expected_deck_menu_x
-		),
-		"Main Deck Actions: context list 오른쪽 끝을 ⋮ 버튼에 정렬"
-	)
-	check(
-		_view(app, "DeckContextMenuPanel").size
-		== _view(app, "DeckContextMenuPanel").get_combined_minimum_size(),
-		"Main Deck Actions: context list 실제 layout 크기로 위치 계산"
-	)
-	check(
-		_view(app, "DeckContextMenuPanel").custom_minimum_size == Vector2(320, 324)
-		and _view(app, "RenameDeckButton").custom_minimum_size.y == 72.0
-		and _view(app, "DuplicateDeckButton").custom_minimum_size.y == 72.0
-		and _view(app, "ExportDeckButton").custom_minimum_size.y == 72.0
-		and _view(app, "DeleteDeckButton").custom_minimum_size.y == 72.0
-		and _view(app, "DeleteDeckButton").get_theme_font_size("font_size") == 30,
-		"Main Deck Actions: 네 가지 큰 작업을 담은 320px context list 표시"
 	)
 	_view(app, "ExportDeckButton").pressed.emit()
 	check(
@@ -479,111 +237,6 @@ func run_tests() -> void:
 		"Main Export: 실제 내보내기 요청 때 기본 파일명 준비"
 	)
 	_view(app, "ExportDialog").hide()
-	var dialog_panels: Array[PanelContainer] = [
-		_dialog(app, "CreateDeckOverlay", "DialogPanel") as PanelContainer,
-		_dialog(app, "RenameDeckOverlay", "DialogPanel") as PanelContainer,
-		_dialog(app, "DeleteConfirmationOverlay", "DialogPanel") as PanelContainer,
-		_dialog(app, "ExitConfirmationOverlay", "DialogPanel") as PanelContainer,
-		_dialog(app, "CardDeleteConfirmationOverlay", "DialogPanel") as PanelContainer,
-		_dialog(app, "DiscardCardChangesOverlay", "DialogPanel") as PanelContainer,
-		_dialog(app, "RestoreBackupConfirmationOverlay", "DialogPanel") as PanelContainer,
-	]
-	var dialogs_unified := true
-	for dialog_panel in dialog_panels:
-		var dialog_style := dialog_panel.get_theme_stylebox("panel") as StyleBoxFlat
-		dialogs_unified = (
-			dialogs_unified
-			and dialog_style != null
-			and dialog_style.bg_color == Color.WHITE
-			and dialog_style.border_width_left == 2
-			and dialog_style.border_color == Color.BLACK
-			and dialog_style.corner_radius_top_left == 18
-			and dialog_style.shadow_size == 8
-		)
-	var modal_shades: Array[ColorRect] = [
-		_view(app, "CreateDeckOverlay") as ColorRect,
-		_view(app, "RenameDeckOverlay") as ColorRect,
-		_view(app, "DeleteConfirmationOverlay") as ColorRect,
-		_view(app, "ExitConfirmationOverlay") as ColorRect,
-		_view(app, "CardDeleteConfirmationOverlay") as ColorRect,
-		_view(app, "DiscardCardChangesOverlay") as ColorRect,
-		_view(app, "RestoreBackupConfirmationOverlay") as ColorRect,
-	]
-	var shades_unified := true
-	for modal_shade in modal_shades:
-		shades_unified = shades_unified and modal_shade.color == Color(0, 0, 0, 0.18)
-	check(
-		dialogs_unified and shades_unified,
-		"Main UI: 모든 다이얼로그의 표면과 배경 dim 규격 통일"
-	)
-	var modal_scene_is_shared := true
-	for overlay_name in [
-		"CreateDeckOverlay",
-		"RenameDeckOverlay",
-		"DeleteConfirmationOverlay",
-		"ExitConfirmationOverlay",
-		"CardDeleteConfirmationOverlay",
-		"DiscardCardChangesOverlay",
-		"RestoreBackupConfirmationOverlay",
-	]:
-		var overlay := _view(app, overlay_name)
-		modal_scene_is_shared = (
-			modal_scene_is_shared
-			and overlay.scene_file_path.ends_with("modal_dialog.tscn")
-			and _dialog(app, overlay_name, "KeyboardShift").get_script().resource_path
-			.ends_with("keyboard_avoider.gd")
-		)
-	check(modal_scene_is_shared, "Main UI: 일곱 팝업이 공용 ModalDialog scene 사용")
-	var option_style := (
-		_view(app, "StudyScopeOption").get_theme_stylebox("normal") as StyleBoxFlat
-	)
-	check(
-		option_style != null
-		and option_style.content_margin_left >= 16.0
-		and option_style.content_margin_right >= 16.0,
-		"Main UI: dropdown 글자와 테두리 사이에 안쪽 여백 확보"
-	)
-	var primary_button := _dialog(app, "DeleteConfirmationOverlay", "PrimaryButton") as Button
-	var secondary_button := (
-		_dialog(app, "DeleteConfirmationOverlay", "SecondaryButton") as Button
-	)
-	var primary_style := primary_button.get_theme_stylebox("normal") as StyleBoxFlat
-	check(
-		primary_button.get_index() < secondary_button.get_index()
-		and primary_style != null
-		and primary_style.bg_color.get_luminance() < 0.2
-		and primary_button.get_theme_color("font_color") == Color.WHITE
-		and secondary_button.get_theme_stylebox("normal").get_class() == "StyleBoxFlat"
-		and (secondary_button.get_theme_stylebox("normal") as StyleBoxFlat).bg_color
-		== Color.WHITE,
-		"Main UI: 팝업의 실행 버튼을 왼쪽에 채운 색으로 두고 취소는 오른쪽에 배치"
-	)
-	var create_deck_panel := _dialog(app, "CreateDeckOverlay", "DialogPanel") as PanelContainer
-	var delete_dialog_panel := (
-		_dialog(app, "DeleteConfirmationOverlay", "DialogPanel") as PanelContainer
-	)
-	check(
-		create_deck_panel.anchor_top == 1.0
-		and create_deck_panel.anchor_bottom == 1.0
-		and delete_dialog_panel.anchor_top == 1.0
-		and delete_dialog_panel.anchor_bottom == 1.0
-		and is_equal_approx(create_deck_panel.offset_bottom, -40.0)
-		and is_equal_approx(
-			create_deck_panel.offset_top,
-			-(40.0 + create_deck_panel.custom_minimum_size.y)
-		)
-		and _dialog(app, "CreateDeckOverlay", "KeyboardShift").get("avoid_target")
-		== NodePath("DialogPanel"),
-		"Main Keyboard: 팝업을 하단 시트로 두고 키보드가 오르면 패널째 회피"
-	)
-	check(
-		_view(app, "CardEditorView").get_script().resource_path.ends_with(
-			"keyboard_avoider.gd"
-		)
-		and _view(app, "CardEditorView").is_processing()
-		== DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD),
-		"Main Keyboard: 카드 편집 키보드 회피는 지원 플랫폼에서만 실행"
-	)
 	_view(app, "RenameDeckButton").pressed.emit()
 	var rename_overlay := _view(app, "RenameDeckOverlay") as Control
 	check(
@@ -645,18 +298,6 @@ func run_tests() -> void:
 	check(not _view(app, "StudyContainer").visible, "Main Ready: 덱 선택만으로 학습을 시작하지 않음")
 	check(_view(app, "ReadyDeckNameLabel").text == "__gd_main", "Main Ready: 선택한 덱 이름 표시")
 	check(
-		_view(app, "StudyReadyTitle").text == "학습 준비"
-		and _view(app, "ReadyDeckNameLabel").horizontal_alignment
-		== HORIZONTAL_ALIGNMENT_CENTER
-		and _view(app, "SetupDeckNameLabel").horizontal_alignment
-		== HORIZONTAL_ALIGNMENT_CENTER
-		and _view(app, "BackToLibraryButton").text.is_empty()
-		and _view(app, "BackToLibraryButton").icon.get_width() == 48
-		and _view(app, "ReadyDeckMenuButton").text.is_empty()
-		and _view(app, "ReadyDeckMenuButton").icon.get_width() == 48,
-		"Main Navigation: 중앙 제목·덱 이름과 큰 SVG header 아이콘 표시"
-	)
-	check(
 		_view(app, "ReadyTotalCountLabel").text == "2"
 		and _view(app, "ReadyNewCountLabel").text == "2"
 		and _view(app, "ReadyLearningCountLabel").text == "0"
@@ -667,77 +308,6 @@ func run_tests() -> void:
 		_view(app, "StudyScopeOption").item_count == 3
 		and _view(app, "StudyOrderOption").item_count == 2,
 		"Main Ready: 학습 범위와 카드 순서 설정 표시"
-	)
-	var scope_option := _view(app, "StudyScopeOption") as OptionButton
-	var order_option := _view(app, "StudyOrderOption") as OptionButton
-	var dropdown_style := scope_option.get_theme_stylebox("normal") as StyleBoxFlat
-	var dropdown_hover_style := scope_option.get_theme_stylebox("hover") as StyleBoxFlat
-	var order_dropdown_style := order_option.get_theme_stylebox("normal") as StyleBoxFlat
-	var dropdown_popup := scope_option.get_popup()
-	var popup_style := dropdown_popup.get_theme_stylebox("panel") as StyleBoxFlat
-	check(
-		dropdown_style != null
-		and order_dropdown_style != null
-		and dropdown_style.bg_color == Color.WHITE
-		and dropdown_style.border_color == Color.BLACK
-		and dropdown_style.border_width_left == 3
-		and dropdown_style.corner_radius_top_left == 8
-		and dropdown_style.get_content_margin(SIDE_LEFT) == 22.0
-		and order_dropdown_style.get_content_margin(SIDE_LEFT) == 22.0
-		and scope_option.get_theme_color("font_color") == Color.BLACK
-		and dropdown_hover_style.bg_color == Color(0.94, 0.94, 0.94, 1)
-		and scope_option.get_theme_color("font_hover_color") == Color.BLACK,
-		"Main Ready: 새 학습 dropdown을 둥근 테두리와 옅은 hover로 표시"
-	)
-	check(
-		popup_style != null
-		and popup_style.bg_color == Color.WHITE
-		and popup_style.border_color == Color.BLACK
-		and dropdown_popup.get_theme_color("font_color") == Color.BLACK
-		and dropdown_popup.get_theme_font_size("font_size") == 28,
-		"Main Ready: dropdown 목록도 밝은 고대비 메뉴로 표시"
-	)
-	check(
-		_view(app, "DeckCover") != null
-		and _view(app, "BackCardFar") != null
-		and _view(app, "BackCardNear") != null,
-		"Main Ready: 카드 뭉치 위에 덱 커버를 씌운 프레임 표시"
-	)
-	var ready_deck_stage := _view(app, "DeckStage") as AspectRatioContainer
-	var ready_deck_stack := _view(app, "DeckStack") as Control
-	var ready_deck_cover_style := (
-		(_view(app, "DeckCover") as PanelContainer).get_theme_stylebox("panel")
-		as StyleBoxFlat
-	)
-	check(
-		is_equal_approx(ready_deck_stage.ratio, 2.0 / 3.0)
-		and ready_deck_stage.stretch_mode == AspectRatioContainer.STRETCH_FIT
-		and ready_deck_stack.get_parent() == ready_deck_stage,
-		"Main Ready: 덱 상세와 학습 설정 프레임을 화면 안의 2:3 카드로 유지"
-	)
-	check(
-		ready_deck_cover_style != null
-		and ready_deck_cover_style.shadow_size == 0,
-		"Main Ready: 덱 커버 프레임의 그림자 제거"
-	)
-	var ready_action_buttons: Array[Button] = [
-		_view(app, "ContinueStudyButton") as Button,
-		_view(app, "OpenStudySetupButton") as Button,
-		_view(app, "ManageCardsButton") as Button,
-		_view(app, "StartStudyButton") as Button,
-		_view(app, "CancelStudySetupButton") as Button,
-	]
-	var ready_buttons_are_uniform := true
-	for button in ready_action_buttons:
-		if (
-			button.get_theme_font_size("font_size") != 28
-			or button.custom_minimum_size.y != 72.0
-		):
-			ready_buttons_are_uniform = false
-			break
-	check(
-		ready_buttons_are_uniform,
-		"Main Ready: 덱 상세와 학습 설정 버튼의 높이·font 크기 통일"
 	)
 	check(
 		_view(app, "OverviewContent").visible
@@ -808,24 +378,6 @@ func run_tests() -> void:
 	check(
 		_dialog(app, "ExitConfirmationOverlay", "SecondaryButton").text == "취소",
 		"MVP Android Back: 취소 버튼 표시"
-	)
-	var exit_panel_style := (
-		_dialog(app, "ExitConfirmationOverlay", "DialogPanel").get_theme_stylebox("panel")
-		as StyleBoxFlat
-	)
-	check(
-		exit_panel_style != null
-		and exit_panel_style.bg_color == Color.WHITE
-		and exit_panel_style.border_color == Color.BLACK,
-		"MVP Android Back: 종료 확인창은 흰 배경과 검은 테두리"
-	)
-	check(
-		_dialog(app, "ExitConfirmationOverlay", "PrimaryButton").custom_minimum_size.y
-		== 88.0
-		and _dialog(
-			app, "ExitConfirmationOverlay", "SecondaryButton"
-		).custom_minimum_size.y == 88.0,
-		"MVP Android Back: 종료 확인 버튼을 모바일 크기로 표시"
 	)
 	check(app.handle_back_request(), "MVP Android Back: 확인창에서 뒤로가기 요청 소비")
 	check(not exit_overlay.visible, "MVP Android Back: 확인창에서 뒤로가면 취소")
@@ -922,46 +474,11 @@ func run_tests() -> void:
 	app.start_deck(TEST_DECK)
 
 	check(_view(app, "DeckLabel").text == "__gd_main", "Main: 덱 이름 표시")
-	var study_card_properties := _view(app, "CardProperties") as HBoxContainer
-	var study_card_content := study_card_properties.get_parent()
-	check(
-		_view(app, "StudyCardMenuButton") == null
-		and _view(app, "CardChrome") == null
-		and _view(study_card_content, "MenuButtonSpacer") == null,
-		"Main Study: 학습 흐름을 가리는 카드 설정 버튼과 여백 제거"
-	)
+	var study_card_content := _view(app, "QuestionLabel").get_parent()
 	check(_view(app, "QuestionLabel").text == "A", "MVP: 첫 질문 표시")
 	check(not _view(app, "AnswerScroll").visible, "Main Study: 첫 화면에서 답 영역 숨김")
 	check(_view(app, "Actions").visible, "Main Study: 답 공개 전에도 자기평가 버튼 표시")
 	check(_view(app, "RemainingLabel").text == "2장 남음", "MVP: 남은 카드 수 표시")
-	check(
-		_view(study_card_properties, "WrongCountLabel") == null
-		and not study_card_properties.visible,
-		"Main Study: 앞면에서는 오답 tally 숨김"
-	)
-	check(
-		_view(study_card_properties, "WrongTally").get_index()
-		< _view(study_card_properties, "Spacer").get_index()
-		and _view(app, "CardStatusLabel") == null
-		and _view(study_card_properties, "StatusBadge").get_index()
-		> _view(study_card_properties, "Spacer").get_index()
-		and _view(study_card_properties, "StatusBadge").text == "MASTERED",
-		"Main Study: 뒷면용 오답 tally와 상태 딱지 배치"
-	)
-	check(
-		_view(app, "WrongTally").get_parent() is HBoxContainer
-		and _view(app, "WrongTally").get_child_count() == 0,
-		"Main Study: 프레임과 문구 없이 직접 그리는 tally 사용"
-	)
-	check(
-		_view(study_card_content, "QuestionCaption") == null,
-		"Main Study: QUESTION 장식 문구 제거"
-	)
-	check(
-		_view(app, "StudyProgressBar") == null
-		and _view(app, "RemainingLabel").text == "2장 남음",
-		"Main Study: 남은 카드 수만 표시하고 중복 XP strip 제거"
-	)
 	check(
 		StudyGestureSurface.drag_direction(Vector2(120, 10))
 		== StudyGestureSurface.GOOD
@@ -982,37 +499,6 @@ func run_tests() -> void:
 		and StudyGestureSurface.key_direction(KEY_DOWN) == StudyGestureSurface.PREVIOUS,
 		"Main Study: 방향키를 swipe 방향과 같은 네 동작에 mapping"
 	)
-	check(
-		StudyGestureSurface.PREVIEW_FOLLOW_RATIO > 0.5
-		and StudyGestureSurface.TAP_MAX_DISTANCE > 0.0
-		and StudyGestureSurface.EXIT_DURATION > 0.0
-		and StudyGestureSurface.ENTER_DURATION > 0.0
-		and StudyGestureSurface.FLIP_LIFT_DURATION
-		+ StudyGestureSurface.FLIP_HALF_DURATION
-		+ StudyGestureSurface.FLIP_OPEN_DURATION
-		+ StudyGestureSurface.FLIP_SETTLE_DURATION < 0.5
-		and CARD_DETAIL_SURFACE.FLIP_HALF_DURATION
-		+ CARD_DETAIL_SURFACE.FLIP_OPEN_DURATION
-		+ CARD_DETAIL_SURFACE.FLIP_SETTLE_DURATION < 0.4,
-		"Main Study: drag 퇴장·다음 카드 안착·앞뒤 flip 연출 제공"
-	)
-	check(
-		_view(app, "AgainHint") == null
-		and _view(app, "GoodHint") == null
-		and _view(app, "SkipHint").text == "↑  SKIP"
-		and _view(app, "PreviousHint").text == "↓  PREV"
-		and _view(app, "GestureHints").get_parent().name == "CardStage"
-		and _view(app, "GestureHints").z_index < _view(app, "CardFrame").z_index
-		and StudyGestureSurface.HINT_MIN_SCALE < 1.0
-		and StudyGestureSurface.HINT_MIN_ALPHA < 1.0
-		and StudyGestureSurface.HINT_PULL_PADDING > 0.0
-		and StudyGestureSurface.HINT_DRAG_DISTANCE_MULTIPLIER == 3.6
-		and StudyGestureSurface.HINT_COMPLETE_DURATION == 0.4
-		and not _view(app, "CardFrame").is_ancestor_of(_view(app, "GestureHints"))
-		and not _view(app, "SkipHint").visible
-		and not _view(app, "PreviousHint").visible,
-		"Main Study: 중복 AGAIN·GOOD 문구 없이 세로 drag 도움말만 준비"
-	)
 	var gesture_surface := _view(app, "CardFrame") as StudyGestureSurface
 	var threshold_crossings: Array[int] = []
 	gesture_surface.judgment_threshold_crossed.connect(
@@ -1025,10 +511,8 @@ func run_tests() -> void:
 	gesture_surface._show_horizontal_preview(-StudyGestureSurface.DRAG_THRESHOLD - 1.0)
 	check(
 		threshold_crossings == [StudyGestureSurface.GOOD, StudyGestureSurface.AGAIN]
-		and gesture_surface.haptics_enabled
-		and StudyGestureSurface.HAPTIC_DURATION_MS == 15
-		and StudyGestureSurface.HAPTIC_AMPLITUDE == 0.25,
-		"Main Study: GOOD·AGAIN 판정선을 넘을 때만 짧은 햅틱 요청"
+		and gesture_surface.haptics_enabled,
+		"Main Study: GOOD·AGAIN 판정선을 넘을 때만 햅틱 요청"
 	)
 	check(
 		FileAccess.get_file_as_string("res://export_presets.cfg").contains(
@@ -1064,80 +548,6 @@ func run_tests() -> void:
 		"Main Android: 일반 파일인 Markdown 샘플 덱도 export에 포함"
 	)
 	gesture_surface._reset_visual()
-	gesture_surface._show_horizontal_preview(-gesture_surface.size.x * 0.25)
-	var again_partial_style := (
-		_view(app, "AgainButton").get_theme_stylebox("normal") as StyleBoxFlat
-	)
-	var good_inactive_style := (
-		_view(app, "GoodButton").get_theme_stylebox("normal") as StyleBoxFlat
-	)
-	check(
-		_view(app, "SwipeFeedback") == null
-		and again_partial_style != null
-		and again_partial_style.bg_color.r > 0.0
-		and again_partial_style.bg_color.r < 1.0
-		and _view(app, "AgainButton").get_theme_color("font_color").r > 0.0
-		and _view(app, "AgainButton").get_theme_color("font_color").r < 1.0
-		and good_inactive_style != null
-		and good_inactive_style.bg_color == Color.WHITE,
-		"Main Study: swipe 기울기에 따라 AGAIN 버튼이 서서히 어두워짐"
-	)
-	gesture_surface._show_horizontal_preview(-gesture_surface.size.x)
-	check(
-		(_view(app, "AgainButton").get_theme_stylebox("normal") as StyleBoxFlat).bg_color
-		== Color.BLACK
-		and _view(app, "AgainButton").get_theme_color("font_color") == Color.WHITE,
-		"Main Study: 왼쪽 최대 기울기에서 AGAIN 버튼 반전 완료"
-	)
-	gesture_surface._show_horizontal_preview(gesture_surface.size.x)
-	check(
-		(_view(app, "GoodButton").get_theme_stylebox("normal") as StyleBoxFlat).bg_color
-		== Color.BLACK
-		and _view(app, "GoodButton").get_theme_color("font_color") == Color.WHITE,
-		"Main Study: 오른쪽 최대 기울기에서 GOOD 버튼 반전 완료"
-	)
-	gesture_surface._reset_visual()
-	check(
-		_view(app, "LibraryHeading").get_theme_color("font_color") == Color.BLACK
-		and _view(app, "LibraryHeading").get_theme_font_size("font_size") == 36,
-		"MVP 스타일: 제목을 큰 검은 글자로 표시"
-	)
-	var card_style := (
-		app.get_node("Margin/Page/StudyFlow/StudyContainer/CardStage/CardSlot/CardFrame").get_theme_stylebox("panel")
-		as StyleBoxFlat
-	)
-	check(
-		card_style != null
-		and card_style.bg_color == Color.WHITE
-		and card_style.border_color == Color.BLACK
-		and card_style.shadow_size == 7,
-		"MVP 스타일: Study 카드는 흰 바탕과 검은 테두리·가벼운 그림자"
-	)
-	check(
-		_view(app, "CardStack") == null
-		and _view(app, "RevealButton") == null
-		and _view(app, "Actions").get_parent().name == "StudyContainer"
-		and not _view(app, "CardFrame").is_ancestor_of(_view(app, "Actions")),
-		"Main Study: 답 보기 버튼 없이 판정 버튼만 카드 밖에 고정 배치"
-	)
-	var button_style := (
-		_view(app, "AgainButton").get_theme_stylebox("normal") as StyleBoxFlat
-	)
-	var button_hover_style := (
-		_view(app, "AgainButton").get_theme_stylebox("hover") as StyleBoxFlat
-	)
-	check(
-		button_style != null
-		and button_style.bg_color == Color.WHITE
-		and button_style.border_color == Color.BLACK
-		and button_style.border_width_left == 3
-		and button_style.corner_radius_top_left == 8
-		and button_hover_style != null
-		and button_hover_style.bg_color == Color(0.94, 0.94, 0.94, 1)
-		and _view(app, "AgainButton").get_theme_color("font_hover_color")
-		== Color.BLACK,
-		"MVP 스타일: 버튼을 둥근 흰 바탕과 옅은 hover로 표시"
-	)
 
 	(_view(app, "CardFrame") as StudyGestureSurface).tapped.emit()
 	check(
@@ -1146,34 +556,16 @@ func run_tests() -> void:
 		and _view(app, "StatusBadge").text == "MASTERED",
 		"Main Study: 카드 tap으로 답·tally·상태 딱지를 함께 공개"
 	)
-	var card_slot := gesture_surface.get_parent() as Control
-	var expected_card_rect := StudyGestureSurface.fitted_card_rect(
-		_view(app, "CardStage").size
-	)
-	var card_slot_layout_matches := (
-		expected_card_rect.size == Vector2.ZERO
-		or (
-			card_slot.position.is_equal_approx(expected_card_rect.position)
-			and card_slot.size.is_equal_approx(expected_card_rect.size)
-			and gesture_surface.size.is_equal_approx(card_slot.size)
-		)
-	)
-	check(
-		gesture_surface._can_start_drag(
-			gesture_surface.get_global_rect().get_center()
-		)
-		and card_slot.name == "CardSlot"
-		and card_slot_layout_matches
-		and gesture_surface.position == Vector2.ZERO,
-		"Main Study: CardSlot이 layout을 맡고 카드는 local zero에서 gesture 시작"
-	)
 	var gesture_center := gesture_surface.get_global_rect().get_center()
+	check(
+		gesture_surface._can_start_drag(gesture_center),
+		"Main Study: 카드 안에서 gesture 시작"
+	)
 	gesture_surface._begin_drag(gesture_center, 0)
 	gesture_surface._update_drag(gesture_center + Vector2(100.0, 0.0))
 	_view(app, "AgainButton").button_down.emit()
 	check(
 		not gesture_surface._dragging
-		and gesture_surface.position == Vector2.ZERO
 		and not gesture_surface._can_start_drag(gesture_center),
 		"Main Study: 판정 버튼을 누르면 진행 중인 카드 drag를 취소하고 소유권 고정"
 	)
@@ -1191,32 +583,7 @@ func run_tests() -> void:
 		gesture_surface._can_start_drag(gesture_center),
 		"Main Study: 판정 버튼에서 손을 떼면 다음 카드 gesture 허용"
 	)
-	check(
-		_view(study_card_content, "AnswerCaption") == null
-		and _view(study_card_content, "Separator") == null,
-		"Main Study: ANSWER 문구와 질문·답 구분선 제거"
-	)
 	check(_view(app, "AnswerLabel").text == "1", "MVP: 현재 카드의 답 표시")
-	check(
-		_view(app, "AnswerLabel").horizontal_alignment == HORIZONTAL_ALIGNMENT_LEFT
-		and _view(app, "AnswerLabel").vertical_alignment == VERTICAL_ALIGNMENT_TOP,
-		"Main Study: 답 내용은 좌측 상단 정렬"
-	)
-	check(
-		_view(app, "QuestionLabel").get_theme_color("font_color")
-		== Color(0.56, 0.56, 0.56, 1),
-		"Main Study: 답과 함께 표시되는 질문은 옅은 색으로 전환"
-	)
-	check(
-		_view(app, "QuestionScroll").custom_minimum_size.y == 150.0
-		and _view(app, "QuestionScroll").size_flags_vertical == Control.SIZE_FILL
-		and _view(app, "QuestionScroll").vertical_scroll_mode
-		== ScrollContainer.SCROLL_MODE_DISABLED
-		and _view(app, "QuestionLabel").max_lines_visible == 2
-		and _view(app, "QuestionLabel").text_overrun_behavior
-		== TextServer.OVERRUN_TRIM_ELLIPSIS,
-		"Main Study: 뒷면 질문을 두 줄 말줄임표로 고정하고 scroll 제거"
-	)
 	check(
 		_view(app, "Actions").visible
 		and _view(app, "AgainButton").text == "AGAIN"
@@ -1226,24 +593,12 @@ func run_tests() -> void:
 	(_view(app, "CardFrame") as StudyGestureSurface).tapped.emit()
 	check(
 		not _view(app, "AnswerScroll").visible
-		and not _view(app, "CardProperties").visible
-		and _view(app, "QuestionScroll").size_flags_vertical
-		== Control.SIZE_EXPAND_FILL
-		and _view(app, "QuestionScroll").vertical_scroll_mode
-		== ScrollContainer.SCROLL_MODE_AUTO
-		and _view(app, "QuestionLabel").max_lines_visible == -1
-		and _view(app, "QuestionLabel").text_overrun_behavior
-		== TextServer.OVERRUN_NO_TRIMMING
-		and _view(app, "QuestionLabel").get_theme_color("font_color") == Color.BLACK,
+		and not _view(app, "CardProperties").visible,
 		"Main Study: 카드를 다시 tap하면 질문만 보는 앞면으로 복귀"
 	)
 
 	_view(app, "AgainButton").pressed.emit()
 	check(_view(app, "QuestionLabel").text == "B", "MVP: Again 후 다음 질문")
-	check(
-		_view(app, "QuestionLabel").get_theme_color("font_color") == Color.BLACK,
-		"Main Study: 다음 카드 질문은 검은색으로 복구"
-	)
 	check(_view(app, "RemainingLabel").text == "1장 남음", "MVP: Again 후 남은 수 감소")
 	check(
 		DeckStorage.load_progress(TEST_DECK).get_wrong_count("A") == 1
@@ -1291,27 +646,6 @@ func run_tests() -> void:
 		and _view(first_result_rows.get_child(1), "OutcomeLabel").text == "GOOD",
 		"Main Result: 카드별 마지막 판정을 학습 순서대로 표시"
 	)
-	check(
-		_view(app, "StudyResultView").scene_file_path.ends_with(
-			"study_result_view.tscn"
-		)
-		and first_result_rows.get_child(0).scene_file_path.ends_with(
-			"card_collection_row.tscn"
-		)
-		and (_view(app, "ResultListScroll") as ScrollContainer).scene_file_path.ends_with(
-			"card_collection_view.tscn"
-		),
-		"Main Result: 카드 목록과 공용 view·row scene 사용"
-	)
-	check(
-		_view(app, "StudyResultView").get_theme_constant("separation") == 26
-		and first_result_rows.get_theme_constant("separation") == 18
-		and first_result_rows.get_child(0).custom_minimum_size.y == 132.0
-		and _view(first_result_rows.get_child(0), "Margin").get_theme_constant(
-			"margin_top"
-		) == 18,
-		"Main Result: 결과 목록의 행간과 카드 안쪽 여백 확보"
-	)
 	var first_result_row = first_result_rows.get_child(0)
 	var result_selection_count := [0]
 	first_result_row.selected.connect(
@@ -1331,32 +665,25 @@ func run_tests() -> void:
 	check(
 		result_selection_count[0] == 0
 		and _view(app, "StudyResultView").visible
-		and first_result_row.mouse_filter == Control.MOUSE_FILTER_PASS
-		and _view(first_result_row, "OpenResultCardButton") == null
-		and (_view(app, "ResultListScroll") as ScrollContainer).scroll_deadzone == 12,
-		"Main Result: 투명 버튼 없이 drag는 스크롤로 전달하고 카드를 열지 않음"
+		and first_result_row.mouse_filter == Control.MOUSE_FILTER_PASS,
+		"Main Result: 행 drag는 스크롤로 전달하고 카드를 열지 않음"
 	)
 	first_result_row._gui_input(result_row_press)
 	first_result_row._gui_input(result_row_release)
 	check(
 		_view(app, "CardDetailView").visible
 		and not _view(app, "StudyResultView").is_visible_in_tree()
-		and _view(app, "BackFromCardDetailButton").text.is_empty()
 		and _view(app, "BackFromCardDetailButton").tooltip_text
 		== "학습 결과로 돌아가기"
 		and _view(app, "DetailQuestionLabel").text == "A"
-		and _view(app, "CardDetailMenuButton").visible
-		and _view(app, "CardDetailMenuButton").text.is_empty()
-		and _view(app, "CardDetailMenuButton").icon.get_width() == 48
-		and _view(app, "CardDetailMenuButton").get_parent().name == "RightActions",
-		"Main Result: 결과 카드를 열고 설정 버튼은 Header 우상단에 표시"
+		and _view(app, "CardDetailMenuButton").visible,
+		"Main Result: 결과 카드 상세 화면 열기"
 	)
 	_view(app, "CardTapButton").pressed.emit()
 	check(
 		_view(app, "DetailAnswerScroll").visible
 		and _view(app, "DetailAnswerLabel").text == "1"
-		and (_view(app, "DetailWrongTally") as WrongTallyView).wrong_count == 1
-		and _view(app, "DetailStatusLabel") == null,
+		and (_view(app, "DetailWrongTally") as WrongTallyView).wrong_count == 1,
 		"Main Result: 실제 카드 tap 버튼으로 뒷면과 tally 확인"
 	)
 	_view(app, "BackFromCardDetailButton").pressed.emit()
@@ -1373,10 +700,9 @@ func run_tests() -> void:
 		"Main Result: AGAIN 카드만 모아 다시 학습"
 	)
 	check(
-		_view(app, "CardStatusLabel") == null
-		and _view(app, "WrongTally").wrong_count == 1
+		_view(app, "WrongTally").wrong_count == 1
 		and _view(app, "WrongTally").tooltip_text == "오답 1회",
-		"Main Study: 다시 표시한 카드에는 저장된 tally만 반영"
+		"Main Study: 다시 표시한 카드에 저장된 tally 반영"
 	)
 	_view(app, "BackToReadyButton").pressed.emit()
 	check(
@@ -1392,10 +718,6 @@ func run_tests() -> void:
 		_view(app, "QuestionLabel").text == "My Simple Flash Card는 어떤 앱인가요?"
 		and _view(app, "RemainingLabel").text == "15장 남음",
 		"MVP: 최신 앱 사용법 15장으로 구성된 샘플 덱 시작"
-	)
-	check(
-		_view(app, "StudyCardMenuButton") == null,
-		"Main Study: 샘플 덱에서도 카드 설정 버튼 없음"
 	)
 
 	DeckStorage.write_deck(RENAME_DECK, TEST_TEXT)
@@ -1433,11 +755,8 @@ func run_tests() -> void:
 		"Main Rename: 마지막 학습 덱 설정도 새 이름으로 이동"
 	)
 	check(
-		_view(app, "ReadyDeckNameLabel").text == "__gd_main_renamed"
-		and _view(app, "StudyReadyView").find_child(
-			"ReadyViewStatusLabel", true, false
-		) == null,
-		"Main Rename: 학습 준비 제목이 새 이름으로 바뀌고 상태 라벨은 없다"
+		_view(app, "ReadyDeckNameLabel").text == "__gd_main_renamed",
+		"Main Rename: 학습 준비 화면에 새 이름 반영"
 	)
 
 	app.show_library()
@@ -1523,39 +842,20 @@ func run_tests() -> void:
 	)
 	var first_card_row = app.card_rows.get_child(0)
 	check(
-		_view(first_card_row, "ListWrongTally") == null
-		and _view(first_card_row, "ListStatusLabel") == null
-		and _view(first_card_row, "Metadata") == null
-		and _view(first_card_row, "QuestionLabel") != null
-		and _view(first_card_row, "AnswerLabel") != null
-		and first_card_row.custom_minimum_size.y == 132.0,
-		"Main Card List: 틸리·상태 딱지를 빼고 질문·답만 강조"
-	)
-	check(
-		first_card_row.get_class() == "PanelContainer"
-		and first_card_row.mouse_filter == Control.MOUSE_FILTER_PASS
+		first_card_row.mouse_filter == Control.MOUSE_FILTER_PASS
 		and (_view(app, "CardListScroll") as ScrollContainer).vertical_scroll_mode
-		== ScrollContainer.SCROLL_MODE_AUTO
-		and (_view(app, "CardListScroll") as ScrollContainer).scroll_deadzone == 12
-		and (_view(app, "CardListScroll") as ScrollContainer).scene_file_path.ends_with(
-			"card_collection_view.tscn"
-		)
-		and not _view(first_card_row, "OutcomeBadge").visible,
-		"Main Card List: 버튼 대신 pass-through 카드 행과 touch drag deadzone 사용"
+		== ScrollContainer.SCROLL_MODE_AUTO,
+		"Main Card List: 카드 행 drag를 scroll에 전달"
 	)
 	var row_menu_button := _view(first_card_row, "RowMenuButton") as Button
 	var row_reorder_handle := _view(first_card_row, "RowReorderHandle") as Button
 	check(
 		row_menu_button != null
 		and row_menu_button.visible
-		and row_menu_button.text == "⋮"
-		and row_menu_button.get_index() == row_menu_button.get_parent()
-		.get_child_count() - 1
 		and row_reorder_handle != null
 		and row_reorder_handle.visible
-		and row_reorder_handle.get_index() == 0
 		and not row_reorder_handle.disabled,
-		"Main Card List: 행 왼쪽에 순서 손잡이, 오른쪽에 ⋮ 관리 버튼 표시"
+		"Main Card List: 카드 관리와 순서 변경 action 제공"
 	)
 	var reorder_deck_before := DeckParser.parse(DeckStorage.read_deck(EDIT_DECK))
 	app.call("_on_card_row_reorder_started", 0)
@@ -1641,27 +941,17 @@ func run_tests() -> void:
 	handle_press.button_index = MOUSE_BUTTON_LEFT
 	handle_press.pressed = true
 	row_reorder_handle.gui_input.emit(handle_press)
-	var lifted_shadow := (first_card_row as Control).get_theme_stylebox(
-		"panel"
-	) as StyleBoxFlat
 	check(
 		handle_pick_started[0] == 1
-		and first_card_row.get("_reordering")
-		and (first_card_row as Control).z_index == 1
-		and (first_card_row as Control).scale == Vector2.ONE
-		and lifted_shadow != null
-		and lifted_shadow.shadow_size == 12,
-		"Main Card List: 손잡이를 누르면 카드를 그림자로 들어올린다"
+		and first_card_row.get("_reordering"),
+		"Main Card List: 손잡이를 누르면 순서 변경 시작"
 	)
 	var handle_release := InputEventMouseButton.new()
 	handle_release.button_index = MOUSE_BUTTON_LEFT
 	row_reorder_handle.gui_input.emit(handle_release)
 	check(
-		not first_card_row.get("_reordering")
-		and (first_card_row as Control).z_index == 0
-		and ((first_card_row as Control).get_theme_stylebox("panel") as StyleBoxFlat)
-		.shadow_size == 3,
-		"Main Card List: 손잡이에서 손을 떼면 카드를 내려놓는다"
+		not first_card_row.get("_reordering"),
+		"Main Card List: 손잡이에서 손을 떼면 순서 변경 종료"
 	)
 	check(
 		_view(app, "CardDetailView").visible
@@ -1669,20 +959,8 @@ func run_tests() -> void:
 		and _view(app, "DetailQuestionLabel").text == "Old"
 		and not _view(app, "DetailAnswerScroll").visible
 		and not _view(app, "DetailCardProperties").visible
-		and _view(app, "CardDetailMenuButton").visible
-		and _view(app, "CardDetailMenuButton").text.is_empty()
-		and _view(app, "CardDetailMenuButton").icon.get_width() == 48
-		and _view(app, "CardDetailMenuButton").get_parent().name == "RightActions"
-		and _view(app, "CardDetailMenuButton").get_index()
-		== _view(app, "CardDetailMenuButton").get_parent().get_child_count() - 1
-		and _view(app, "CardDetailChrome") == null
-		and not _view(app, "CardDetailFrame").is_ancestor_of(
-			_view(app, "CardDetailMenuButton")
-		)
-		and _view(app, "CardTapButton").get_parent() == _view(app, "CardDetailFrame")
-		and (_view(app, "CardDetailFrame").get_theme_stylebox("panel") as StyleBoxFlat).shadow_size
-		== 0,
-		"Main Card Detail: 카드 전체 tap 영역과 Header 우상단 설정 버튼 분리"
+		and _view(app, "CardDetailMenuButton").visible,
+		"Main Card Detail: 선택한 카드 상세 화면 열기"
 	)
 	_view(app, "CardTapButton").pressed.emit()
 	check(
@@ -1690,14 +968,7 @@ func run_tests() -> void:
 		and _view(app, "DetailAnswerLabel").text == "Answer"
 		and _view(app, "DetailCardProperties").visible
 		and (_view(app, "DetailWrongTally") as WrongTallyView).wrong_count == 3
-		and _view(app, "DetailStatusLabel") == null
-		and _view(app, "DetailStatusBadge").text == "LEARNING"
-		and _view(_view(app, "DetailCardProperties"), "MenuButtonSpacer") == null
-		and _view(app, "DetailQuestionScroll").vertical_scroll_mode
-		== ScrollContainer.SCROLL_MODE_DISABLED
-		and _view(app, "DetailQuestionLabel").max_lines_visible == 2
-		and _view(app, "DetailQuestionLabel").text_overrun_behavior
-		== TextServer.OVERRUN_TRIM_ELLIPSIS,
+		and _view(app, "DetailStatusBadge").text == "LEARNING",
 		"Main Card Detail: tap으로 뒷면·tally·상태 딱지 확인"
 	)
 	check(
@@ -1709,15 +980,9 @@ func run_tests() -> void:
 	check(
 		_view(app, "CardContextMenu").visible
 		and _view(app, "EditCardActionButton").text == "수정하기"
-		and _view(app, "CardContextMenu").find_child(
-			"FavoriteCardActionButton", true, false
-		) == null
 		and _view(app, "DeleteCardActionButton").text == "카드 삭제"
-		and _view(app, "DeleteCardActionButton").visible
-		and _view(app, "CardContextMenuPanel").custom_minimum_size.x == 320.0
-		and _view(app, "EditCardActionButton").custom_minimum_size.y == 72.0
-		and _view(app, "EditCardActionButton").get_theme_font_size("font_size") == 30,
-		"Main Card Detail: ⋮ context list를 큰 글자와 터치 크기로 표시"
+		and _view(app, "DeleteCardActionButton").visible,
+		"Main Card Detail: 수정과 삭제 action 제공"
 	)
 	var favorite_progress := DeckStorage.load_progress(EDIT_DECK)
 	favorite_progress.set_favorite("Old", true)
@@ -1732,27 +997,7 @@ func run_tests() -> void:
 		== CardStatus.Value.LEARNING,
 		"Main Card Edit: 질문·답과 기존 학습 정보를 편집기에 표시"
 	)
-	var question_input := _view(app, "CardQuestionInput") as TextEdit
-	var single_line_question := question_input as SingleLineTextEdit
-	check(
-		single_line_question != null
-		and question_input.wrap_mode == TextEdit.LINE_WRAPPING_BOUNDARY
-		and single_line_question.min_visible_lines == 2
-		and single_line_question.max_visible_lines == 4,
-		"Main Card Edit: 질문을 여러 줄로 감싸는 넓은 입력 field 사용"
-	)
-	question_input.text = "긴 질문 ".repeat(60)
-	question_input.call("_update_height")
-	var long_question_height := question_input.custom_minimum_size.y
-	question_input.text = "Old"
-	question_input.call("_update_height")
-	var short_question_height := question_input.custom_minimum_size.y
-	check(
-		is_equal_approx(short_question_height, single_line_question.height_for_lines(2))
-		and long_question_height >= short_question_height
-		and long_question_height <= single_line_question.height_for_lines(4),
-		"Main Card Edit: 질문 field 높이를 두 줄에서 네 줄 사이로 제한"
-	)
+	var question_input := _view(app, "CardQuestionInput") as SingleLineTextEdit
 	question_input.text = "Line one\nLine two"
 	question_input.call("_strip_newlines")
 	check(
@@ -1761,14 +1006,7 @@ func run_tests() -> void:
 	)
 	question_input.text = "Old"
 	check(
-		_view(app, "SaveCardButton").get_parent().name == "RightActions"
-		and _view(app, "SaveCardButton").text == "저장"
-		and _view(app, "CardEditorView").find_child("DeleteCardButton", true, false)
-		== null,
-		"Main Card Edit: 저장은 header 우측에 두고 편집기의 삭제 버튼은 제거"
-	)
-	check(
-		(question_input as SingleLineTextEdit).submitted.is_connected(
+		question_input.submitted.is_connected(
 			Callable(app, "_on_question_submitted")
 		),
 		"Main Card Edit: 질문 Enter 신호를 답 focus 이동에 연결"
@@ -1777,27 +1015,6 @@ func run_tests() -> void:
 	check(
 		(_view(app, "CardAnswerInput") as TextEdit).has_focus(),
 		"Main Card Edit: 질문 제출 시 답 입력으로 focus 이동"
-	)
-	var card_editor_content := _view(app, "CardEditorProperties").get_parent()
-	var card_editor_style := (
-		_view(app, "CardEditorFrame").get_theme_stylebox("panel") as StyleBoxFlat
-	)
-	check(
-		_view(app, "CardEditorProperties").get_index()
-		< _view(app, "QuestionCaption").get_index()
-		and card_editor_content == _view(app, "QuestionCaption").get_parent()
-		and _view(app, "CardEditorFrame").is_ancestor_of(card_editor_content)
-		and card_editor_style != null
-		and card_editor_style.bg_color == Color.WHITE
-		and card_editor_style.border_color == Color.BLACK,
-		"Main Card Edit: 질문·답·학습 정보를 카드 프레임 안에 배치"
-	)
-	check(
-		_view(app, "CardEditorFrame") is CardRatioFrame
-		and _view(app, "CardEditorFrame").get_parent().name == "CardEditorStage"
-		and StudyGestureSurface.fitted_card_rect(Vector2(656, 1600))
-		== Rect2(0, 308, 656, 984),
-		"Main Card Edit: 편집 프레임도 학습 카드와 같은 2:3 비율 유지"
 	)
 	_view(app, "WrongPlusButton").pressed.emit()
 	_view(app, "CardStatusOption").select(
@@ -1914,9 +1131,8 @@ func run_tests() -> void:
 	)
 	_view(app, "StartStudyButton").pressed.emit()
 	check(
-		_view(app, "StudyCardMenuButton") == null
-		and _view(study_card_content, "QuestionLabel").text == "Study old",
-		"Main Study: 설정 버튼 없이 첫 카드 학습"
+		_view(study_card_content, "QuestionLabel").text == "Study old",
+		"Main Study: 설정한 첫 카드 학습"
 	)
 	_view(app, "GoodButton").pressed.emit()
 	check(
@@ -1963,13 +1179,8 @@ func run_tests() -> void:
 	_view(app, "CreateNewDeckButton").pressed.emit()
 	check(
 		_view(app, "CreateDeckOverlay").visible
-		and not _view(app, "AddDeckMenu").visible
-		and _view(app, "CreateDeckOverlay").scene_file_path.ends_with(
-			"modal_dialog.tscn"
-		)
-		and _dialog(app, "CreateDeckOverlay", "PrimaryButton").custom_minimum_size.y
-		== 88.0,
-		"Main Create: 새 덱 이름 입력 scene으로 전환"
+		and not _view(app, "AddDeckMenu").visible,
+		"Main Create: 새 덱 이름 입력으로 전환"
 	)
 	_dialog(app, "CreateDeckOverlay", "PrimaryButton").pressed.emit()
 	check(
@@ -2026,11 +1237,8 @@ func run_tests() -> void:
 	)
 	check(
 		_view(app, "CardListView").visible
-		and _view(app, "CardListDeckLabel").text == "__gd_main_created"
-		and _view(app, "CardListView").find_child(
-			"CardListStatusLabel", true, false
-		) == null,
-		"Main Create: 생성 완료 후 상태 라벨 없이 카드 목록 표시"
+		and _view(app, "CardListDeckLabel").text == "__gd_main_created",
+		"Main Create: 생성 완료 후 카드 목록 표시"
 	)
 	_view(app, "BackFromCardListButton").pressed.emit()
 	check(

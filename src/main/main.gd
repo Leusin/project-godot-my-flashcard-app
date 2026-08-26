@@ -385,15 +385,15 @@ static func safe_insets_in_viewport(
 	if window_size.x <= 0 or window_size.y <= 0:
 		return Vector4.ZERO
 
-	var scale := Vector2(
+	var viewport_scale := Vector2(
 		viewport_size.x / float(window_size.x),
 		viewport_size.y / float(window_size.y)
 	)
 	return Vector4(
-		maxi(safe_area.position.x, 0) * scale.x,
-		maxi(safe_area.position.y, 0) * scale.y,
-		maxi(window_size.x - safe_area.end.x, 0) * scale.x,
-		maxi(window_size.y - safe_area.end.y, 0) * scale.y
+		maxi(safe_area.position.x, 0) * viewport_scale.x,
+		maxi(safe_area.position.y, 0) * viewport_scale.y,
+		maxi(window_size.x - safe_area.end.x, 0) * viewport_scale.x,
+		maxi(window_size.y - safe_area.end.y, 0) * viewport_scale.y
 	)
 
 
@@ -871,10 +871,10 @@ func _on_card_detail_tapped() -> void:
 	)
 
 
-func _set_card_detail_answer_visible(visible: bool) -> void:
-	detail_answer_scroll.visible = visible
-	detail_card_properties.visible = visible
-	if visible:
+func _set_card_detail_answer_visible(show_answer: bool) -> void:
+	detail_answer_scroll.visible = show_answer
+	detail_card_properties.visible = show_answer
+	if show_answer:
 		detail_question_scroll.scroll_vertical = 0
 		detail_question_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 		detail_question_scroll.custom_minimum_size.y = 150.0
@@ -1164,7 +1164,7 @@ func _select_card_editor_status(status: CardStatus.Value) -> void:
 
 
 func _card_editor_status() -> CardStatus.Value:
-	return card_status_option.get_selected_id()
+	return card_status_option.get_selected_id() as CardStatus.Value
 
 
 func _update_card_editor_learning_fields() -> void:
@@ -1356,7 +1356,8 @@ func _on_card_delete_confirmed() -> void:
 			break
 	if not question_still_exists:
 		progress.remove(deleted_question)
-	var progress_saved := DeckStorage.save_progress(_editing_deck_file, progress)
+	if not DeckStorage.save_progress(_editing_deck_file, progress):
+		push_warning("Card progress save failed during delete")
 	DeckStorage.delete_study_resume(_editing_deck_file)
 	_editing_cards = updated
 	if deleting_from_detail:
@@ -1449,7 +1450,7 @@ func _on_start_study_pressed() -> void:
 		_show_library_status("덱 파일을 읽지 못했습니다.")
 		return
 
-	var scope: StudyScope = study_ready_view.selected_scope()
+	var scope := study_ready_view.selected_scope() as StudyScope
 	var selected_indices := card_indices_for_scope(
 		_ready_cards,
 		DeckStorage.load_progress(_ready_deck_file),
@@ -1464,7 +1465,7 @@ func _on_start_study_pressed() -> void:
 		return
 
 	study_ready_view.hide_status()
-	var order: DeckOrdering.StudyOrder = study_ready_view.selected_order()
+	var order := study_ready_view.selected_order() as DeckOrdering.StudyOrder
 	_begin_indexed_study(selected_indices, order, scope, true)
 
 
@@ -1475,7 +1476,7 @@ func _on_continue_study_pressed() -> void:
 		study_ready_view.show_status("이어서 학습할 기록이 없습니다.")
 		return
 
-	var resume_scope: StudyScope = resume.scope
+	var resume_scope := resume.scope as StudyScope
 	_begin_indexed_study(
 		resume.remaining_indices,
 		resume.order,
@@ -1568,15 +1569,15 @@ func _position_add_deck_menu(anchor: Control) -> void:
 	var viewport_size := add_deck_menu.size
 	var margin := 12.0
 	var gap := 4.0
-	var position := Vector2(
+	var menu_position := Vector2(
 		anchor_rect.end.x - menu_size.x,
 		anchor_rect.end.y + gap
 	)
-	position.x = clampf(position.x, margin, viewport_size.x - menu_size.x - margin)
-	if position.y + menu_size.y > viewport_size.y - margin:
-		position.y = anchor_rect.position.y - menu_size.y - gap
-	position.y = clampf(position.y, margin, viewport_size.y - menu_size.y - margin)
-	add_deck_menu_panel.position = position
+	menu_position.x = clampf(menu_position.x, margin, viewport_size.x - menu_size.x - margin)
+	if menu_position.y + menu_size.y > viewport_size.y - margin:
+		menu_position.y = anchor_rect.position.y - menu_size.y - gap
+	menu_position.y = clampf(menu_position.y, margin, viewport_size.y - menu_size.y - margin)
+	add_deck_menu_panel.position = menu_position
 
 
 func _on_add_deck_menu_dismissed() -> void:
@@ -1590,15 +1591,15 @@ func _position_library_context_menu(anchor: Control) -> void:
 	var viewport_size := library_context_menu.size
 	var margin := 12.0
 	var gap := 4.0
-	var position := Vector2(
+	var menu_position := Vector2(
 		anchor_rect.end.x - menu_size.x,
 		anchor_rect.end.y + gap
 	)
-	position.x = clampf(position.x, margin, viewport_size.x - menu_size.x - margin)
-	if position.y + menu_size.y > viewport_size.y - margin:
-		position.y = anchor_rect.position.y - menu_size.y - gap
-	position.y = clampf(position.y, margin, viewport_size.y - menu_size.y - margin)
-	library_context_menu_panel.position = position
+	menu_position.x = clampf(menu_position.x, margin, viewport_size.x - menu_size.x - margin)
+	if menu_position.y + menu_size.y > viewport_size.y - margin:
+		menu_position.y = anchor_rect.position.y - menu_size.y - gap
+	menu_position.y = clampf(menu_position.y, margin, viewport_size.y - menu_size.y - margin)
+	library_context_menu_panel.position = menu_position
 
 
 func _on_library_context_menu_dismissed() -> void:
@@ -1628,15 +1629,15 @@ func _position_deck_context_menu(anchor: Control) -> void:
 	var viewport_size := deck_context_menu.size
 	var margin := 12.0
 	var gap := 4.0
-	var position := Vector2(
+	var menu_position := Vector2(
 		anchor_rect.end.x - menu_size.x,
 		anchor_rect.end.y + gap
 	)
-	position.x = clampf(position.x, margin, viewport_size.x - menu_size.x - margin)
-	if position.y + menu_size.y > viewport_size.y - margin:
-		position.y = anchor_rect.position.y - menu_size.y - gap
-	position.y = clampf(position.y, margin, viewport_size.y - menu_size.y - margin)
-	deck_context_menu_panel.position = position
+	menu_position.x = clampf(menu_position.x, margin, viewport_size.x - menu_size.x - margin)
+	if menu_position.y + menu_size.y > viewport_size.y - margin:
+		menu_position.y = anchor_rect.position.y - menu_size.y - gap
+	menu_position.y = clampf(menu_position.y, margin, viewport_size.y - menu_size.y - margin)
+	deck_context_menu_panel.position = menu_position
 
 
 static func _control_rect_in_overlay(overlay: Control, control: Control) -> Rect2:
@@ -1644,9 +1645,9 @@ static func _control_rect_in_overlay(overlay: Control, control: Control) -> Rect
 		overlay.get_global_transform().affine_inverse()
 		* control.get_global_transform()
 	)
-	var position := control_to_overlay * Vector2.ZERO
+	var local_position := control_to_overlay * Vector2.ZERO
 	var end := control_to_overlay * control.size
-	return Rect2(position, end - position)
+	return Rect2(local_position, end - local_position)
 
 
 func _on_deck_context_dismissed() -> void:
@@ -2363,10 +2364,10 @@ func _on_card_tapped() -> void:
 	)
 
 
-func _set_answer_visible(visible: bool) -> void:
-	answer_scroll.visible = visible
-	card_properties.visible = visible
-	if visible:
+func _set_answer_visible(show_answer: bool) -> void:
+	answer_scroll.visible = show_answer
+	card_properties.visible = show_answer
+	if show_answer:
 		question_scroll.scroll_vertical = 0
 		question_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 		question_scroll.custom_minimum_size.y = 150.0

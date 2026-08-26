@@ -371,15 +371,15 @@ func _show_horizontal_preview(horizontal_delta: float) -> void:
 	)
 	position = Vector2(preview_offset, 0.0)
 	var width := maxf(size.x, 1.0)
-	var rotation_degrees := clampf(
+	var preview_rotation_degrees := clampf(
 		horizontal_delta / width * PREVIEW_MAX_ROTATION_DEGREES * 2.0,
 		-PREVIEW_MAX_ROTATION_DEGREES,
 		PREVIEW_MAX_ROTATION_DEGREES
 	)
-	rotation = deg_to_rad(rotation_degrees)
+	rotation = deg_to_rad(preview_rotation_degrees)
 	var action := GOOD if horizontal_delta > 0.0 else AGAIN
 	var feedback_strength := clampf(
-		absf(rotation_degrees) / PREVIEW_MAX_ROTATION_DEGREES,
+		absf(preview_rotation_degrees) / PREVIEW_MAX_ROTATION_DEGREES,
 		0.0,
 		1.0
 	)
