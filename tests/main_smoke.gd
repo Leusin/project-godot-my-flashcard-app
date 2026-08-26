@@ -1478,6 +1478,24 @@ func run_tests() -> void:
 		"Main Card Edit: 질문에 들어온 줄바꿈을 공백으로 정리"
 	)
 	question_input.text = "Old"
+	check(
+		_view(app, "SaveCardButton").get_parent().name == "Header"
+		and _view(app, "SaveCardButton").text == "저장"
+		and _view(app, "DeleteCardButton").get_parent().name == "CardContent"
+		and _view(app, "DeleteCardButton").text == "카드 삭제",
+		"Main Card Edit: 저장은 header 우측에 두고 삭제는 카드 하단에 배치"
+	)
+	check(
+		(question_input as SingleLineTextEdit).submitted.is_connected(
+			Callable(app, "_on_question_submitted")
+		),
+		"Main Card Edit: 질문 Enter 신호를 답 focus 이동에 연결"
+	)
+	app.call("_on_question_submitted")
+	check(
+		(_view(app, "CardAnswerInput") as TextEdit).has_focus(),
+		"Main Card Edit: 질문 제출 시 답 입력으로 focus 이동"
+	)
 	var card_editor_content := _view(app, "CardEditorProperties").get_parent()
 	var card_editor_style := (
 		_view(app, "CardEditorFrame").get_theme_stylebox("panel") as StyleBoxFlat

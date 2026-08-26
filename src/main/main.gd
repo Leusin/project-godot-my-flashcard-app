@@ -173,7 +173,7 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @onready var card_detail_menu_button: Button = $Margin/Page/CardDetailView/Header/CardDetailMenuButton
 @onready var card_editor_view: VBoxContainer = $Margin/Page/CardEditorView
 @onready var card_editor_title: Label = $Margin/Page/CardEditorView/Header/CardEditorTitle
-@onready var delete_card_button: Button = $Margin/Page/CardEditorView/Header/DeleteCardButton
+@onready var delete_card_button: Button = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/DeleteCardButton
 @onready var wrong_minus_button: Button = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls/WrongMinusButton
 @onready var editor_wrong_count_label: Label = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls/EditorWrongCountLabel
 @onready var wrong_plus_button: Button = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls/WrongPlusButton
@@ -356,7 +356,8 @@ func _ready() -> void:
 	wrong_plus_button.pressed.connect(_on_wrong_plus_pressed)
 	reset_card_progress_button.pressed.connect(_on_reset_card_progress_pressed)
 	card_status_option.item_selected.connect(_on_card_status_selected)
-	$Margin/Page/CardEditorView/SaveCardButton.pressed.connect(_on_save_card_pressed)
+	$Margin/Page/CardEditorView/Header/SaveCardButton.pressed.connect(_on_save_card_pressed)
+	card_question_input.submitted.connect(_on_question_submitted)
 	(card_delete_confirmation_overlay.find_child("SecondaryButton", true, false) as Button).pressed.connect(
 		_on_card_delete_canceled
 	)
@@ -1264,6 +1265,10 @@ static func answer_has_question_heading(answer: String) -> bool:
 func _show_card_editor_error(message: String) -> void:
 	card_editor_error_label.text = message
 	card_editor_error_label.show()
+
+
+func _on_question_submitted() -> void:
+	card_answer_input.grab_focus()
 
 
 func _on_delete_card_pressed() -> void:

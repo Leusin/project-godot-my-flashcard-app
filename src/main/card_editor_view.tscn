@@ -92,11 +92,11 @@ text = "카드 편집"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="DeleteCardButton" type="Button" parent="Header"]
+[node name="SaveCardButton" type="Button" parent="Header"]
 custom_minimum_size = Vector2(112, 64)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "삭제"
+text = "저장"
 
 [node name="CardEditorFrame" type="PanelContainer" parent="."]
 unique_name_in_owner = true
@@ -216,8 +216,8 @@ theme_override_font_sizes/font_size = 24
 text = "오류"
 autowrap_mode = 3
 
-[node name="SaveCardButton" type="Button" parent="."]
-custom_minimum_size = Vector2(0, 88)
+[node name="DeleteCardButton" type="Button" parent="CardEditorFrame/CardMargin/CardContent"]
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
-text = "카드 저장"
+theme_override_font_sizes/font_size = 24
+text = "카드 삭제"
