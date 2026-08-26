@@ -1,6 +1,6 @@
 # My Simple Flash Card
 
-Markdown으로 카드를 작성하고, 스와이프와 버튼으로 복습하는 모바일 중심 플래시카드 앱. Google Play 테스트 배포 버전은 0.9.2이다 (패키지 `com.leusin.mysimpleflashcard`).
+Markdown으로 카드를 작성하고, 스와이프와 버튼으로 복습하는 모바일 중심 플래시카드 앱. Google Play 테스트 배포 버전은 0.10.0이다 (패키지 `com.leusin.mysimpleflashcard`).
 
 - Engine: Godot 4.7.1
 - Language: GDScript
@@ -28,9 +28,9 @@ $godot = "C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windo
 | 프리셋 | 용도 | 출력 |
 | --- | --- | --- |
 | Android | 개발용 debug APK (기기 설치 테스트) | `build/android/my-simple-flash-card-debug.apk` |
-| Android Release AAB | Play 업로드용 release AAB, target SDK 36 | `build/android/my-simple-flash-card-0.9.2.aab` |
+| Android Release AAB | Play 업로드용 release AAB, target SDK 36 | `build/android/my-simple-flash-card-0.10.0.aab` |
 
-- 앱 이름 **My Simple Flash Card**, 패키지 `com.leusin.mysimpleflashcard`, versionName `0.9.2`, versionCode `3`.
+- 앱 이름 **My Simple Flash Card**, 패키지 `com.leusin.mysimpleflashcard`, versionName `0.10.0`, versionCode `4`.
 - `package/unique_name`은 첫 Play Console 업로드 후 바꿀 수 없다. 업로드 전에 반드시 최종 확인한다.
 - target SDK 36은 2026-08-31부터 Play 신규 제출에 필요한 기준이다.
 - AAB export는 Gradle 빌드를 쓴다. Godot Editor에서 **Project > Install Android Build Template**을 한 번 실행하고, Editor Settings에 Android SDK/JDK 경로가 설정되어 있어야 한다.
@@ -56,7 +56,7 @@ keytool -genkeypair -v -keystore my-simple-flash-card-upload.jks -alias my-simpl
 ```powershell
 $godot = "C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe"
 & $godot --headless --path . --export-debug "Android" build/android/my-simple-flash-card-debug.apk
-& $godot --headless --path . --export-release "Android Release AAB" build/android/my-simple-flash-card-0.9.2.aab
+& $godot --headless --path . --export-release "Android Release AAB" build/android/my-simple-flash-card-0.10.0.aab
 ```
 
 debug 빌드는 `tools\deploy_android_debug.bat` 한 번 실행으로 export, 연결된 폰 설치, 앱 실행까지 끝낼 수 있다.

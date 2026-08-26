@@ -224,7 +224,7 @@ func run_tests() -> void:
 		"Main Settings: 별도 설정 화면에서 공개 개인정보처리방침 연결"
 	)
 	check(
-		_view(settings_view, "AppVersionLabel").text == "버전 0.9.2"
+		_view(settings_view, "AppVersionLabel").text == "버전 0.10.0"
 		and _view(settings_view, "CreateBackupButton").text == "전체 백업"
 		and _view(settings_view, "RestoreBackupButton").text == "전체 복원",
 		"Main Settings: 버전과 전체 백업·복원 작업 표시"
@@ -1043,11 +1043,11 @@ func run_tests() -> void:
 		"Main Android: debug와 release에서 시스템 상태·내비게이션 bar 유지"
 	)
 	check(
-		ProjectSettings.get_setting("application/config/version") == "0.9.2"
-		and export_presets_text.count("version/name=\"0.9.2\"") == 2
-		and export_presets_text.count("version/code=3") == 2
-		and export_presets_text.contains("my-simple-flash-card-0.9.2.aab"),
-		"Main Release: 0.9.2 versionName과 versionCode 3 일치"
+		ProjectSettings.get_setting("application/config/version") == "0.10.0"
+		and export_presets_text.count("version/name=\"0.10.0\"") == 2
+		and export_presets_text.count("version/code=4") == 2
+		and export_presets_text.contains("my-simple-flash-card-0.10.0.aab"),
+		"Main Release: 0.10.0 versionName과 versionCode 4 일치"
 	)
 	check(
 		export_presets_text.count("export_filter=\"all_resources\"") == 2,
