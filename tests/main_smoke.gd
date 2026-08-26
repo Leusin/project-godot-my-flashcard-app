@@ -417,20 +417,23 @@ func run_tests() -> void:
 			.ends_with("keyboard_avoider.gd")
 		)
 	check(modal_scene_is_shared, "Main UI: 일곱 팝업이 공용 ModalDialog scene 사용")
+	var create_deck_panel := _dialog(app, "CreateDeckOverlay", "DialogPanel") as PanelContainer
+	var delete_dialog_panel := (
+		_dialog(app, "DeleteConfirmationOverlay", "DialogPanel") as PanelContainer
+	)
 	check(
-		is_equal_approx(
-			_dialog(app, "CreateDeckOverlay", "DialogPanel").anchor_top,
-			0.28
-		)
+		create_deck_panel.anchor_top == 1.0
+		and create_deck_panel.anchor_bottom == 1.0
+		and delete_dialog_panel.anchor_top == 1.0
+		and delete_dialog_panel.anchor_bottom == 1.0
+		and is_equal_approx(create_deck_panel.offset_bottom, -40.0)
 		and is_equal_approx(
-			_dialog(app, "RenameDeckOverlay", "DialogPanel").anchor_top,
-			0.28
+			create_deck_panel.offset_top,
+			-(40.0 + create_deck_panel.custom_minimum_size.y)
 		)
-		and is_equal_approx(
-			_dialog(app, "DeleteConfirmationOverlay", "DialogPanel").anchor_top,
-			0.5
-		),
-		"Main Keyboard: 입력 field 팝업만 IME 측정과 무관하게 상단 배치"
+		and _dialog(app, "CreateDeckOverlay", "KeyboardShift").get("avoid_target")
+		== NodePath("DialogPanel"),
+		"Main Keyboard: 팝업을 하단 시트로 두고 키보드가 오르면 패널째 회피"
 	)
 	check(
 		_view(app, "CardEditorView").get_script().resource_path.ends_with(

@@ -424,6 +424,17 @@ func _apply_safe_area() -> void:
 	page_margin.offset_right = -(BASE_PAGE_MARGIN + safe_insets.z)
 	page_margin.offset_bottom = -(BASE_PAGE_MARGIN + safe_insets.w)
 
+	for overlay in [
+		create_deck_overlay,
+		rename_deck_overlay,
+		delete_confirmation_overlay,
+		exit_confirmation_overlay,
+		card_delete_confirmation_overlay,
+		discard_card_changes_overlay,
+		restore_backup_confirmation_overlay,
+	]:
+		(overlay as ModalDialog).set_bottom_inset(safe_insets.w)
+
 
 func start_default_deck() -> void:
 	_show_startup_view()
