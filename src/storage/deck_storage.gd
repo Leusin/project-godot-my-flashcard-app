@@ -44,8 +44,17 @@ static func list_deck_files() -> Array[String]:
 	for file_name in DirAccess.get_files_at(_decks_dir):
 		if DeckNaming.is_deck_file(file_name):
 			decks.append(file_name)
-	
-	decks.sort()
+
+	# 새로 만들거나 방금 고친 덱을 위에 둔다. 시각이 같으면 이름순으로 안정적으로 정렬한다.
+	var changed_at := {}
+	for file_name in decks:
+		changed_at[file_name] = FileAccess.get_modified_time(deck_path(file_name))
+	decks.sort_custom(
+		func(left: String, right: String) -> bool:
+			if changed_at[left] == changed_at[right]:
+				return left.naturalnocasecmp_to(right) < 0
+			return changed_at[left] > changed_at[right]
+	)
 	return decks
 
 

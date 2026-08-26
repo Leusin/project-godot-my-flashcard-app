@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" path="res://src/main/card_detail_view.tscn" id="16_card_detail"]
 [ext_resource type="PackedScene" path="res://src/main/card_context_menu.tscn" id="17_card_context"]
 [ext_resource type="PackedScene" path="res://src/main/settings_view.tscn" id="18_settings"]
+[ext_resource type="PackedScene" path="res://src/main/library_context_menu.tscn" id="19_library_menu"]
 
 [node name="Main" type="Control" unique_id=1978189679]
 layout_mode = 3
@@ -72,6 +73,10 @@ visible = false
 layout_mode = 2
 
 [node name="AddDeckMenu" parent="." unique_id=1212683312 instance=ExtResource("14_add_menu")]
+visible = false
+layout_mode = 1
+
+[node name="LibraryContextMenu" parent="." instance=ExtResource("19_library_menu")]
 visible = false
 layout_mode = 1
 

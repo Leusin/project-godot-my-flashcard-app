@@ -105,6 +105,84 @@ func run_tests() -> void:
 	app.show_library()
 
 	check(_view(app, "LibraryContainer").visible, "MVP: 덱 목록 화면 표시")
+	# 인스턴스한 공용 header 밑에 붙인 노드는 [editable path] 표시가 없으면
+	# 실행 중에는 보이지만 export 변환에서 통째로 사라진다. 빈 화면으로 나가는 것을 막는다.
+	var header_scenes := [
+		"res://src/main/library_view.tscn",
+		"res://src/main/study_ready_view.tscn",
+		"res://src/main/card_list_view.tscn",
+		"res://src/main/card_detail_view.tscn",
+		"res://src/main/card_editor_view.tscn",
+		"res://src/main/settings_view.tscn",
+		"res://src/main/study_view.tscn",
+	]
+	var header_scenes_editable := true
+	for scene_path in header_scenes:
+		var scene_text := FileAccess.get_file_as_string(scene_path)
+		if not scene_text.contains('parent="Header/'):
+			continue
+		header_scenes_editable = (
+			header_scenes_editable
+			and scene_text.contains('[editable path="Header"]')
+		)
+	check(
+		header_scenes_editable,
+		"Main Export: 공용 header에 붙인 노드를 editable로 표시해 export 누락 방지"
+	)
+	var header_gap_consistent := true
+	for scene_path in header_scenes:
+		header_gap_consistent = (
+			header_gap_consistent
+			and FileAccess.get_file_as_string(scene_path).contains(
+				"theme_override_constants/separation = 32"
+			)
+		)
+	check(
+		header_gap_consistent,
+		"Main Navigation: 모든 화면에서 header와 내용 사이 여백을 같게 유지"
+	)
+	check(
+		_view(app, "InteractionPanel").visible == MainApp.is_mobile()
+		and _view(app, "InteractionTitle").visible == MainApp.is_mobile(),
+		"Main Settings: 햅틱 설정은 진동이 있는 모바일에서만 표시"
+	)
+	check(
+		(_view(app, "SettingsScroll") as ScrollContainer).scroll_deadzone == 12,
+		"Main Settings: 버튼 위에서 끌어도 touch scroll이 되도록 deadzone 설정"
+	)
+	check(
+		_view(app, "LibraryHeading").text == "덱 목록",
+		"Main Navigation: 시작 화면 이름을 덱 목록으로 통일"
+	)
+	check(
+		_view(app, "LibraryHeading").horizontal_alignment
+		== HORIZONTAL_ALIGNMENT_LEFT
+		and _view(app, "LibraryHeading").get_parent().get_parent().scene_file_path
+		.ends_with("app_header.tscn"),
+		"Main Navigation: 공용 header에서 덱 목록 제목을 좌측 정렬"
+	)
+	var shared_header_titles: Array[Label] = [
+		_view(app, "LibraryHeading") as Label,
+		_view(app, "SettingsTitle") as Label,
+		_view(app, "StudyReadyTitle") as Label,
+		_view(app, "CardListDeckLabel") as Label,
+		_view(app, "CardDetailDeckLabel") as Label,
+		_view(app, "CardEditorTitle") as Label,
+		_view(app, "DeckLabel") as Label,
+	]
+	var headers_are_shared_and_left_aligned := true
+	for title in shared_header_titles:
+		headers_are_shared_and_left_aligned = (
+			headers_are_shared_and_left_aligned
+			and title.horizontal_alignment == HORIZONTAL_ALIGNMENT_LEFT
+			and title.get_parent().get_parent().scene_file_path.ends_with(
+				"app_header.tscn"
+			)
+		)
+	check(
+		headers_are_shared_and_left_aligned,
+		"Main Navigation: 모든 주요 화면이 좌측 제목 공용 header 사용"
+	)
 	check(not _view(app, "SettingsView").visible, "Main Settings: 덱 목록에서 설정 화면 숨김")
 	check(not _view(app, "StudyReadyView").visible, "Main Ready: 덱 목록에서 준비 화면 숨김")
 	check(
@@ -125,7 +203,12 @@ func run_tests() -> void:
 		_view(_view(app, "LibraryContainer"), "PrivacyPolicyLink") == null,
 		"Main Privacy: 덱 목록 하단에서 개인정보처리방침 제거"
 	)
-	_view(app, "LibraryMenuButton").pressed.emit()
+	_view(app, "LibrarySettingsButton").pressed.emit()
+	check(
+		_view(app, "LibraryContextMenu").visible
+		and _view(app, "OpenSettingsButton").text == "설정",
+		"Main Settings: 덱 목록 ⋮가 확장 가능한 context list 표시"
+	)
 	_view(app, "OpenSettingsButton").pressed.emit()
 	var settings_view := _view(app, "SettingsView") as VBoxContainer
 	var privacy_policy_link := _view(settings_view, "PrivacyPolicyLink") as LinkButton
@@ -146,6 +229,27 @@ func run_tests() -> void:
 		and _view(settings_view, "RestoreBackupButton").text == "전체 복원",
 		"Main Settings: 버전과 전체 백업·복원 작업 표시"
 	)
+	var haptics_toggle := _view(settings_view, "HapticsToggle") as CheckButton
+	check(
+		haptics_toggle.button_pressed
+		and haptics_toggle.text.is_empty()
+		and haptics_toggle.custom_minimum_size == Vector2(92, 64)
+		and _view(settings_view, "HapticsLabel").text == "햅틱 사용"
+		and haptics_toggle.get_theme_icon("checked").get_width() == 73
+		and haptics_toggle.get_theme_stylebox("normal") is StyleBoxEmpty
+		and haptics_toggle.get_theme_stylebox("hover") is StyleBoxEmpty
+		and haptics_toggle.toggled.is_connected(
+			Callable(app, "_on_haptics_toggled")
+		),
+		"Main Settings: 테두리 없이 설명과 분리된 햅틱 토글 표시"
+	)
+	haptics_toggle.button_pressed = false
+	check(
+		not (_view(app, "CardFrame") as StudyGestureSurface).haptics_enabled
+		and not DeckStorage.load_settings().haptics_enabled,
+		"Main Settings: 햅틱 끄기를 즉시 적용하고 저장"
+	)
+	haptics_toggle.button_pressed = true
 	check(
 		_view(settings_view, "BackupDialog").access == FileDialog.ACCESS_FILESYSTEM
 		and _view(settings_view, "BackupDialog").file_mode == FileDialog.FILE_MODE_SAVE_FILE
@@ -178,7 +282,7 @@ func run_tests() -> void:
 		"Main: 덱 목록을 왼쪽부터 정렬"
 	)
 	check(
-		_view(app, "LibraryContainer").get_theme_constant("separation") == 30
+		_view(app, "LibraryContainer").get_theme_constant("separation") == 32
 		and _view(app, "DeckList").get_theme_constant("h_separation") == 28
 		and _view(app, "DeckList").get_theme_constant("v_separation") == 32,
 		"Main: 덱 헤더와 카드 목록에 넉넉한 여백 표시"
@@ -202,25 +306,25 @@ func run_tests() -> void:
 		and _view(deck_buttons[0], "BackCardNear") != null,
 		"Main: 덱 타일을 세 장의 카드 뭉치로 표시"
 	)
-	var library_menu_button := _view(app, "LibraryMenuButton") as Button
+	var library_add_button := _view(app, "LibraryAddButton") as Button
+	var library_settings_button := _view(app, "LibrarySettingsButton") as Button
 	check(
-		library_menu_button.text == "⋮"
-		and library_menu_button.custom_minimum_size == Vector2(64, 64)
-		and library_menu_button.get_theme_stylebox("normal") is StyleBoxEmpty,
-		"Main Create: 덱 추가와 설정을 header ⋮ 하나로 통합"
+		library_add_button.text.is_empty()
+		and library_settings_button.text.is_empty()
+		and library_add_button.icon.get_width() == 48
+		and library_settings_button.icon.get_width() == 48
+		and library_add_button.custom_minimum_size == Vector2(72, 72)
+		and library_settings_button.custom_minimum_size == Vector2(72, 72)
+		and library_add_button.get_theme_stylebox("normal") is StyleBoxEmpty
+		and library_settings_button.get_theme_stylebox("normal") is StyleBoxEmpty,
+		"Main Header: 굵은 SVG 덱 추가와 앱 설정 아이콘을 분리"
 	)
 	check(
-		_view(deck_buttons[0], "DeckMenuButton").custom_minimum_size == Vector2(64, 64),
-		"Main Export: 덱 관리 버튼을 모바일 크기로 표시"
+		_view(deck_buttons[0], "DeckMenuButton") == null
+		and deck_buttons[0].custom_minimum_size == Vector2(300, 220),
+		"Main Deck: 목록 타일을 기존 비율로 표시하고 개별 ⋮ 제거"
 	)
-	check(
-		_view(deck_buttons[0], "DeckMenuButton").get_theme_stylebox("normal")
-		is StyleBoxEmpty
-		and _view(deck_buttons[0], "DeckMenuButton").get_theme_stylebox("hover")
-		is StyleBoxEmpty,
-		"Main Deck Actions: ⋮ 버튼의 테두리와 hover 배경 제거"
-	)
-	library_menu_button.pressed.emit()
+	library_add_button.pressed.emit()
 	var add_deck_menu := _view(app, "AddDeckMenu") as Control
 	var add_deck_menu_panel := _view(app, "AddDeckMenuPanel") as PanelContainer
 	check(
@@ -228,13 +332,13 @@ func run_tests() -> void:
 		and _view(app, "CreateNewDeckButton").text == "새 덱 만들기"
 		and _view(app, "ImportMarkdownButton").text == "Markdown 가져오기"
 		and _view(app, "CreateFromClipboardButton").text == "클립보드에서 만들기"
-		and _view(app, "OpenSettingsButton").text == "설정"
+		and add_deck_menu.find_child("OpenSettingsButton", true, false) == null
 		and add_deck_menu.find_child("CopyAiPromptButton", true, false) == null,
-		"Main Create: ⋮ 메뉴에서 새 덱, Markdown, 클립보드, 설정 선택"
+		"Main Create: + 메뉴에는 세 가지 덱 추가 작업만 표시"
 	)
 	check(
 		add_deck_menu.scene_file_path.ends_with("add_deck_menu.tscn")
-		and add_deck_menu_panel.custom_minimum_size == Vector2(320, 324)
+		and add_deck_menu_panel.custom_minimum_size == Vector2(320, 252)
 		and _view(app, "CreateNewDeckButton").custom_minimum_size.y == 72.0
 		and _view(app, "CreateFromClipboardButton").custom_minimum_size.y == 72.0
 		and _view(app, "CreateNewDeckButton").get_theme_font_size("font_size") == 30,
@@ -256,7 +360,7 @@ func run_tests() -> void:
 	)
 	var add_anchor_rect := MainApp._control_rect_in_overlay(
 		add_deck_menu,
-		library_menu_button
+		library_add_button
 	)
 	var add_menu_size := add_deck_menu_panel.get_combined_minimum_size()
 	var expected_add_menu_x := clampf(
@@ -271,7 +375,7 @@ func run_tests() -> void:
 			add_anchor_rect.end.y + 4.0
 		)
 		and not add_deck_menu_panel.get_rect().intersects(add_anchor_rect),
-		"Main Create: 추가 선택 context list를 header ⋮ 아래에 간격 두고 표시"
+		"Main Create: 추가 선택 context list를 header + 아래에 간격 두고 표시"
 	)
 	check(app.handle_back_request(), "Main Create: 추가 선택창에서 뒤로가기 요청 소비")
 	check(not add_deck_menu.visible, "Main Create: 뒤로가기로 추가 선택창 닫기")
@@ -286,7 +390,8 @@ func run_tests() -> void:
 	)
 	app.show_library()
 	deck_buttons = _view(app, "DeckList").get_children()
-	_view(deck_buttons[0], "DeckMenuButton").pressed.emit()
+	_view(deck_buttons[0], "DeckButton").pressed.emit()
+	_view(app, "ReadyDeckMenuButton").pressed.emit()
 	var deck_context_menu := _view(app, "DeckContextMenu") as Control
 	check(deck_context_menu.visible, "Main Export: ⋮ 위치에 context list 표시")
 	check(
@@ -315,7 +420,7 @@ func run_tests() -> void:
 		== Color.BLACK,
 		"Main Deck Actions: context list hover에서도 검은 글자 유지"
 	)
-	var deck_menu_button := _view(deck_buttons[0], "DeckMenuButton") as Button
+	var deck_menu_button := _view(app, "ReadyDeckMenuButton") as Button
 	var deck_menu_anchor_rect := MainApp._control_rect_in_overlay(
 		deck_context_menu,
 		deck_menu_button
@@ -328,7 +433,7 @@ func run_tests() -> void:
 		and not _view(app, "DeckContextMenuPanel").get_rect().intersects(
 			deck_menu_anchor_rect
 		),
-		"Main Deck Actions: context list를 ⋮ 버튼 아래에 간격 두고 배치"
+		"Main Deck Actions: 학습 준비 ⋮ 아래에 context list 배치"
 	)
 	var deck_menu_size := (
 		_view(app, "DeckContextMenuPanel") as PanelContainer
@@ -465,8 +570,10 @@ func run_tests() -> void:
 	check(
 		_view(app, "CardEditorView").get_script().resource_path.ends_with(
 			"keyboard_avoider.gd"
-		),
-		"Main Keyboard: 카드 편집 입력창도 공용 키보드 회피 사용"
+		)
+		and _view(app, "CardEditorView").is_processing()
+		== DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD),
+		"Main Keyboard: 카드 편집 키보드 회피는 지원 플랫폼에서만 실행"
 	)
 	_view(app, "RenameDeckButton").pressed.emit()
 	var rename_overlay := _view(app, "RenameDeckOverlay") as Control
@@ -500,7 +607,7 @@ func run_tests() -> void:
 	)
 	_dialog(app, "RenameDeckOverlay", "SecondaryButton").pressed.emit()
 	check(not rename_overlay.visible, "Main Rename: 취소하면 이름 변경창 닫기")
-	_view(deck_buttons[0], "DeckMenuButton").pressed.emit()
+	_view(app, "ReadyDeckMenuButton").pressed.emit()
 	_view(app, "DeleteDeckButton").pressed.emit()
 	var delete_overlay := _view(app, "DeleteConfirmationOverlay") as Control
 	check(
@@ -524,11 +631,22 @@ func run_tests() -> void:
 	check(app.handle_back_request(), "Main Delete: 확인창에서 뒤로가기 요청 소비")
 	check(not delete_overlay.visible, "Main Delete: 확인창에서 뒤로가면 취소")
 	check(DeckStorage.deck_exists(TEST_DECK), "Main Delete: 취소하면 덱 유지")
-	_view(deck_buttons[0], "DeckButton").pressed.emit()
 	check(not _view(app, "LibraryContainer").visible, "MVP: 덱 선택 후 목록 숨김")
 	check(_view(app, "StudyReadyView").visible, "Main Ready: 덱 선택 후 학습 준비 화면 표시")
 	check(not _view(app, "StudyContainer").visible, "Main Ready: 덱 선택만으로 학습을 시작하지 않음")
 	check(_view(app, "ReadyDeckNameLabel").text == "__gd_main", "Main Ready: 선택한 덱 이름 표시")
+	check(
+		_view(app, "StudyReadyTitle").text == "학습 준비"
+		and _view(app, "ReadyDeckNameLabel").horizontal_alignment
+		== HORIZONTAL_ALIGNMENT_CENTER
+		and _view(app, "SetupDeckNameLabel").horizontal_alignment
+		== HORIZONTAL_ALIGNMENT_CENTER
+		and _view(app, "BackToLibraryButton").text.is_empty()
+		and _view(app, "BackToLibraryButton").icon.get_width() == 48
+		and _view(app, "ReadyDeckMenuButton").text.is_empty()
+		and _view(app, "ReadyDeckMenuButton").icon.get_width() == 48,
+		"Main Navigation: 중앙 제목·덱 이름과 큰 SVG header 아이콘 표시"
+	)
 	check(
 		_view(app, "ReadyTotalCountLabel").text == "2"
 		and _view(app, "ReadyNewCountLabel").text == "2"
@@ -1214,11 +1332,14 @@ func run_tests() -> void:
 	check(
 		_view(app, "CardDetailView").visible
 		and not _view(app, "StudyResultView").is_visible_in_tree()
-		and _view(app, "BackFromCardDetailButton").text == "← 학습 결과"
+		and _view(app, "BackFromCardDetailButton").text.is_empty()
+		and _view(app, "BackFromCardDetailButton").tooltip_text
+		== "학습 결과로 돌아가기"
 		and _view(app, "DetailQuestionLabel").text == "A"
 		and _view(app, "CardDetailMenuButton").visible
-		and _view(app, "CardDetailMenuButton").text == "⋮"
-		and _view(app, "CardDetailMenuButton").get_parent().name == "Header",
+		and _view(app, "CardDetailMenuButton").text.is_empty()
+		and _view(app, "CardDetailMenuButton").icon.get_width() == 48
+		and _view(app, "CardDetailMenuButton").get_parent().name == "RightActions",
 		"Main Result: 결과 카드를 열고 설정 버튼은 Header 우상단에 표시"
 	)
 	_view(app, "CardTapButton").pressed.emit()
@@ -1279,7 +1400,8 @@ func run_tests() -> void:
 	var rename_tile := _find_deck_tile(app, "__gd_main_rename")
 	check(rename_tile != null, "Main Rename: 이름을 바꿀 덱 타일 표시")
 	if rename_tile != null:
-		_view(rename_tile, "DeckMenuButton").pressed.emit()
+		_view(rename_tile, "DeckButton").pressed.emit()
+		_view(app, "ReadyDeckMenuButton").pressed.emit()
 		_view(app, "RenameDeckButton").pressed.emit()
 		_dialog(app, "RenameDeckOverlay", "DialogInput").text = "__gd_main"
 		_dialog(app, "RenameDeckOverlay", "PrimaryButton").pressed.emit()
@@ -1302,16 +1424,19 @@ func run_tests() -> void:
 		"Main Rename: 마지막 학습 덱 설정도 새 이름으로 이동"
 	)
 	check(
-		_view(app, "LibraryStatusLabel").text
-		== "'__gd_main_rename' → '__gd_main_renamed' 이름 변경 완료",
-		"Main Rename: 목록 아래 완료 메시지 표시"
+		_view(app, "ReadyDeckNameLabel").text == "__gd_main_renamed"
+		and _view(app, "StudyReadyView").find_child(
+			"ReadyViewStatusLabel", true, false
+		) == null,
+		"Main Rename: 학습 준비 제목이 새 이름으로 바뀌고 상태 라벨은 없다"
 	)
 
 	app.show_library()
 	var duplicate_tile := _find_deck_tile(app, "__gd_main")
 	check(duplicate_tile != null, "Main Duplicate: 복제할 덱 타일 표시")
 	if duplicate_tile != null:
-		_view(duplicate_tile, "DeckMenuButton").pressed.emit()
+		_view(duplicate_tile, "DeckButton").pressed.emit()
+		_view(app, "ReadyDeckMenuButton").pressed.emit()
 		_view(app, "DuplicateDeckButton").pressed.emit()
 	check(DeckStorage.deck_exists(DUPLICATED_DECK), "Main Duplicate: 새 덱 파일 생성")
 	check(
@@ -1323,8 +1448,8 @@ func run_tests() -> void:
 		"Main Duplicate: 학습 기록 복사"
 	)
 	check(
-		_view(app, "LibraryStatusLabel").text == "'__gd_main' → '__gd_main (2)' 복제 완료",
-		"Main Duplicate: 목록 아래 완료 메시지 표시"
+		DeckStorage.deck_exists(DUPLICATED_DECK),
+		"Main Duplicate: 복제한 덱 파일 존재"
 	)
 	check(
 		not app.duplicate_deck_from_library("__없는덱.md")
@@ -1344,7 +1469,8 @@ func run_tests() -> void:
 	var delete_tile := _find_deck_tile(app, "__gd_main_delete")
 	check(delete_tile != null, "Main Delete: 삭제할 덱 타일 표시")
 	if delete_tile != null:
-		_view(delete_tile, "DeckMenuButton").pressed.emit()
+		_view(delete_tile, "DeckButton").pressed.emit()
+		_view(app, "ReadyDeckMenuButton").pressed.emit()
 		_view(app, "DeleteDeckButton").pressed.emit()
 		_dialog(app, "DeleteConfirmationOverlay", "PrimaryButton").pressed.emit()
 	check(not DeckStorage.deck_exists(DELETE_DECK), "Main Delete: 덱 파일 제거")
@@ -1419,9 +1545,31 @@ func run_tests() -> void:
 		and row_reorder_handle != null
 		and row_reorder_handle.visible
 		and row_reorder_handle.get_index() == 0
-		and row_reorder_handle.disabled,
-		"Main Card List: 행 왼쪽에 정렬 placeholder, 오른쪽에 ⋮ 관리 버튼 표시"
+		and not row_reorder_handle.disabled,
+		"Main Card List: 행 왼쪽에 순서 손잡이, 오른쪽에 ⋮ 관리 버튼 표시"
 	)
+	var reorder_deck_before := DeckParser.parse(DeckStorage.read_deck(EDIT_DECK))
+	app.call("_on_card_row_reorder_started", 0)
+	app.call("_move_card_row", 0, 1)
+	app.call("_on_card_row_reorder_ended", 1)
+	var reorder_deck_after := DeckParser.parse(DeckStorage.read_deck(EDIT_DECK))
+	check(
+		reorder_deck_before.size() == reorder_deck_after.size()
+		and reorder_deck_after[0].question == reorder_deck_before[1].question
+		and reorder_deck_after[1].question == reorder_deck_before[0].question,
+		"Main Card List: 손잡이로 옮긴 카드 순서를 Markdown에 저장"
+	)
+	check(
+		app.card_rows.get_child(0).card_index == 0
+		and app.card_rows.get_child(1).card_index == 1
+		and (app.card_rows.get_child(0) as CardCollectionRow).question_label.text
+		== reorder_deck_after[0].question
+		and DeckStorage.load_study_resume(EDIT_DECK) == null,
+		"Main Card List: 순서 변경 후 행 index와 이어하기 기록 정리"
+	)
+	app.call("_on_card_row_reorder_started", 0)
+	app.call("_move_card_row", 0, 1)
+	app.call("_on_card_row_reorder_ended", 1)
 	row_menu_button.pressed.emit()
 	check(
 		_view(app, "CardContextMenu").visible
@@ -1477,8 +1625,9 @@ func run_tests() -> void:
 		and not _view(app, "DetailAnswerScroll").visible
 		and not _view(app, "DetailCardProperties").visible
 		and _view(app, "CardDetailMenuButton").visible
-		and _view(app, "CardDetailMenuButton").text == "⋮"
-		and _view(app, "CardDetailMenuButton").get_parent().name == "Header"
+		and _view(app, "CardDetailMenuButton").text.is_empty()
+		and _view(app, "CardDetailMenuButton").icon.get_width() == 48
+		and _view(app, "CardDetailMenuButton").get_parent().name == "RightActions"
 		and _view(app, "CardDetailMenuButton").get_index()
 		== _view(app, "CardDetailMenuButton").get_parent().get_child_count() - 1
 		and _view(app, "CardDetailChrome") == null
@@ -1567,7 +1716,7 @@ func run_tests() -> void:
 	)
 	question_input.text = "Old"
 	check(
-		_view(app, "SaveCardButton").get_parent().name == "Header"
+		_view(app, "SaveCardButton").get_parent().name == "RightActions"
 		and _view(app, "SaveCardButton").text == "저장"
 		and _view(app, "CardEditorView").find_child("DeleteCardButton", true, false)
 		== null,
@@ -1765,7 +1914,7 @@ func run_tests() -> void:
 	)
 
 	app.show_library()
-	_view(app, "LibraryMenuButton").pressed.emit()
+	_view(app, "LibraryAddButton").pressed.emit()
 	_view(app, "CreateNewDeckButton").pressed.emit()
 	check(
 		_view(app, "CreateDeckOverlay").visible
@@ -1813,7 +1962,7 @@ func run_tests() -> void:
 		and not DeckStorage.deck_exists(CREATED_DECK),
 		"Main Create: 첫 카드 작성을 취소하면 빈 덱을 남기지 않음"
 	)
-	_view(app, "LibraryMenuButton").pressed.emit()
+	_view(app, "LibraryAddButton").pressed.emit()
 	_view(app, "CreateNewDeckButton").pressed.emit()
 	_dialog(app, "CreateDeckOverlay", "DialogInput").text = "__gd_main_created"
 	_dialog(app, "CreateDeckOverlay", "PrimaryButton").pressed.emit()
@@ -1831,9 +1980,12 @@ func run_tests() -> void:
 		"Main Create: 첫 카드 저장 순간 유효한 Markdown 덱 생성"
 	)
 	check(
-		_view(app, "CardListStatusLabel").text
-		== "'__gd_main_created' 덱 생성 완료",
-		"Main Create: 생성 완료 후 카드 추가가 가능한 목록 표시"
+		_view(app, "CardListView").visible
+		and _view(app, "CardListDeckLabel").text == "__gd_main_created"
+		and _view(app, "CardListView").find_child(
+			"CardListStatusLabel", true, false
+		) == null,
+		"Main Create: 생성 완료 후 상태 라벨 없이 카드 목록 표시"
 	)
 	_view(app, "BackFromCardListButton").pressed.emit()
 	check(
@@ -1877,8 +2029,8 @@ func run_tests() -> void:
 		"Main Clipboard: 복사한 Markdown 원문 그대로 덱 저장"
 	)
 	check(
-		_view(app, "CardListStatusLabel").text
-		== "'__gd_main_clipboard' 덱 생성 완료",
+		_view(app, "CardListView").visible
+		and _view(app, "CardListDeckLabel").text == "__gd_main_clipboard",
 		"Main Clipboard: 생성 완료 후 카드 목록 진입"
 	)
 	_view(app, "BackFromCardListButton").pressed.emit()

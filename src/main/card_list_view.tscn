@@ -1,44 +1,40 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
 [ext_resource type="PackedScene" path="res://src/main/card_collection_view.tscn" id="2_collection"]
+[ext_resource type="Texture2D" path="res://assets/icons/chevron_left.svg" id="3_back"]
+[ext_resource type="PackedScene" path="res://src/main/app_header.tscn" id="4_header"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxHeaderButton"]
 
 [node name="CardListView" type="VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 theme = ExtResource("1_theme")
-theme_override_constants/separation = 16
+theme_override_constants/separation = 32
 
-[node name="Header" type="HBoxContainer" parent="."]
+[node name="Header" parent="." instance=ExtResource("4_header")]
 layout_mode = 2
-theme_override_constants/separation = 12
 
-[node name="BackFromCardListButton" type="Button" parent="Header"]
-custom_minimum_size = Vector2(132, 64)
+[node name="BackFromCardListButton" type="Button" parent="Header/LeftActions"]
+custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "← 학습 준비"
+icon = ExtResource("3_back")
+theme_override_styles/normal = SubResource("StyleBoxHeaderButton")
+theme_override_styles/pressed = SubResource("StyleBoxHeaderButton")
+theme_override_styles/hover = SubResource("StyleBoxHeaderButton")
+theme_override_styles/disabled = SubResource("StyleBoxHeaderButton")
+theme_override_styles/focus = SubResource("StyleBoxHeaderButton")
+tooltip_text = "뒤로"
 
-[node name="CardListDeckLabel" type="Label" parent="Header"]
+[node name="CardListDeckLabel" type="Label" parent="Header/TitleSlot"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 32
 text = "덱 이름"
-horizontal_alignment = 1
+horizontal_alignment = 0
 vertical_alignment = 1
 text_overrun_behavior = 3
-
-[node name="HeaderBalance" type="Control" parent="Header"]
-custom_minimum_size = Vector2(132, 64)
-layout_mode = 2
-mouse_filter = 2
-
-[node name="CardListStatusLabel" type="Label" parent="."]
-visible = false
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "안내"
-autowrap_mode = 3
 
 [node name="CardListScroll" parent="." instance=ExtResource("2_collection")]
 layout_mode = 2
@@ -48,3 +44,5 @@ custom_minimum_size = Vector2(0, 82)
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "+ 카드 추가"
+
+[editable path="Header"]

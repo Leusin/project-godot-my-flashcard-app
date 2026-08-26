@@ -21,10 +21,15 @@ func _gui_input(event: InputEvent) -> void:
 	if event is not InputEventKey:
 		return
 	var key_event := event as InputEventKey
-	if key_event.keycode == KEY_ENTER or key_event.keycode == KEY_KP_ENTER:
-		accept_event()
-		if key_event.pressed and not key_event.echo:
-			submitted.emit()
+	if key_event.keycode != KEY_ENTER and key_event.keycode != KEY_KP_ENTER:
+		return
+	# 한글 같은 IME 조합 중 Enter는 글자 확정에 필요하다. 이 이벤트를 submit으로
+	# 가로채면 마지막 음절이 사라지거나 다음 입력칸으로 포커스가 튄다.
+	if has_ime_text():
+		return
+	accept_event()
+	if key_event.pressed and not key_event.echo:
+		submitted.emit()
 
 
 func _on_text_changed() -> void:

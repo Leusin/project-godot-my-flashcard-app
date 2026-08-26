@@ -3,6 +3,9 @@ extends PanelContainer
 
 signal selected(index: int)
 signal menu_requested(index: int, anchor: Control)
+signal reorder_started(index: int)
+signal reorder_moved(index: int, pointer_y: float)
+signal reorder_ended(index: int)
 
 const FALLBACK_DRAG_THRESHOLD := 12.0
 
@@ -11,6 +14,7 @@ const FALLBACK_DRAG_THRESHOLD := 12.0
 @export var skip_badge_style: StyleBoxFlat
 
 var card_index := -1
+var _reordering := false
 var _pointer_down := false
 var _dragged := false
 var _scrolling := false
@@ -23,12 +27,13 @@ var _scroll_container: ScrollContainer
 @onready var outcome_badge: PanelContainer = $Margin/Row/Content/Top/OutcomeBadge
 @onready var outcome_label: Label = $Margin/Row/Content/Top/OutcomeBadge/Margin/OutcomeLabel
 @onready var menu_button: Button = $Margin/Row/RowMenuButton
-# 순서 변경은 아직 기능이 없다. 자리와 크기만 잡아 둔 placeholder다.
+# 손잡이를 잡고 위아래로 끌면 카드 자리가 바뀐다. 어디로 옮길지는 App이 정한다.
 @onready var reorder_handle: Button = $Margin/Row/RowReorderHandle
 
 
 func _ready() -> void:
 	menu_button.pressed.connect(_on_menu_pressed)
+	reorder_handle.gui_input.connect(_on_reorder_handle_input)
 	_scroll_container = _find_scroll_container()
 	if _scroll_container != null:
 		_scroll_container.scroll_started.connect(_on_scroll_started)
@@ -42,6 +47,29 @@ func set_row_actions_visible(actions_visible: bool) -> void:
 
 func _on_menu_pressed() -> void:
 	menu_requested.emit(card_index, menu_button)
+
+
+func set_index(index: int) -> void:
+	card_index = index
+
+
+func _on_reorder_handle_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var button_event := event as InputEventMouseButton
+		if button_event.button_index != MOUSE_BUTTON_LEFT:
+			return
+		if button_event.pressed:
+			_reordering = true
+			reorder_started.emit(card_index)
+		elif _reordering:
+			_reordering = false
+			reorder_ended.emit(card_index)
+		accept_event()
+		return
+
+	if event is InputEventMouseMotion and _reordering:
+		reorder_moved.emit(card_index, (event as InputEventMouseMotion).global_position.y)
+		accept_event()
 
 
 func _gui_input(event: InputEvent) -> void:

@@ -4,6 +4,7 @@ extends RefCounted
 var last_deck_file := ""
 var deck_dir := ""
 var shuffle_study := false
+var haptics_enabled := true
 
 func to_json() -> String:
 	return JSON.stringify(
@@ -11,6 +12,7 @@ func to_json() -> String:
 			"LastDeckFile": last_deck_file,
 			"DeckDir": deck_dir,
 			"ShuffleStudy": shuffle_study,
+			"HapticsEnabled": haptics_enabled,
 		},
 		"\t"
 	)
@@ -41,5 +43,8 @@ static func from_json(json: String) -> AppSettings:
 
 	if data.get("ShuffleStudy", false) is bool:
 		settings.shuffle_study = data.get("ShuffleStudy", false)
+
+	if data.get("HapticsEnabled", true) is bool:
+		settings.haptics_enabled = data.get("HapticsEnabled", true)
 
 	return settings

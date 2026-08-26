@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[node name="AppHeader" type="HBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="LeftActions" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TitleSlot" type="HBoxContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RightActions" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 12

@@ -8,12 +8,15 @@ extends Control
 
 
 func _ready() -> void:
-	set_process(true)
+	# Windows의 한글 IME와 모바일 가상 키보드는 별개 기능이다.
+	# 지원하지 않는 플랫폼에서 높이를 조회하면 매 frame 경고가 발생하고 입력을 방해한다.
+	set_process(DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD))
 
 
 func _process(delta: float) -> void:
 	if not is_visible_in_tree():
-		position = Vector2.ZERO
+		if not position.is_equal_approx(Vector2.ZERO):
+			position = Vector2.ZERO
 		return
 	_apply_shift(_desired_shift(), delta)
 
@@ -57,6 +60,9 @@ func _desired_shift() -> float:
 
 func _apply_shift(shift: float, delta: float) -> void:
 	var target_y := -shift
+	# 같은 위치를 계속 다시 쓰면 입력 중 layout/IME 위치 갱신이 불필요하게 반복된다.
+	if is_equal_approx(target_y, position.y):
+		return
 	# OS 키보드 등장 높이가 몇 frame 늦게 잡히므로 짧은 따라잡기로 스냅을 감춘다.
 	if absf(target_y - position.y) < 1.0:
 		position = Vector2(0.0, target_y)

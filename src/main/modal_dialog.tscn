@@ -1,8 +1,8 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene format=3 uid="uid://ci2qn2pq2a26x"]
 
-[ext_resource type="Script" path="res://src/main/modal_dialog.gd" id="1_dialog"]
-[ext_resource type="Script" path="res://src/main/keyboard_avoider.gd" id="2_keyboard"]
-[ext_resource type="Theme" path="res://src/main/main_theme.tres" id="3_theme"]
+[ext_resource type="Script" uid="uid://bm50uo745xyvy" path="res://src/main/modal_dialog.gd" id="1_dialog"]
+[ext_resource type="Script" uid="uid://bfvm5h7ycpr1v" path="res://src/main/keyboard_avoider.gd" id="2_keyboard"]
+[ext_resource type="Theme" uid="uid://bu5jyw4ehw6ya" path="res://src/main/main_theme.tres" id="3_theme"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxDialog"]
 bg_color = Color(1, 1, 1, 1)
@@ -20,6 +20,8 @@ shadow_size = 8
 shadow_offset = Vector2(0, 4)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxInput"]
+content_margin_left = 16.0
+content_margin_right = 16.0
 bg_color = Color(1, 1, 1, 1)
 border_width_left = 2
 border_width_top = 2
@@ -30,10 +32,10 @@ corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
-content_margin_left = 16.0
-content_margin_right = 16.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxInputFocus"]
+content_margin_left = 15.0
+content_margin_right = 15.0
 bg_color = Color(1, 1, 1, 1)
 border_width_left = 3
 border_width_top = 3
@@ -44,18 +46,9 @@ corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
-content_margin_left = 15.0
-content_margin_right = 15.0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxPrimary"]
 bg_color = Color(0.08, 0.08, 0.08, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxPrimaryHover"]
-bg_color = Color(0.24, 0.24, 0.24, 1)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
@@ -68,8 +61,14 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
-[node name="ModalDialog" type="ColorRect"]
-layout_mode = 3
+[sub_resource type="StyleBoxFlat" id="StyleBoxPrimaryHover"]
+bg_color = Color(0.24, 0.24, 0.24, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="ModalDialog" type="ColorRect" unique_id=1209415429]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -79,7 +78,7 @@ theme = ExtResource("3_theme")
 color = Color(0, 0, 0, 0.18)
 script = ExtResource("1_dialog")
 
-[node name="KeyboardShift" type="Control" parent="."]
+[node name="KeyboardShift" type="Control" parent="." unique_id=2073885392]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -90,7 +89,7 @@ mouse_filter = 2
 script = ExtResource("2_keyboard")
 avoid_target = NodePath("DialogPanel")
 
-[node name="DialogPanel" type="PanelContainer" parent="KeyboardShift"]
+[node name="DialogPanel" type="PanelContainer" parent="KeyboardShift" unique_id=1788935778]
 custom_minimum_size = Vector2(600, 360)
 layout_mode = 1
 anchors_preset = 7
@@ -104,29 +103,28 @@ offset_right = 300.0
 offset_bottom = -40.0
 grow_horizontal = 2
 grow_vertical = 0
-mouse_filter = 0
 theme_override_styles/panel = SubResource("StyleBoxDialog")
 
-[node name="Margin" type="MarginContainer" parent="KeyboardShift/DialogPanel"]
+[node name="Margin" type="MarginContainer" parent="KeyboardShift/DialogPanel" unique_id=1746708311]
 layout_mode = 2
 theme_override_constants/margin_left = 32
 theme_override_constants/margin_top = 28
 theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 28
 
-[node name="Content" type="VBoxContainer" parent="KeyboardShift/DialogPanel/Margin"]
+[node name="Content" type="VBoxContainer" parent="KeyboardShift/DialogPanel/Margin" unique_id=636679622]
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 24
 alignment = 1
 
-[node name="DialogTitle" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content"]
+[node name="DialogTitle" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content" unique_id=1679844548]
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
 text = "확인"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="DialogDescription" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content"]
+[node name="DialogDescription" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content" unique_id=1607736997]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.32, 0.32, 0.32, 1)
 theme_override_font_sizes/font_size = 24
@@ -134,7 +132,7 @@ text = "설명"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="DialogInput" type="LineEdit" parent="KeyboardShift/DialogPanel/Margin/Content"]
+[node name="DialogInput" type="LineEdit" parent="KeyboardShift/DialogPanel/Margin/Content" unique_id=1995334835]
 visible = false
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
@@ -147,7 +145,7 @@ theme_override_styles/focus = SubResource("StyleBoxInputFocus")
 placeholder_text = "입력"
 select_all_on_focus = true
 
-[node name="DialogCounter" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content"]
+[node name="DialogCounter" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content" unique_id=1562501647]
 visible = false
 layout_mode = 2
 theme_override_colors/font_color = Color(0.45, 0.45, 0.45, 1)
@@ -155,7 +153,7 @@ theme_override_font_sizes/font_size = 21
 text = "0/40"
 horizontal_alignment = 2
 
-[node name="DialogError" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content"]
+[node name="DialogError" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content" unique_id=636837575]
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
@@ -163,27 +161,27 @@ text = "오류"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="Buttons" type="HBoxContainer" parent="KeyboardShift/DialogPanel/Margin/Content"]
+[node name="Buttons" type="HBoxContainer" parent="KeyboardShift/DialogPanel/Margin/Content" unique_id=1350125699]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="PrimaryButton" type="Button" parent="KeyboardShift/DialogPanel/Margin/Content/Buttons"]
+[node name="PrimaryButton" type="Button" parent="KeyboardShift/DialogPanel/Margin/Content/Buttons" unique_id=1972507155]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
-theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 28
 theme_override_styles/normal = SubResource("StyleBoxPrimary")
-theme_override_styles/hover = SubResource("StyleBoxPrimaryHover")
 theme_override_styles/pressed = SubResource("StyleBoxPrimaryPressed")
+theme_override_styles/hover = SubResource("StyleBoxPrimaryHover")
 theme_override_styles/focus = SubResource("StyleBoxPrimary")
 text = "확인"
 
-[node name="SecondaryButton" type="Button" parent="KeyboardShift/DialogPanel/Margin/Content/Buttons"]
+[node name="SecondaryButton" type="Button" parent="KeyboardShift/DialogPanel/Margin/Content/Buttons" unique_id=1614885142]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3

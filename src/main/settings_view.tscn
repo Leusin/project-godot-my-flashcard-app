@@ -1,6 +1,10 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
+[ext_resource type="Texture2D" path="res://assets/icons/toggle_on.svg" id="2_toggle_on"]
+[ext_resource type="Texture2D" path="res://assets/icons/toggle_off.svg" id="3_toggle_off"]
+[ext_resource type="Texture2D" path="res://assets/icons/chevron_left.svg" id="4_back"]
+[ext_resource type="PackedScene" path="res://src/main/app_header.tscn" id="5_header"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxSection"]
 bg_color = Color(1, 1, 1, 1)
@@ -18,34 +22,35 @@ corner_radius_bottom_left = 14
 color = Color(0.82, 0.82, 0.8, 1)
 thickness = 2
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxIconButton"]
+
 [node name="SettingsView" type="VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 theme = ExtResource("1_theme")
-theme_override_constants/separation = 24
+theme_override_constants/separation = 32
 
-[node name="Header" type="HBoxContainer" parent="."]
+[node name="Header" parent="." instance=ExtResource("5_header")]
 layout_mode = 2
-theme_override_constants/separation = 12
 
-[node name="BackFromSettingsButton" type="Button" parent="Header"]
-custom_minimum_size = Vector2(112, 64)
+[node name="BackFromSettingsButton" type="Button" parent="Header/LeftActions"]
+custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "← 내 덱"
+icon = ExtResource("4_back")
+theme_override_styles/normal = SubResource("StyleBoxIconButton")
+theme_override_styles/pressed = SubResource("StyleBoxIconButton")
+theme_override_styles/hover = SubResource("StyleBoxIconButton")
+theme_override_styles/disabled = SubResource("StyleBoxIconButton")
+theme_override_styles/focus = SubResource("StyleBoxIconButton")
+tooltip_text = "뒤로"
 
-[node name="SettingsTitle" type="Label" parent="Header"]
+[node name="SettingsTitle" type="Label" parent="Header/TitleSlot"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 36
 text = "설정"
-horizontal_alignment = 1
+horizontal_alignment = 0
 vertical_alignment = 1
-
-[node name="HeaderBalance" type="Control" parent="Header"]
-custom_minimum_size = Vector2(112, 64)
-layout_mode = 2
-mouse_filter = 2
 
 [node name="SettingsStatusLabel" type="Label" parent="."]
 visible = false
@@ -59,11 +64,70 @@ autowrap_mode = 3
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
+scroll_deadzone = 12
 
 [node name="Content" type="VBoxContainer" parent="SettingsScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 24
+
+[node name="InteractionTitle" type="Label" parent="SettingsScroll/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "학습"
+
+[node name="InteractionPanel" type="PanelContainer" parent="SettingsScroll/Content"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxSection")
+
+[node name="Margin" type="MarginContainer" parent="SettingsScroll/Content/InteractionPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="InteractionContent" type="VBoxContainer" parent="SettingsScroll/Content/InteractionPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HapticsRow" type="HBoxContainer" parent="SettingsScroll/Content/InteractionPanel/Margin/InteractionContent"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="HapticsText" type="VBoxContainer" parent="SettingsScroll/Content/InteractionPanel/Margin/InteractionContent/HapticsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="HapticsLabel" type="Label" parent="SettingsScroll/Content/InteractionPanel/Margin/InteractionContent/HapticsRow/HapticsText"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 27
+text = "햅틱 사용"
+
+[node name="HapticsDescription" type="Label" parent="SettingsScroll/Content/InteractionPanel/Margin/InteractionContent/HapticsRow/HapticsText"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.45, 0.45, 1)
+theme_override_font_sizes/font_size = 21
+text = "카드 판정선을 넘을 때 짧게 진동합니다."
+autowrap_mode = 3
+
+[node name="HapticsToggle" type="CheckButton" parent="SettingsScroll/Content/InteractionPanel/Margin/InteractionContent/HapticsRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(92, 64)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_default_cursor_shape = 2
+tooltip_text = "햅틱 켜기 또는 끄기"
+theme_override_icons/checked = ExtResource("2_toggle_on")
+theme_override_icons/checked_disabled = ExtResource("2_toggle_on")
+theme_override_icons/unchecked = ExtResource("3_toggle_off")
+theme_override_icons/unchecked_disabled = ExtResource("3_toggle_off")
+theme_override_styles/normal = SubResource("StyleBoxIconButton")
+theme_override_styles/pressed = SubResource("StyleBoxIconButton")
+theme_override_styles/hover = SubResource("StyleBoxIconButton")
+theme_override_styles/disabled = SubResource("StyleBoxIconButton")
+theme_override_styles/focus = SubResource("StyleBoxIconButton")
 
 [node name="DataTitle" type="Label" parent="SettingsScroll/Content"]
 layout_mode = 2
@@ -204,3 +268,5 @@ size = Vector2i(720, 900)
 title = "복원할 백업 선택"
 initial_position = 2
 size = Vector2i(720, 900)
+
+[editable path="Header"]

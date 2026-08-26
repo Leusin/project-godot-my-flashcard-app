@@ -4,6 +4,8 @@
 [ext_resource type="Script" uid="uid://ckd7lm61l0d42" path="res://src/main/wrong_tally.gd" id="2_tally"]
 [ext_resource type="Script" uid="uid://cdtkjlxu0k1o2" path="res://src/main/study_gesture_surface.gd" id="3_gesture"]
 [ext_resource type="PackedScene" path="res://src/main/study_result_view.tscn" id="4_result"]
+[ext_resource type="Texture2D" path="res://assets/icons/chevron_left.svg" id="5_back"]
+[ext_resource type="PackedScene" path="res://src/main/app_header.tscn" id="6_header"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxStudyCard"]
 bg_color = Color(1, 1, 1, 1)
@@ -48,32 +50,38 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxHeaderButton"]
+
 [node name="StudyFlow" type="VBoxContainer" unique_id=1949007233]
 size_flags_vertical = 3
 theme = ExtResource("1_theme")
-theme_override_constants/separation = 14
+theme_override_constants/separation = 32
 
-[node name="Header" type="HBoxContainer" parent="." unique_id=846375467]
+[node name="Header" parent="." unique_id=846375467 instance=ExtResource("6_header")]
 layout_mode = 2
-theme_override_constants/separation = 12
 
-[node name="BackToReadyButton" type="Button" parent="Header" unique_id=2108732561]
-custom_minimum_size = Vector2(140, 60)
+[node name="BackToReadyButton" type="Button" parent="Header/LeftActions" unique_id=2108732561]
+custom_minimum_size = Vector2(140, 72)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "← 학습 준비"
+icon = ExtResource("5_back")
+theme_override_styles/normal = SubResource("StyleBoxHeaderButton")
+theme_override_styles/pressed = SubResource("StyleBoxHeaderButton")
+theme_override_styles/hover = SubResource("StyleBoxHeaderButton")
+theme_override_styles/disabled = SubResource("StyleBoxHeaderButton")
+theme_override_styles/focus = SubResource("StyleBoxHeaderButton")
+tooltip_text = "뒤로"
 
-[node name="DeckLabel" type="Label" parent="Header" unique_id=586662298]
+[node name="DeckLabel" type="Label" parent="Header/TitleSlot" unique_id=586662298]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
 text = "덱"
-horizontal_alignment = 1
+horizontal_alignment = 0
 vertical_alignment = 1
 text_overrun_behavior = 3
 
-[node name="RemainingLabel" type="Label" parent="Header" unique_id=224445267]
-custom_minimum_size = Vector2(140, 60)
+[node name="RemainingLabel" type="Label" parent="Header/RightActions" unique_id=224445267]
+custom_minimum_size = Vector2(140, 72)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "0장 남음"
@@ -240,3 +248,5 @@ tooltip_text = "오른쪽 방향키"
 
 [node name="StudyResultView" parent="." unique_id=1976919345 instance=ExtResource("4_result")]
 visible = false
+
+[editable path="Header"]

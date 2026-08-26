@@ -1,9 +1,11 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
 [ext_resource type="Script" path="res://src/main/keyboard_avoider.gd" id="2_keyboard"]
 [ext_resource type="Script" path="res://src/main/single_line_text_edit.gd" id="3_single_line"]
 [ext_resource type="Script" path="res://src/main/card_ratio_frame.gd" id="4_card_frame"]
+[ext_resource type="Texture2D" path="res://assets/icons/chevron_left.svg" id="5_back"]
+[ext_resource type="PackedScene" path="res://src/main/app_header.tscn" id="6_header"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxEditorCard"]
 bg_color = Color(1, 1, 1, 1)
@@ -68,33 +70,39 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxHeaderButton"]
+
 [node name="CardEditorView" type="VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 theme = ExtResource("1_theme")
-theme_override_constants/separation = 14
+theme_override_constants/separation = 32
 script = ExtResource("2_keyboard")
 
-[node name="Header" type="HBoxContainer" parent="."]
+[node name="Header" parent="." instance=ExtResource("6_header")]
 layout_mode = 2
-theme_override_constants/separation = 12
 
-[node name="CancelCardEditButton" type="Button" parent="Header"]
-custom_minimum_size = Vector2(112, 64)
+[node name="CancelCardEditButton" type="Button" parent="Header/LeftActions"]
+custom_minimum_size = Vector2(112, 72)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "← 취소"
+icon = ExtResource("5_back")
+theme_override_styles/normal = SubResource("StyleBoxHeaderButton")
+theme_override_styles/pressed = SubResource("StyleBoxHeaderButton")
+theme_override_styles/hover = SubResource("StyleBoxHeaderButton")
+theme_override_styles/disabled = SubResource("StyleBoxHeaderButton")
+theme_override_styles/focus = SubResource("StyleBoxHeaderButton")
+tooltip_text = "취소"
 
-[node name="CardEditorTitle" type="Label" parent="Header"]
+[node name="CardEditorTitle" type="Label" parent="Header/TitleSlot"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 32
 text = "카드 편집"
-horizontal_alignment = 1
+horizontal_alignment = 0
 vertical_alignment = 1
 
-[node name="SaveCardButton" type="Button" parent="Header"]
-custom_minimum_size = Vector2(112, 64)
+[node name="SaveCardButton" type="Button" parent="Header/RightActions"]
+custom_minimum_size = Vector2(112, 72)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "저장"
@@ -222,3 +230,5 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "오류"
 autowrap_mode = 3
+
+[editable path="Header"]

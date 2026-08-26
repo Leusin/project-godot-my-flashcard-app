@@ -67,20 +67,17 @@ const CARD_ANSWER_HEADING_MESSAGE := "답의 줄 시작에는 '# '를 사용할 
 const CARD_SAVE_FAILED_MESSAGE := "카드를 저장하지 못했습니다. 저장 공간을 확인하세요."
 const PRIVACY_POLICY_URL := "https://leusin.github.io/privacy/my-simple-flash-card/"
 const STUDY_INPUT_LOCK_SECONDS := 0.22
-const DECK_TILE_SCENE := preload("res://src/main/deck_tile.tscn")
 const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.tscn")
 
 @export var auto_start := true
 
 @onready var page_margin: MarginContainer = $Margin
-@onready var library_container: VBoxContainer = $Margin/Page/LibraryContainer
-@onready var deck_list: HFlowContainer = $Margin/Page/LibraryContainer/DeckListScroll/DeckList
-@onready var empty_decks_label: Label = $Margin/Page/LibraryContainer/EmptyDecksLabel
-@onready var library_status_label: Label = $Margin/Page/LibraryContainer/LibraryStatusLabel
-@onready var import_dialog: FileDialog = $Margin/Page/LibraryContainer/ImportDialog
-@onready var export_dialog: FileDialog = $Margin/Page/LibraryContainer/ExportDialog
+@onready var library_view: LibraryView = $Margin/Page/LibraryContainer
 @onready var settings_view: VBoxContainer = $Margin/Page/SettingsView
 @onready var settings_status_label: Label = $Margin/Page/SettingsView/SettingsStatusLabel
+@onready var haptics_toggle: CheckButton = (
+	$Margin/Page/SettingsView/SettingsScroll/Content/InteractionPanel/Margin/InteractionContent/HapticsRow/HapticsToggle
+)
 @onready var privacy_policy_link: LinkButton = (
 	$Margin/Page/SettingsView/SettingsScroll/Content/InfoPanel/Margin/Content/PrivacyPolicyLink
 )
@@ -91,6 +88,13 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @onready var restore_dialog: FileDialog = $Margin/Page/SettingsView/RestoreDialog
 @onready var add_deck_menu: Control = $AddDeckMenu
 @onready var add_deck_menu_panel: PanelContainer = $AddDeckMenu/AddDeckMenuPanel
+@onready var library_context_menu: Control = $LibraryContextMenu
+@onready var library_context_menu_panel: PanelContainer = (
+	$LibraryContextMenu/LibraryContextMenuPanel
+)
+@onready var open_settings_button := (
+	library_context_menu.find_child("OpenSettingsButton", true, false) as Button
+)
 @onready var create_new_deck_button := (
 	add_deck_menu.find_child("CreateNewDeckButton", true, false) as Button
 )
@@ -103,10 +107,6 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @onready var copy_ai_prompt_button := (
 	settings_view.find_child("CopyAiPromptButton", true, false) as Button
 )
-@onready var open_settings_button := (
-	add_deck_menu.find_child("OpenSettingsButton", true, false) as Button
-)
-@onready var library_menu_button: Button = $Margin/Page/LibraryContainer/Header/LibraryMenuButton
 @onready var deck_context_menu: Control = $DeckContextMenu
 @onready var deck_context_menu_panel: PanelContainer = $DeckContextMenu/DeckContextMenuPanel
 @onready var rename_deck_button := (
@@ -142,29 +142,13 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @onready var create_deck_input := create_deck_overlay.find_child("DialogInput", true, false) as LineEdit
 @onready var create_deck_error_label := create_deck_overlay.find_child("DialogError", true, false) as Label
 @onready var confirm_create_deck_button := create_deck_overlay.find_child("PrimaryButton", true, false) as Button
-@onready var study_ready_view: VBoxContainer = $Margin/Page/StudyReadyView
-@onready var ready_overview: VBoxContainer = $Margin/Page/StudyReadyView/DeckStage/DeckStack/DeckCover/Margin/OverviewContent
-@onready var new_study_content: VBoxContainer = $Margin/Page/StudyReadyView/DeckStage/DeckStack/DeckCover/Margin/NewStudyContent
-@onready var ready_deck_name_label: Label = ready_overview.get_node("ReadyDeckNameLabel")
-@onready var setup_deck_name_label: Label = new_study_content.get_node("SetupDeckNameLabel")
-@onready var ready_total_count_label: Label = ready_overview.get_node("Stats/Total/ReadyTotalCountLabel")
-@onready var ready_new_count_label: Label = ready_overview.get_node("Stats/New/ReadyNewCountLabel")
-@onready var ready_learning_count_label: Label = ready_overview.get_node("Stats/Learning/ReadyLearningCountLabel")
-@onready var ready_mastered_count_label: Label = ready_overview.get_node("Stats/Mastered/ReadyMasteredCountLabel")
-@onready var mastery_progress: ProgressBar = ready_overview.get_node("MasteryProgress")
-@onready var study_scope_option: OptionButton = new_study_content.get_node("StudyScopeOption")
-@onready var study_order_option: OptionButton = new_study_content.get_node("StudyOrderOption")
-@onready var ready_status_label: Label = new_study_content.get_node("ReadyStatusLabel")
-@onready var setup_description: Label = new_study_content.get_node("SetupDescription")
-@onready var start_study_button: Button = new_study_content.get_node("StartStudyButton")
-@onready var continue_study_button: Button = ready_overview.get_node("ContinueStudyButton")
+@onready var study_ready_view: StudyReadyView = $Margin/Page/StudyReadyView
 @onready var card_list_view: VBoxContainer = $Margin/Page/CardListView
-@onready var card_list_deck_label: Label = $Margin/Page/CardListView/Header/CardListDeckLabel
-@onready var card_list_status_label: Label = $Margin/Page/CardListView/CardListStatusLabel
+@onready var card_list_deck_label: Label = $Margin/Page/CardListView/Header/TitleSlot/CardListDeckLabel
 @onready var card_rows: VBoxContainer = $Margin/Page/CardListView/CardListScroll/Rows
 @onready var card_detail_view: VBoxContainer = $Margin/Page/CardDetailView
 @onready var card_detail_surface: PanelContainer = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame
-@onready var card_detail_deck_label: Label = $Margin/Page/CardDetailView/Header/CardDetailDeckLabel
+@onready var card_detail_deck_label: Label = $Margin/Page/CardDetailView/Header/TitleSlot/CardDetailDeckLabel
 @onready var detail_card_properties: HBoxContainer = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailCardProperties
 @onready var detail_wrong_tally: WrongTallyView = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailCardProperties/DetailWrongTally
 @onready var detail_status_badge: Label = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailCardProperties/DetailStatusBadge
@@ -172,9 +156,9 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @onready var detail_question_label: Label = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailQuestionScroll/DetailQuestionLabel
 @onready var detail_answer_scroll: ScrollContainer = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailAnswerScroll
 @onready var detail_answer_label: Label = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame/CardMargin/CardContent/DetailAnswerScroll/DetailAnswerLabel
-@onready var card_detail_menu_button: Button = $Margin/Page/CardDetailView/Header/CardDetailMenuButton
+@onready var card_detail_menu_button: Button = $Margin/Page/CardDetailView/Header/RightActions/CardDetailMenuButton
 @onready var card_editor_view: VBoxContainer = $Margin/Page/CardEditorView
-@onready var card_editor_title: Label = $Margin/Page/CardEditorView/Header/CardEditorTitle
+@onready var card_editor_title: Label = $Margin/Page/CardEditorView/Header/TitleSlot/CardEditorTitle
 @onready var wrong_minus_button: Button = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls/WrongMinusButton
 @onready var editor_wrong_count_label: Label = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls/EditorWrongCountLabel
 @onready var wrong_plus_button: Button = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls/WrongPlusButton
@@ -186,8 +170,8 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @onready var card_delete_confirmation_overlay: Control = $CardDeleteConfirmationOverlay
 @onready var discard_card_changes_overlay: Control = $DiscardCardChangesOverlay
 @onready var study_flow: VBoxContainer = $Margin/Page/StudyFlow
-@onready var deck_label: Label = $Margin/Page/StudyFlow/Header/DeckLabel
-@onready var remaining_label: Label = $Margin/Page/StudyFlow/Header/RemainingLabel
+@onready var deck_label: Label = $Margin/Page/StudyFlow/Header/TitleSlot/DeckLabel
+@onready var remaining_label: Label = $Margin/Page/StudyFlow/Header/RightActions/RemainingLabel
 @onready var study_gesture_surface: StudyGestureSurface = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardSlot/CardFrame
 @onready var card_properties: HBoxContainer = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/CardProperties
 @onready var wrong_tally: WrongTallyView = $Margin/Page/StudyFlow/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/CardProperties/WrongTally
@@ -236,6 +220,8 @@ var _card_detail_index := -1
 var _card_detail_result_index := -1
 var _card_menu_from_study := false
 var _card_menu_from_list := false
+var _reordering_cards := false
+var _reorder_original_cards: Array[FlashCard] = []
 var _study_edit_source_index := -1
 var _study_edit_return_show_answer := false
 var _study_input_locked := false
@@ -248,19 +234,10 @@ var _pending_restore_path := ""
 func _ready() -> void:
 	get_tree().root.size_changed.connect(_apply_safe_area)
 	call_deferred("_apply_safe_area")
-	import_dialog.file_selected.connect(import_deck_from_path)
-	import_dialog.access = FileDialog.ACCESS_FILESYSTEM
-	import_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
-	import_dialog.use_native_dialog = true
-	import_dialog.clear_filters()
-	import_dialog.add_filter("*.md", "Markdown", "text/markdown,text/plain")
-	export_dialog.file_selected.connect(_on_export_file_selected)
-	export_dialog.canceled.connect(_on_export_canceled)
-	export_dialog.access = FileDialog.ACCESS_FILESYSTEM
-	export_dialog.file_mode = FileDialog.FILE_MODE_SAVE_FILE
-	export_dialog.use_native_dialog = true
-	export_dialog.clear_filters()
-	export_dialog.add_filter("*.md", "Markdown", "text/markdown,text/plain")
+	library_view.deck_selected.connect(_on_deck_selected)
+	library_view.import_file_selected.connect(import_deck_from_path)
+	library_view.export_file_selected.connect(_on_export_file_selected)
+	library_view.export_canceled.connect(_on_export_canceled)
 	backup_dialog.file_selected.connect(_on_backup_path_selected)
 	backup_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	backup_dialog.file_mode = FileDialog.FILE_MODE_SAVE_FILE
@@ -277,9 +254,17 @@ func _ready() -> void:
 	import_markdown_button.pressed.connect(_on_import_from_add_menu_pressed)
 	create_from_clipboard_button.pressed.connect(_on_create_from_clipboard_pressed)
 	copy_ai_prompt_button.pressed.connect(_on_copy_ai_prompt_pressed)
+	var settings := DeckStorage.load_settings()
+	haptics_toggle.button_pressed = settings.haptics_enabled
+	study_gesture_surface.haptics_enabled = settings.haptics_enabled
+	haptics_toggle.toggled.connect(_on_haptics_toggled)
+	# 진동이 없는 데스크톱에서는 학습 설정 항목 자체를 감춘다.
+	(settings_view.find_child("InteractionTitle", true, false) as Control).visible = is_mobile()
+	(settings_view.find_child("InteractionPanel", true, false) as Control).visible = is_mobile()
+	library_view.add_pressed.connect(_on_library_add_pressed)
+	library_view.settings_pressed.connect(_on_library_settings_pressed)
 	open_settings_button.pressed.connect(_on_open_settings_pressed)
-	library_menu_button.pressed.connect(_on_library_menu_pressed)
-	$Margin/Page/SettingsView/Header/BackFromSettingsButton.pressed.connect(show_library)
+	$Margin/Page/SettingsView/Header/LeftActions/BackFromSettingsButton.pressed.connect(show_library)
 	$Margin/Page/SettingsView/SettingsScroll/Content/DataPanel/Margin/DataActions/CreateBackupButton.pressed.connect(
 		_on_create_backup_pressed
 	)
@@ -288,6 +273,9 @@ func _ready() -> void:
 	)
 	privacy_policy_link.pressed.connect(_on_privacy_policy_pressed)
 	$AddDeckMenu/DismissAddDeckMenuButton.pressed.connect(_on_add_deck_menu_dismissed)
+	$LibraryContextMenu/DismissLibraryContextMenuButton.pressed.connect(
+		_on_library_context_menu_dismissed
+	)
 	rename_deck_button.pressed.connect(_on_rename_pressed)
 	duplicate_deck_button.pressed.connect(_on_duplicate_pressed)
 	export_deck_button.pressed.connect(_on_export_pressed)
@@ -328,37 +316,32 @@ func _ready() -> void:
 	(restore_backup_confirmation_overlay.find_child("PrimaryButton", true, false) as Button).pressed.connect(
 		_on_restore_backup_confirmed
 	)
-	$Margin/Page/StudyReadyView/Header/BackToLibraryButton.pressed.connect(show_library)
-	(ready_overview.get_node("OpenStudySetupButton") as Button).pressed.connect(
-		_on_open_study_setup
-	)
-	continue_study_button.pressed.connect(_on_continue_study_pressed)
-	start_study_button.pressed.connect(_on_start_study_pressed)
-	(new_study_content.get_node("CancelStudySetupButton") as Button).pressed.connect(
-		_on_cancel_study_setup
-	)
-	(ready_overview.get_node("ManageCardsButton") as Button).pressed.connect(
-		_on_manage_cards_pressed
-	)
-	$Margin/Page/CardListView/Header/BackFromCardListButton.pressed.connect(
+	study_ready_view.back_pressed.connect(show_library)
+	study_ready_view.menu_pressed.connect(_on_ready_deck_menu_pressed)
+	study_ready_view.open_setup_pressed.connect(_on_open_study_setup)
+	study_ready_view.continue_pressed.connect(_on_continue_study_pressed)
+	study_ready_view.start_study_pressed.connect(_on_start_study_pressed)
+	study_ready_view.cancel_setup_pressed.connect(_on_cancel_study_setup)
+	study_ready_view.manage_cards_pressed.connect(_on_manage_cards_pressed)
+	$Margin/Page/CardListView/Header/LeftActions/BackFromCardListButton.pressed.connect(
 		_return_to_ready_from_card_list
 	)
 	$Margin/Page/CardListView/AddCardButton.pressed.connect(_on_add_card_pressed)
-	$Margin/Page/CardDetailView/Header/BackFromCardDetailButton.pressed.connect(
+	$Margin/Page/CardDetailView/Header/LeftActions/BackFromCardDetailButton.pressed.connect(
 		_close_card_detail
 	)
 	card_detail_surface.tapped.connect(_on_card_detail_tapped)
 	card_detail_menu_button.pressed.connect(
 		_on_card_context_requested.bind(card_detail_menu_button, false)
 	)
-	$Margin/Page/CardEditorView/Header/CancelCardEditButton.pressed.connect(
+	$Margin/Page/CardEditorView/Header/LeftActions/CancelCardEditButton.pressed.connect(
 		_request_close_card_editor
 	)
 	wrong_minus_button.pressed.connect(_on_wrong_minus_pressed)
 	wrong_plus_button.pressed.connect(_on_wrong_plus_pressed)
 	reset_card_progress_button.pressed.connect(_on_reset_card_progress_pressed)
 	card_status_option.item_selected.connect(_on_card_status_selected)
-	$Margin/Page/CardEditorView/Header/SaveCardButton.pressed.connect(_on_save_card_pressed)
+	$Margin/Page/CardEditorView/Header/RightActions/SaveCardButton.pressed.connect(_on_save_card_pressed)
 	card_question_input.submitted.connect(_on_question_submitted)
 	(card_delete_confirmation_overlay.find_child("SecondaryButton", true, false) as Button).pressed.connect(
 		_on_card_delete_canceled
@@ -372,7 +355,7 @@ func _ready() -> void:
 	(discard_card_changes_overlay.find_child("PrimaryButton", true, false) as Button).pressed.connect(
 		_on_discard_card_changes_confirmed
 	)
-	$Margin/Page/StudyFlow/Header/BackToReadyButton.pressed.connect(_return_to_study_ready)
+	$Margin/Page/StudyFlow/Header/LeftActions/BackToReadyButton.pressed.connect(_return_to_study_ready)
 	study_gesture_surface.swiped.connect(_on_study_swiped)
 	study_gesture_surface.tapped.connect(_on_card_tapped)
 	again_button.pressed.connect(_on_again_requested)
@@ -413,9 +396,13 @@ static func safe_insets_in_viewport(
 	)
 
 
+static func is_mobile() -> bool:
+	return OS.get_name() == "Android" or OS.get_name() == "iOS"
+
+
 func _apply_safe_area() -> void:
 	var safe_insets := Vector4.ZERO
-	if OS.get_name() == "Android" or OS.get_name() == "iOS":
+	if is_mobile():
 		safe_insets = safe_insets_in_viewport(
 			DisplayServer.get_display_safe_area(),
 			DisplayServer.window_get_size(),
@@ -482,6 +469,13 @@ func _save_settings_or_warn(settings: AppSettings) -> void:
 		push_warning("App settings save failed")
 
 
+func _on_haptics_toggled(enabled: bool) -> void:
+	study_gesture_surface.haptics_enabled = enabled
+	var settings := DeckStorage.load_settings()
+	settings.haptics_enabled = enabled
+	_save_settings_or_warn(settings)
+
+
 func show_library() -> void:
 	DeckStorage.seed_sample_if_empty()
 	_session = null
@@ -504,6 +498,7 @@ func show_library() -> void:
 	_menu_deck_file = ""
 	_reset_create_deck_state()
 	add_deck_menu.hide()
+	library_context_menu.hide()
 	deck_context_menu.hide()
 	card_context_menu.hide()
 	create_deck_overlay.hide()
@@ -513,8 +508,8 @@ func show_library() -> void:
 	discard_card_changes_overlay.hide()
 	restore_backup_confirmation_overlay.hide()
 	_pending_restore_path = ""
-	library_status_label.visible = false
-	library_container.visible = true
+	library_view.hide_status()
+	library_view.visible = true
 	settings_view.visible = false
 	study_ready_view.visible = false
 	card_list_view.visible = false
@@ -528,7 +523,7 @@ func show_library() -> void:
 
 func show_settings() -> void:
 	show_library()
-	library_container.hide()
+	library_view.hide()
 	settings_view.show()
 	settings_status_label.hide()
 	app_version_label.text = "버전 %s" % ProjectSettings.get_setting(
@@ -554,13 +549,13 @@ func show_study_ready(deck_file: String) -> bool:
 	_menu_deck_file = ""
 	deck_context_menu.hide()
 	card_context_menu.hide()
-	library_container.visible = false
+	library_view.visible = false
 	card_list_view.visible = false
 	card_detail_view.visible = false
 	card_editor_view.visible = false
 	study_flow.visible = false
 	study_ready_view.visible = true
-	ready_status_label.hide()
+	study_ready_view.hide_status()
 	_update_study_ready_summary()
 	_update_continue_action()
 	_show_ready_overview()
@@ -606,7 +601,7 @@ func _start_cards(
 	_progress = DeckStorage.load_progress(deck_file)
 	_source_cards = cards.duplicate()
 	_active_card_indices.clear()
-	library_container.visible = false
+	library_view.visible = false
 	card_context_menu.hide()
 	study_ready_view.visible = false
 	card_list_view.visible = false
@@ -617,20 +612,14 @@ func _start_cards(
 
 
 func _refresh_deck_list() -> void:
-	for child in deck_list.get_children():
-		child.free()
-
-	var deck_files := DeckStorage.list_deck_files()
-	empty_decks_label.visible = deck_files.is_empty()
-
-	for deck_file in deck_files:
-		var deck_tile := DECK_TILE_SCENE.instantiate() as DeckTileView
-		deck_tile.name = "Deck_%s" % deck_file.validate_node_name()
-		deck_list.add_child(deck_tile)
-		var card_count := DeckParser.parse(DeckStorage.read_deck(deck_file)).size()
-		deck_tile.setup(deck_file, DeckNaming.display_name(deck_file), card_count)
-		deck_tile.selected.connect(_on_deck_selected)
-		deck_tile.menu_requested.connect(_on_deck_menu_requested)
+	var decks: Array[DeckInfo] = []
+	for deck_file in DeckStorage.list_deck_files():
+		decks.append(DeckInfo.new(
+			deck_file,
+			DeckNaming.display_name(deck_file),
+			DeckParser.parse(DeckStorage.read_deck(deck_file)).size()
+		))
+	library_view.render(decks)
 
 
 func _on_deck_selected(deck_file: String) -> void:
@@ -640,13 +629,12 @@ func _on_deck_selected(deck_file: String) -> void:
 
 
 func _setup_study_ready_options() -> void:
-	study_scope_option.clear()
-	study_scope_option.add_item("전체 카드", StudyScope.ALL)
-	study_scope_option.add_item("미완료 카드", StudyScope.INCOMPLETE)
-	study_scope_option.add_item("오답 카드", StudyScope.WRONG)
-	study_order_option.clear()
-	study_order_option.add_item("순서대로", DeckOrdering.StudyOrder.SEQUENTIAL)
-	study_order_option.add_item("섞어서", DeckOrdering.StudyOrder.SHUFFLE)
+	study_ready_view.clear_options()
+	study_ready_view.add_scope_option("전체 카드", StudyScope.ALL)
+	study_ready_view.add_scope_option("미완료 카드", StudyScope.INCOMPLETE)
+	study_ready_view.add_scope_option("오답 카드", StudyScope.WRONG)
+	study_ready_view.add_order_option("순서대로", DeckOrdering.StudyOrder.SEQUENTIAL)
+	study_ready_view.add_order_option("섞어서", DeckOrdering.StudyOrder.SHUFFLE)
 
 
 func _setup_card_editor_status_options() -> void:
@@ -670,38 +658,28 @@ func _update_study_ready_summary() -> void:
 			_:
 				new_count += 1
 
-	ready_deck_name_label.text = DeckNaming.display_name(_ready_deck_file)
-	setup_deck_name_label.text = DeckNaming.display_name(_ready_deck_file)
-	ready_total_count_label.text = str(_ready_cards.size())
-	ready_new_count_label.text = str(new_count)
-	ready_learning_count_label.text = str(learning_count)
-	ready_mastered_count_label.text = str(mastered_count)
-	mastery_progress.max_value = maxi(_ready_cards.size(), 1)
-	mastery_progress.value = mastered_count
+	study_ready_view.render_summary(
+		DeckNaming.display_name(_ready_deck_file),
+		_ready_cards.size(),
+		new_count,
+		learning_count,
+		mastered_count
+	)
 
 
 func _show_ready_overview() -> void:
-	new_study_content.hide()
-	ready_overview.show()
-	ready_status_label.hide()
+	study_ready_view.show_overview()
 
 
 func _on_open_study_setup() -> void:
 	var resume := DeckStorage.load_study_resume(_ready_deck_file)
 	var replacing_resume := _is_valid_resume(resume)
-	setup_description.text = (
+	study_ready_view.show_setup(
 		"진행 중 세션은 교체되며 카드별 진행 기록은 유지됩니다."
 		if replacing_resume
-		else "진행 기록은 유지하고 새로운 학습 세션을 시작합니다."
+		else "진행 기록은 유지하고 새로운 학습 세션을 시작합니다.",
+		"진행 중 세션 교체하고 시작" if replacing_resume else "새 학습 시작"
 	)
-	start_study_button.text = (
-		"진행 중 세션 교체하고 시작"
-		if replacing_resume
-		else "새 학습 시작"
-	)
-	ready_status_label.hide()
-	ready_overview.hide()
-	new_study_content.show()
 
 
 func _on_cancel_study_setup() -> void:
@@ -723,14 +701,8 @@ func _open_card_list(deck_file: String) -> bool:
 	_study_edit_source_index = -1
 	_study_edit_return_show_answer = false
 	card_list_deck_label.text = DeckNaming.display_name(deck_file)
-	card_list_status_label.hide()
-	var source := DeckStorage.read_deck(deck_file).replace("\r\n", "\n")
-	if DeckWriter.to_markdown(_editing_cards) != source:
-		_show_card_list_status(
-			"카드를 저장하면 Markdown이 앱 표준 형식으로 정리됩니다."
-		)
 	_refresh_card_rows()
-	library_container.hide()
+	library_view.hide()
 	study_ready_view.hide()
 	study_flow.hide()
 	card_detail_view.hide()
@@ -756,6 +728,70 @@ func _refresh_card_rows() -> void:
 		row.setup(index, card)
 		row.selected.connect(_on_card_row_selected)
 		row.menu_requested.connect(_on_card_row_menu_requested)
+		row.reorder_started.connect(_on_card_row_reorder_started)
+		row.reorder_moved.connect(_on_card_row_reorder_moved)
+		row.reorder_ended.connect(_on_card_row_reorder_ended)
+
+
+func _on_card_row_reorder_started(_index: int) -> void:
+	_reordering_cards = true
+	_reorder_original_cards = _copy_cards(_editing_cards)
+
+
+func _on_card_row_reorder_moved(index: int, pointer_y: float) -> void:
+	_move_card_row(index, _card_row_index_at(pointer_y))
+
+
+func _move_card_row(index: int, target: int) -> void:
+	if not _reordering_cards:
+		return
+	if target < 0 or target == index or index < 0 or index >= _editing_cards.size():
+		return
+
+	_editing_cards = CardOrdering.moved(_editing_cards, index, target)
+	card_rows.move_child(card_rows.get_child(index), target)
+	for row_index in card_rows.get_child_count():
+		(card_rows.get_child(row_index) as CardCollectionRow).set_index(row_index)
+
+
+func _on_card_row_reorder_ended(_index: int) -> void:
+	if not _reordering_cards:
+		return
+	_reordering_cards = false
+	if not _card_order_changed(_reorder_original_cards, _editing_cards):
+		return
+
+	if not DeckStorage.write_deck(
+		_editing_deck_file,
+		DeckWriter.to_markdown(_editing_cards)
+	):
+		_editing_cards = _reorder_original_cards
+		_refresh_card_rows()
+		push_warning("Card order save failed: %s" % _editing_deck_file)
+		return
+
+	# 이어하기 기록은 카드 위치로 남아 있어 순서가 바뀌면 더 이상 맞지 않는다.
+	DeckStorage.delete_study_resume(_editing_deck_file)
+
+
+func _card_row_index_at(pointer_y: float) -> int:
+	for row_index in card_rows.get_child_count():
+		var rect := (card_rows.get_child(row_index) as Control).get_global_rect()
+		if pointer_y >= rect.position.y and pointer_y <= rect.end.y:
+			return row_index
+	return -1
+
+
+static func _card_order_changed(
+	before: Array[FlashCard],
+	after: Array[FlashCard]
+) -> bool:
+	if before.size() != after.size():
+		return true
+	for index in before.size():
+		if before[index].question != after[index].question:
+			return true
+	return false
 
 
 func _on_card_row_selected(index: int) -> void:
@@ -789,12 +825,12 @@ func _show_card_detail(
 		and deck_index < _editing_cards.size()
 		and DeckStorage.deck_exists(_editing_deck_file)
 	)
-	($Margin/Page/CardDetailView/Header/BackFromCardDetailButton as Button).text = (
-		"← 학습 결과"
+	($Margin/Page/CardDetailView/Header/LeftActions/BackFromCardDetailButton as Button).tooltip_text = (
+		"학습 결과로 돌아가기"
 		if origin == CardDetailOrigin.STUDY_RESULT
-		else "← 카드 목록"
+		else "카드 목록으로 돌아가기"
 	)
-	library_container.hide()
+	library_view.hide()
 	study_ready_view.hide()
 	card_list_view.hide()
 	card_editor_view.hide()
@@ -1255,15 +1291,6 @@ func _on_save_card_pressed() -> void:
 		_card_editor_origin = CardEditorOrigin.CARD_LIST
 	_close_card_editor_without_save()
 	_refresh_card_rows()
-	_show_card_list_status(
-		("'%s' 덱 생성 완료" % DeckNaming.display_name(_editing_deck_file))
-		if creating_deck and progress_saved
-		else "덱은 만들었지만 학습 기록을 저장하지 못했습니다."
-		if creating_deck
-		else "카드 저장 완료"
-		if progress_saved
-		else "카드는 저장했지만 학습 기록을 저장하지 못했습니다."
-	)
 
 
 static func answer_has_question_heading(answer: String) -> bool:
@@ -1302,7 +1329,7 @@ func _on_card_delete_confirmed() -> void:
 		else:
 			card_detail_view.hide()
 			card_list_view.show()
-			_show_card_list_status(CARD_SAVE_FAILED_MESSAGE)
+			push_warning("Card delete save failed: %s" % _editing_deck_file)
 		return
 
 	var progress := DeckStorage.load_progress(_editing_deck_file)
@@ -1329,24 +1356,9 @@ func _on_card_delete_confirmed() -> void:
 			_show_study_results()
 		else:
 			card_list_view.show()
-		_show_card_list_status(
-			"카드 삭제 완료"
-			if progress_saved
-			else "카드는 삭제했지만 학습 기록을 저장하지 못했습니다."
-		)
 		return
 	_close_card_editor_without_save()
 	_refresh_card_rows()
-	_show_card_list_status(
-		"카드 삭제 완료"
-		if progress_saved
-		else "카드는 삭제했지만 학습 기록을 저장하지 못했습니다."
-	)
-
-
-func _show_card_list_status(message: String) -> void:
-	card_list_status_label.text = message
-	card_list_status_label.show()
 
 
 func _return_to_ready_from_card_list() -> void:
@@ -1357,15 +1369,16 @@ func _return_to_ready_from_card_list() -> void:
 func _update_continue_action() -> void:
 	var resume := DeckStorage.load_study_resume(_ready_deck_file)
 	if not _is_valid_resume(resume):
-		continue_study_button.hide()
+		study_ready_view.hide_continue_action()
 		if resume != null:
 			DeckStorage.delete_study_resume(_ready_deck_file)
 		return
 
-	continue_study_button.text = "이어서 학습 (%d장 남음)" % resume.remaining_indices.size()
-	continue_study_button.show()
-	study_scope_option.select(resume.scope)
-	study_order_option.select(resume.order)
+	study_ready_view.set_continue_action(
+		"이어서 학습 (%d장 남음)" % resume.remaining_indices.size()
+	)
+	study_ready_view.select_scope(resume.scope)
+	study_ready_view.select_order(resume.order)
 
 
 func _is_valid_resume(resume: StudyResume) -> bool:
@@ -1420,23 +1433,22 @@ func _on_start_study_pressed() -> void:
 		_show_library_status("덱 파일을 읽지 못했습니다.")
 		return
 
-	var scope: StudyScope = study_scope_option.get_selected_id()
+	var scope: StudyScope = study_ready_view.selected_scope()
 	var selected_indices := card_indices_for_scope(
 		_ready_cards,
 		DeckStorage.load_progress(_ready_deck_file),
 		scope
 	)
 	if selected_indices.is_empty():
-		ready_status_label.text = (
+		study_ready_view.show_status(
 			"오답 카드가 없습니다."
 			if scope == StudyScope.WRONG
 			else "학습할 미완료 카드가 없습니다."
 		)
-		ready_status_label.show()
 		return
 
-	ready_status_label.hide()
-	var order: DeckOrdering.StudyOrder = study_order_option.get_selected_id()
+	study_ready_view.hide_status()
+	var order: DeckOrdering.StudyOrder = study_ready_view.selected_order()
 	_begin_indexed_study(selected_indices, order, scope, true)
 
 
@@ -1444,8 +1456,7 @@ func _on_continue_study_pressed() -> void:
 	var resume := DeckStorage.load_study_resume(_ready_deck_file)
 	if not _is_valid_resume(resume):
 		_update_continue_action()
-		ready_status_label.text = "이어서 학습할 기록이 없습니다."
-		ready_status_label.show()
+		study_ready_view.show_status("이어서 학습할 기록이 없습니다.")
 		return
 
 	var resume_scope: StudyScope = resume.scope
@@ -1478,7 +1489,7 @@ func _begin_indexed_study(
 	_order = DeckOrdering.StudyOrder.SEQUENTIAL
 	_progress = DeckStorage.load_progress(_deck_file)
 	_source_cards = cards
-	library_container.visible = false
+	library_view.visible = false
 	study_ready_view.visible = false
 	study_flow.visible = true
 	_restart_session()
@@ -1510,17 +1521,27 @@ func _return_to_study_ready() -> void:
 	show_study_ready(deck_file)
 
 
-func _on_library_menu_pressed() -> void:
+func _on_library_add_pressed(anchor: Control) -> void:
 	_menu_deck_file = ""
+	library_context_menu.hide()
 	deck_context_menu.hide()
-	library_status_label.hide()
+	library_view.hide_status()
 	add_deck_menu.show()
 	add_deck_menu_panel.reset_size()
-	_position_add_deck_menu(library_menu_button)
+	_position_add_deck_menu(anchor)
+
+
+func _on_library_settings_pressed(anchor: Control) -> void:
+	add_deck_menu.hide()
+	deck_context_menu.hide()
+	library_context_menu.show()
+	library_context_menu_panel.reset_size()
+	_position_library_context_menu(anchor)
 
 
 func _on_open_settings_pressed() -> void:
 	add_deck_menu.hide()
+	library_context_menu.hide()
 	show_settings()
 
 
@@ -1544,6 +1565,36 @@ func _position_add_deck_menu(anchor: Control) -> void:
 
 func _on_add_deck_menu_dismissed() -> void:
 	add_deck_menu.hide()
+
+
+func _position_library_context_menu(anchor: Control) -> void:
+	var anchor_rect := _control_rect_in_overlay(library_context_menu, anchor)
+	var menu_size := library_context_menu_panel.get_combined_minimum_size()
+	library_context_menu_panel.size = menu_size
+	var viewport_size := library_context_menu.size
+	var margin := 12.0
+	var gap := 4.0
+	var position := Vector2(
+		anchor_rect.end.x - menu_size.x,
+		anchor_rect.end.y + gap
+	)
+	position.x = clampf(position.x, margin, viewport_size.x - menu_size.x - margin)
+	if position.y + menu_size.y > viewport_size.y - margin:
+		position.y = anchor_rect.position.y - menu_size.y - gap
+	position.y = clampf(position.y, margin, viewport_size.y - menu_size.y - margin)
+	library_context_menu_panel.position = position
+
+
+func _on_library_context_menu_dismissed() -> void:
+	library_context_menu.hide()
+
+
+func _on_ready_deck_menu_pressed(anchor: Control) -> void:
+	if _ready_deck_file.is_empty() or not DeckStorage.deck_exists(_ready_deck_file):
+		show_library()
+		_show_library_status("덱 파일을 읽지 못했습니다.")
+		return
+	_on_deck_menu_requested(_ready_deck_file, anchor)
 
 
 func _on_deck_menu_requested(deck_file: String, anchor: Control) -> void:
@@ -1616,6 +1667,10 @@ func handle_back_request() -> bool:
 		_on_add_deck_menu_dismissed()
 		return true
 
+	if library_context_menu.visible:
+		_on_library_context_menu_dismissed()
+		return true
+
 	if card_context_menu.visible:
 		_on_card_context_dismissed()
 		return true
@@ -1632,7 +1687,7 @@ func handle_back_request() -> bool:
 		show_library()
 		return true
 
-	if library_container.visible:
+	if library_view.visible:
 		exit_confirmation_overlay.show()
 		return true
 
@@ -1649,7 +1704,7 @@ func handle_back_request() -> bool:
 		return true
 
 	if study_ready_view.visible:
-		if new_study_content.visible:
+		if study_ready_view.is_setup_visible():
 			_on_cancel_study_setup()
 			return true
 		show_library()
@@ -1804,7 +1859,6 @@ func create_deck_from_markdown(display_name: String, markdown_text: String) -> b
 	create_deck_overlay.hide()
 	_reset_create_deck_state()
 	_open_card_list(deck_file)
-	_show_card_list_status("'%s' 덱 생성 완료" % DeckNaming.display_name(deck_file))
 	return true
 
 
@@ -1821,8 +1875,7 @@ func _begin_new_deck(display_name: String) -> bool:
 	_study_edit_source_index = -1
 	_study_edit_return_show_answer = false
 	card_list_deck_label.text = trimmed_name
-	card_list_status_label.hide()
-	library_container.hide()
+	library_view.hide()
 	study_ready_view.hide()
 	study_flow.hide()
 	card_list_view.hide()
@@ -1870,8 +1923,8 @@ func _on_import_from_add_menu_pressed() -> void:
 
 func _on_import_pressed() -> void:
 	add_deck_menu.hide()
-	library_status_label.visible = false
-	import_dialog.popup_file_dialog()
+	library_view.hide_status()
+	library_view.popup_import()
 
 
 func _on_export_pressed() -> void:
@@ -1881,11 +1934,10 @@ func _on_export_pressed() -> void:
 		return
 
 	deck_context_menu.hide()
-	export_dialog.current_file = "%s%s" % [
+	library_view.popup_export("%s%s" % [
 		DeckNaming.display_name(_menu_deck_file),
 		DeckNaming.EXTENSION,
-	]
-	export_dialog.popup_file_dialog()
+	])
 
 
 func _on_export_file_selected(target_path: String) -> void:
@@ -1916,7 +1968,8 @@ func duplicate_deck_from_library(deck_file: String) -> bool:
 		return false
 
 	_refresh_deck_list()
-	_show_library_status(
+	_show_deck_action_status(
+		deck_file,
 		"'%s' → '%s' 복제 완료"
 		% [DeckNaming.display_name(deck_file), DeckNaming.display_name(duplicated)]
 	)
@@ -1969,7 +2022,7 @@ func rename_deck_from_library(deck_file: String, new_display_name: String) -> bo
 	if new_file.to_lower() == deck_file.to_lower():
 		rename_deck_overlay.hide()
 		_menu_deck_file = ""
-		_show_library_status("이름이 변경되지 않았습니다.")
+		_show_deck_action_status(deck_file, "이름이 변경되지 않았습니다.")
 		return true
 
 	for existing_file in DeckStorage.list_deck_files():
@@ -1987,7 +2040,13 @@ func rename_deck_from_library(deck_file: String, new_display_name: String) -> bo
 	rename_deck_overlay.hide()
 	_menu_deck_file = ""
 	_refresh_deck_list()
-	_show_library_status("'%s' → '%s' 이름 변경 완료" % [old_display_name, trimmed_name])
+	# 준비 화면에서는 제목이 새 이름으로 바뀌는 것 자체가 결과를 보여 준다.
+	if study_ready_view.visible and _ready_deck_file == deck_file:
+		show_study_ready(new_file)
+	else:
+		_show_library_status(
+			"'%s' → '%s' 이름 변경 완료" % [old_display_name, trimmed_name]
+		)
 	return true
 
 
@@ -2042,7 +2101,10 @@ func export_deck_to_path(deck_file: String, target_path: String) -> bool:
 	var markdown_path := ensure_markdown_extension(target_path)
 	var result := DeckStorage.export_deck_result(deck_file, markdown_path)
 	if result == DeckStorage.ExportResult.OK:
-		_show_library_status("'%s' 내보내기 완료" % markdown_path.uri_decode().get_file())
+		_show_deck_action_status(
+			deck_file,
+			"'%s' 내보내기 완료" % markdown_path.uri_decode().get_file()
+		)
 		return true
 
 	var message := export_error_message(result)
@@ -2112,11 +2174,19 @@ static func clipboard_content_error(markdown_text: String) -> String:
 
 
 func _show_library_status(message: String) -> void:
-	if not library_container.visible:
+	if not library_view.visible:
 		show_library()
 
-	library_status_label.text = message
-	library_status_label.visible = true
+	library_view.show_status(message)
+
+
+# 덱 목록을 보고 있을 때만 알린다. 다른 화면은 제목이나 목록이 바로 바뀌어 결과가 드러난다.
+func _show_deck_action_status(deck_file: String, message: String) -> void:
+	if study_ready_view.visible and _ready_deck_file == deck_file:
+		return
+	if not library_view.visible:
+		return
+	_show_library_status(message)
 
 
 func _show_settings_status(message: String) -> void:

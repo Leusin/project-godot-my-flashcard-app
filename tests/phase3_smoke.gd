@@ -19,6 +19,8 @@ func run_tests() -> void:
 	_test_progress_rename()
 	_test_progress_json()
 	_test_progress_fixtures()
+	_test_card_ordering()
+
 
 func _test_queue_progression() -> void:
 	var cards: Array[FlashCard] = [
@@ -159,6 +161,7 @@ func _test_app_settings_round_trip() -> void:
 	settings.last_deck_file = "영어단어.md"
 	settings.deck_dir = "user://test-decks"
 	settings.shuffle_study = true
+	settings.haptics_enabled = false
 
 	var restored := AppSettings.from_json(settings.to_json())
 
@@ -173,6 +176,10 @@ func _test_app_settings_round_trip() -> void:
 	check(
 		restored.shuffle_study,
 		"설정: 학습 순서 직렬화 왕복"
+	)
+	check(
+		not restored.haptics_enabled,
+		"설정: 햅틱 사용 여부 직렬화 왕복"
 	)
 
 
@@ -191,12 +198,17 @@ func _test_app_settings_defaults() -> void:
 		not empty.shuffle_study,
 		"설정: 학습 순서 기본값은 Sequential"
 	)
+	check(
+		empty.haptics_enabled,
+		"설정: 햅틱은 기본으로 사용"
+	)
 
 	var malformed := AppSettings.from_json("{깨진 json")
 	check(
 		malformed.last_deck_file.is_empty()
 		and malformed.deck_dir.is_empty()
-		and not malformed.shuffle_study,
+		and not malformed.shuffle_study
+		and malformed.haptics_enabled,
 		"설정: 깨진 JSON은 모든 값을 기본값으로 복구"
 	)
 
@@ -413,4 +425,46 @@ func _test_progress_fixtures() -> void:
 		malformed.get_wrong_count("Apple") == 0
 		and malformed.get_status("Apple") == CardStatus.Value.NEW,
 		"진행도 fixture: 깨진 JSON은 빈 진행도로 복구"
+	)
+
+
+func _test_card_ordering() -> void:
+	var cards: Array[FlashCard] = [
+		FlashCard.new("A", "1"),
+		FlashCard.new("B", "2"),
+		FlashCard.new("C", "3"),
+	]
+
+	var moved_down := CardOrdering.moved(cards, 0, 2)
+	check(
+		moved_down[0].question == "B"
+		and moved_down[1].question == "C"
+		and moved_down[2].question == "A",
+		"카드 순서: 아래로 옮기면 사이 카드가 앞으로 당겨진다"
+	)
+
+	var moved_up := CardOrdering.moved(cards, 2, 0)
+	check(
+		moved_up[0].question == "C"
+		and moved_up[1].question == "A"
+		and moved_up[2].question == "B",
+		"카드 순서: 위로 옮기면 사이 카드가 뒤로 밀린다"
+	)
+
+	check(
+		cards[0].question == "A" and cards[2].question == "C",
+		"카드 순서: 원본 배열은 그대로 둔다"
+	)
+	check(
+		CardOrdering.moved(cards, 1, 1)[1].question == "B",
+		"카드 순서: 같은 자리로 옮기면 그대로"
+	)
+	check(
+		CardOrdering.moved(cards, 0, 99)[2].question == "A",
+		"카드 순서: 범위를 넘는 목적지는 끝으로 붙인다"
+	)
+	check(
+		CardOrdering.moved(cards, 5, 0).size() == 3
+		and CardOrdering.moved(cards, 5, 0)[0].question == "A",
+		"카드 순서: 없는 카드를 옮기면 아무 일도 없다"
 	)

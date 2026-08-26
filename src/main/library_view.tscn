@@ -1,66 +1,71 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=7 format=3 uid="uid://bsgwt125mqmrw"]
 
-[ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
+[ext_resource type="Theme" uid="uid://bu5jyw4ehw6ya" path="res://src/main/main_theme.tres" id="1_theme"]
+[ext_resource type="Texture2D" path="res://assets/icons/plus.svg" id="2_plus"]
+[ext_resource type="Texture2D" path="res://assets/icons/more_vertical.svg" id="3_more"]
+[ext_resource type="PackedScene" path="res://src/main/app_header.tscn" id="4_header"]
+[ext_resource type="Script" path="res://src/main/library_view.gd" id="5_script"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxMenuButton"]
+[sub_resource type="StyleBoxEmpty" id="StyleBoxHeaderButton"]
 
-[node name="LibraryContainer" type="VBoxContainer"]
-layout_mode = 2
+[node name="LibraryContainer" type="VBoxContainer" unique_id=986299045]
 size_flags_vertical = 3
 theme = ExtResource("1_theme")
-theme_override_constants/separation = 30
+theme_override_constants/separation = 32
+script = ExtResource("5_script")
 
-[node name="Header" type="HBoxContainer" parent="."]
+[node name="Header" parent="." unique_id=1885776386 instance=ExtResource("4_header")]
 layout_mode = 2
-theme_override_constants/separation = 12
 
-[node name="LibraryHeading" type="Label" parent="Header"]
+[node name="LibraryHeading" type="Label" parent="Header/TitleSlot"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 36
-text = "내 덱"
+text = "덱 목록"
+horizontal_alignment = 0
 vertical_alignment = 1
 
-[node name="LibraryMenuButton" type="Button" parent="Header"]
-custom_minimum_size = Vector2(64, 64)
+[node name="LibraryAddButton" type="Button" parent="Header/RightActions"]
+custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
-size_flags_vertical = 4
-action_mode = 1
-tooltip_text = "덱 추가와 설정"
-theme_override_font_sizes/font_size = 38
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
-theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
-theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
-theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
-theme_override_styles/normal = SubResource("StyleBoxMenuButton")
-theme_override_styles/pressed = SubResource("StyleBoxMenuButton")
-theme_override_styles/hover = SubResource("StyleBoxMenuButton")
-theme_override_styles/disabled = SubResource("StyleBoxMenuButton")
-theme_override_styles/focus = SubResource("StyleBoxMenuButton")
-text = "⋮"
+icon = ExtResource("2_plus")
+theme_override_styles/normal = SubResource("StyleBoxHeaderButton")
+theme_override_styles/pressed = SubResource("StyleBoxHeaderButton")
+theme_override_styles/hover = SubResource("StyleBoxHeaderButton")
+theme_override_styles/disabled = SubResource("StyleBoxHeaderButton")
+theme_override_styles/focus = SubResource("StyleBoxHeaderButton")
+tooltip_text = "덱 추가"
 
-[node name="DeckListScroll" type="ScrollContainer" parent="."]
+[node name="LibrarySettingsButton" type="Button" parent="Header/RightActions"]
+custom_minimum_size = Vector2(72, 72)
+layout_mode = 2
+icon = ExtResource("3_more")
+theme_override_styles/normal = SubResource("StyleBoxHeaderButton")
+theme_override_styles/pressed = SubResource("StyleBoxHeaderButton")
+theme_override_styles/hover = SubResource("StyleBoxHeaderButton")
+theme_override_styles/disabled = SubResource("StyleBoxHeaderButton")
+theme_override_styles/focus = SubResource("StyleBoxHeaderButton")
+tooltip_text = "앱 메뉴"
+
+[node name="DeckListScroll" type="ScrollContainer" parent="." unique_id=565054244]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="DeckList" type="HFlowContainer" parent="DeckListScroll"]
+[node name="DeckList" type="HFlowContainer" parent="DeckListScroll" unique_id=1212341988]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/h_separation = 28
 theme_override_constants/v_separation = 32
-alignment = 0
-last_wrap_alignment = 0
 
-[node name="EmptyDecksLabel" type="Label" parent="."]
+[node name="EmptyDecksLabel" type="Label" parent="." unique_id=1132875317]
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "덱이 없습니다."
 horizontal_alignment = 1
 
-[node name="LibraryStatusLabel" type="Label" parent="."]
+[node name="LibraryStatusLabel" type="Label" parent="." unique_id=27992916]
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
@@ -68,12 +73,14 @@ text = "작업 완료"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="ImportDialog" type="FileDialog" parent="."]
+[node name="ImportDialog" type="FileDialog" parent="." unique_id=574728603]
 title = "가져올 Markdown 덱 선택"
 initial_position = 2
 size = Vector2i(720, 900)
 
-[node name="ExportDialog" type="FileDialog" parent="."]
+[node name="ExportDialog" type="FileDialog" parent="." unique_id=272680108]
 title = "Markdown 덱 내보내기"
 initial_position = 2
 size = Vector2i(720, 900)
+
+[editable path="Header"]

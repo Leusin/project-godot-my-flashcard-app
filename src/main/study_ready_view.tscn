@@ -1,6 +1,10 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
+[ext_resource type="Texture2D" path="res://assets/icons/chevron_left.svg" id="2_back"]
+[ext_resource type="Texture2D" path="res://assets/icons/more_vertical.svg" id="3_more"]
+[ext_resource type="PackedScene" path="res://src/main/app_header.tscn" id="4_header"]
+[ext_resource type="Script" path="res://src/main/study_ready_view.gd" id="5_script"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxDeckLayer"]
 bg_color = Color(1, 1, 1, 1)
@@ -88,31 +92,47 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxIconButton"]
+
 [node name="StudyReadyView" type="VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 theme = ExtResource("1_theme")
-theme_override_constants/separation = 18
+theme_override_constants/separation = 32
+script = ExtResource("5_script")
 
-[node name="Header" type="HBoxContainer" parent="."]
+[node name="Header" parent="." instance=ExtResource("4_header")]
 layout_mode = 2
-theme_override_constants/separation = 12
 
-[node name="BackToLibraryButton" type="Button" parent="Header"]
-custom_minimum_size = Vector2(132, 64)
+[node name="BackToLibraryButton" type="Button" parent="Header/LeftActions"]
+custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "← 덱 목록"
+icon = ExtResource("2_back")
+theme_override_styles/normal = SubResource("StyleBoxIconButton")
+theme_override_styles/pressed = SubResource("StyleBoxIconButton")
+theme_override_styles/hover = SubResource("StyleBoxIconButton")
+theme_override_styles/disabled = SubResource("StyleBoxIconButton")
+theme_override_styles/focus = SubResource("StyleBoxIconButton")
+tooltip_text = "뒤로"
 
-[node name="HeaderSpacer" type="Control" parent="Header"]
+[node name="StudyReadyTitle" type="Label" parent="Header/TitleSlot"]
 layout_mode = 2
 size_flags_horizontal = 3
-mouse_filter = 2
+theme_override_font_sizes/font_size = 36
+text = "학습 준비"
+horizontal_alignment = 0
+vertical_alignment = 1
 
-[node name="HeaderBalance" type="Control" parent="Header"]
-custom_minimum_size = Vector2(132, 64)
+[node name="ReadyDeckMenuButton" type="Button" parent="Header/RightActions"]
+custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
-mouse_filter = 2
+icon = ExtResource("3_more")
+theme_override_styles/normal = SubResource("StyleBoxIconButton")
+theme_override_styles/pressed = SubResource("StyleBoxIconButton")
+theme_override_styles/hover = SubResource("StyleBoxIconButton")
+theme_override_styles/disabled = SubResource("StyleBoxIconButton")
+theme_override_styles/focus = SubResource("StyleBoxIconButton")
+tooltip_text = "덱 관리"
 
 [node name="DeckStage" type="AspectRatioContainer" parent="."]
 custom_minimum_size = Vector2(0, 880)
@@ -375,3 +395,5 @@ custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "취소"
+
+[editable path="Header"]

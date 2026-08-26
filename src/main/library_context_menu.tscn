@@ -41,7 +41,7 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
-[node name="AddDeckMenu" type="Control"]
+[node name="LibraryContextMenu" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -50,7 +50,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_theme")
 
-[node name="DismissAddDeckMenuButton" type="Button" parent="."]
+[node name="DismissLibraryContextMenuButton" type="Button" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -63,27 +63,27 @@ theme_override_styles/hover = SubResource("StyleBoxBackdrop")
 theme_override_styles/pressed = SubResource("StyleBoxBackdrop")
 theme_override_styles/focus = SubResource("StyleBoxBackdrop")
 
-[node name="AddDeckMenuPanel" type="PanelContainer" parent="."]
-custom_minimum_size = Vector2(320, 252)
+[node name="LibraryContextMenuPanel" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(320, 96)
 layout_mode = 0
 offset_left = 190.0
 offset_top = 120.0
 offset_right = 510.0
-offset_bottom = 372.0
+offset_bottom = 216.0
 theme_override_styles/panel = SubResource("StyleBoxContextMenu")
 
-[node name="Margin" type="MarginContainer" parent="AddDeckMenuPanel"]
+[node name="Margin" type="MarginContainer" parent="LibraryContextMenuPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 12
 
-[node name="Content" type="VBoxContainer" parent="AddDeckMenuPanel/Margin"]
+[node name="Content" type="VBoxContainer" parent="LibraryContextMenuPanel/Margin"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="CreateNewDeckButton" type="Button" parent="AddDeckMenuPanel/Margin/Content"]
+[node name="OpenSettingsButton" type="Button" parent="LibraryContextMenuPanel/Margin/Content"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
@@ -97,39 +97,5 @@ theme_override_styles/normal = SubResource("StyleBoxMenuItem")
 theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
 theme_override_styles/pressed = SubResource("StyleBoxMenuItemPressed")
 theme_override_styles/focus = SubResource("StyleBoxMenuItemHover")
-text = "새 덱 만들기"
-alignment = 0
-
-[node name="ImportMarkdownButton" type="Button" parent="AddDeckMenuPanel/Margin/Content"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 72)
-layout_mode = 2
-theme_override_font_sizes/font_size = 30
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
-theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
-theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
-theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
-theme_override_styles/normal = SubResource("StyleBoxMenuItem")
-theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
-theme_override_styles/pressed = SubResource("StyleBoxMenuItemPressed")
-theme_override_styles/focus = SubResource("StyleBoxMenuItemHover")
-text = "Markdown 가져오기"
-alignment = 0
-
-[node name="CreateFromClipboardButton" type="Button" parent="AddDeckMenuPanel/Margin/Content"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 72)
-layout_mode = 2
-theme_override_font_sizes/font_size = 30
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
-theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
-theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
-theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
-theme_override_styles/normal = SubResource("StyleBoxMenuItem")
-theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
-theme_override_styles/pressed = SubResource("StyleBoxMenuItemPressed")
-theme_override_styles/focus = SubResource("StyleBoxMenuItemHover")
-text = "클립보드에서 만들기"
+text = "설정"
 alignment = 0
