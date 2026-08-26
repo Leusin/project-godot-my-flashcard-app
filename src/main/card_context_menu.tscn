@@ -64,7 +64,7 @@ theme_override_styles/pressed = SubResource("StyleBoxBackdrop")
 theme_override_styles/focus = SubResource("StyleBoxBackdrop")
 
 [node name="CardContextMenuPanel" type="PanelContainer" parent="."]
-custom_minimum_size = Vector2(320, 172)
+custom_minimum_size = Vector2(320, 0)
 layout_mode = 0
 offset_left = 190.0
 offset_top = 120.0
@@ -100,7 +100,7 @@ theme_override_styles/focus = SubResource("StyleBoxMenuItemHover")
 text = "수정하기"
 alignment = 0
 
-[node name="FavoriteCardActionButton" type="Button" parent="CardContextMenuPanel/Margin/Content"]
+[node name="DeleteCardActionButton" type="Button" parent="CardContextMenuPanel/Margin/Content"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
@@ -114,5 +114,5 @@ theme_override_styles/normal = SubResource("StyleBoxMenuItem")
 theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
 theme_override_styles/pressed = SubResource("StyleBoxMenuItemPressed")
 theme_override_styles/focus = SubResource("StyleBoxMenuItemHover")
-text = "즐겨찾기"
+text = "카드 삭제"
 alignment = 0

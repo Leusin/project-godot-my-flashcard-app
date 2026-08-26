@@ -40,6 +40,48 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxOption"]
+content_margin_left = 20.0
+content_margin_right = 20.0
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxOptionHover"]
+content_margin_left = 20.0
+content_margin_right = 20.0
+bg_color = Color(0.94, 0.94, 0.94, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxOptionPressed"]
+content_margin_left = 20.0
+content_margin_right = 20.0
+bg_color = Color(0.84, 0.84, 0.84, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxPopupHover"]
 bg_color = Color(0.9, 0.9, 0.88, 1)
 corner_radius_top_left = 6
@@ -93,11 +135,11 @@ OptionButton/constants/arrow_margin = 18
 OptionButton/constants/modulate_arrow = 1
 OptionButton/icons/arrow = ExtResource("1_arrow")
 OptionButton/font_sizes/font_size = 28
-OptionButton/styles/disabled = SubResource("StyleBoxWhite")
-OptionButton/styles/focus = SubResource("StyleBoxWhite")
-OptionButton/styles/hover = SubResource("StyleBoxHover")
-OptionButton/styles/normal = SubResource("StyleBoxWhite")
-OptionButton/styles/pressed = SubResource("StyleBoxPressed")
+OptionButton/styles/disabled = SubResource("StyleBoxOption")
+OptionButton/styles/focus = SubResource("StyleBoxOption")
+OptionButton/styles/hover = SubResource("StyleBoxOptionHover")
+OptionButton/styles/normal = SubResource("StyleBoxOption")
+OptionButton/styles/pressed = SubResource("StyleBoxOptionPressed")
 PanelContainer/styles/panel = SubResource("StyleBoxWhite")
 PopupMenu/colors/font_accelerator_color = Color(0, 0, 0, 1)
 PopupMenu/colors/font_color = Color(0, 0, 0, 1)

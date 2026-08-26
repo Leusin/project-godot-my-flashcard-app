@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://src/main/modal_dialog.gd" id="1_dialog"]
 [ext_resource type="Script" path="res://src/main/keyboard_avoider.gd" id="2_keyboard"]
@@ -46,6 +46,27 @@ corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 content_margin_left = 15.0
 content_margin_right = 15.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxPrimary"]
+bg_color = Color(0.08, 0.08, 0.08, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxPrimaryHover"]
+bg_color = Color(0.24, 0.24, 0.24, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxPrimaryPressed"]
+bg_color = Color(0.38, 0.38, 0.38, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [node name="ModalDialog" type="ColorRect"]
 layout_mode = 3
@@ -138,16 +159,25 @@ autowrap_mode = 3
 layout_mode = 2
 theme_override_constants/separation = 16
 
+[node name="PrimaryButton" type="Button" parent="KeyboardShift/DialogPanel/Margin/Content/Buttons"]
+custom_minimum_size = Vector2(0, 88)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 28
+theme_override_styles/normal = SubResource("StyleBoxPrimary")
+theme_override_styles/hover = SubResource("StyleBoxPrimaryHover")
+theme_override_styles/pressed = SubResource("StyleBoxPrimaryPressed")
+theme_override_styles/focus = SubResource("StyleBoxPrimary")
+text = "확인"
+
 [node name="SecondaryButton" type="Button" parent="KeyboardShift/DialogPanel/Margin/Content/Buttons"]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
 text = "취소"
-
-[node name="PrimaryButton" type="Button" parent="KeyboardShift/DialogPanel/Margin/Content/Buttons"]
-custom_minimum_size = Vector2(0, 88)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 28
-text = "확인"

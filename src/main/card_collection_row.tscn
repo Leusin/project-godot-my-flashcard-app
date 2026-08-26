@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://src/main/card_collection_row.gd" id="1_script"]
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="2_theme"]
@@ -17,6 +17,8 @@ corner_radius_bottom_left = 10
 shadow_color = Color(0, 0, 0, 0.1)
 shadow_size = 3
 shadow_offset = Vector2(2, 3)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxRowMenu"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxGoodBadge"]
 bg_color = Color(0.08, 0.08, 0.08, 1)
@@ -60,22 +62,44 @@ skip_badge_style = SubResource("StyleBoxSkipBadge")
 [node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/margin_left = 24
+theme_override_constants/margin_left = 10
 theme_override_constants/margin_top = 18
-theme_override_constants/margin_right = 24
+theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 18
 
-[node name="Content" type="VBoxContainer" parent="Margin"]
+[node name="Row" type="HBoxContainer" parent="Margin"]
 layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="RowReorderHandle" type="Button" parent="Margin/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(56, 64)
+layout_mode = 2
+size_flags_vertical = 4
+disabled = true
+tooltip_text = "카드 순서 변경 (준비 중)"
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_disabled_color = Color(0.62, 0.62, 0.62, 1)
+theme_override_styles/normal = SubResource("StyleBoxRowMenu")
+theme_override_styles/pressed = SubResource("StyleBoxRowMenu")
+theme_override_styles/hover = SubResource("StyleBoxRowMenu")
+theme_override_styles/disabled = SubResource("StyleBoxRowMenu")
+theme_override_styles/focus = SubResource("StyleBoxRowMenu")
+text = "≡"
+
+[node name="Content" type="VBoxContainer" parent="Margin/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_constants/separation = 10
 
-[node name="Top" type="HBoxContainer" parent="Margin/Content"]
+[node name="Top" type="HBoxContainer" parent="Margin/Row/Content"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 16
 
-[node name="QuestionLabel" type="Label" parent="Margin/Content/Top"]
+[node name="QuestionLabel" type="Label" parent="Margin/Row/Content/Top"]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
@@ -83,13 +107,13 @@ theme_override_font_sizes/font_size = 28
 text = "질문"
 text_overrun_behavior = 3
 
-[node name="OutcomeBadge" type="PanelContainer" parent="Margin/Content/Top"]
+[node name="OutcomeBadge" type="PanelContainer" parent="Margin/Row/Content/Top"]
 custom_minimum_size = Vector2(112, 44)
 layout_mode = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxGoodBadge")
 
-[node name="Margin" type="MarginContainer" parent="Margin/Content/Top/OutcomeBadge"]
+[node name="Margin" type="MarginContainer" parent="Margin/Row/Content/Top/OutcomeBadge"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/margin_left = 12
@@ -97,7 +121,7 @@ theme_override_constants/margin_top = 5
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 5
 
-[node name="OutcomeLabel" type="Label" parent="Margin/Content/Top/OutcomeBadge/Margin"]
+[node name="OutcomeLabel" type="Label" parent="Margin/Row/Content/Top/OutcomeBadge/Margin"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -106,10 +130,30 @@ text = "GOOD"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="AnswerLabel" type="Label" parent="Margin/Content"]
+[node name="AnswerLabel" type="Label" parent="Margin/Row/Content"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.38, 0.38, 0.38, 1)
 theme_override_font_sizes/font_size = 24
 text = "답"
 text_overrun_behavior = 3
+
+[node name="RowMenuButton" type="Button" parent="Margin/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_vertical = 4
+action_mode = 1
+tooltip_text = "카드 관리"
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxRowMenu")
+theme_override_styles/pressed = SubResource("StyleBoxRowMenu")
+theme_override_styles/hover = SubResource("StyleBoxRowMenu")
+theme_override_styles/disabled = SubResource("StyleBoxRowMenu")
+theme_override_styles/focus = SubResource("StyleBoxRowMenu")
+text = "⋮"

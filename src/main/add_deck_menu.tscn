@@ -134,7 +134,7 @@ theme_override_styles/focus = SubResource("StyleBoxMenuItemHover")
 text = "클립보드에서 만들기"
 alignment = 0
 
-[node name="CopyAiPromptButton" type="Button" parent="AddDeckMenuPanel/Margin/Content"]
+[node name="OpenSettingsButton" type="Button" parent="AddDeckMenuPanel/Margin/Content"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
@@ -148,5 +148,5 @@ theme_override_styles/normal = SubResource("StyleBoxMenuItem")
 theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
 theme_override_styles/pressed = SubResource("StyleBoxMenuItemPressed")
 theme_override_styles/focus = SubResource("StyleBoxMenuItemHover")
-text = "AI 프롬프트 복사"
+text = "설정"
 alignment = 0

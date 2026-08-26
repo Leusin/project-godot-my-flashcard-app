@@ -115,6 +115,48 @@ theme_override_font_sizes/font_size = 21
 text = "백업에 포함된 데이터로 현재 앱 데이터를 교체합니다."
 autowrap_mode = 3
 
+[node name="TipsTitle" type="Label" parent="SettingsScroll/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "덱 만들기 팁"
+
+[node name="TipsPanel" type="PanelContainer" parent="SettingsScroll/Content"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxSection")
+
+[node name="Margin" type="MarginContainer" parent="SettingsScroll/Content/TipsPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="TipsContent" type="VBoxContainer" parent="SettingsScroll/Content/TipsPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="TipTitleLabel" type="Label" parent="SettingsScroll/Content/TipsPanel/Margin/TipsContent"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 25
+text = "단어장 사진으로 덱 만들기"
+autowrap_mode = 3
+
+[node name="TipDescription" type="Label" parent="SettingsScroll/Content/TipsPanel/Margin/TipsContent"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 23
+text = "1. 아래 버튼으로 AI 프롬프트를 복사합니다.
+2. AI 앱에 단어장 사진과 함께 붙여넣습니다.
+3. 답변을 복사한 뒤 덱 목록의 ⋮에서 '클립보드에서 만들기'를 누릅니다."
+autowrap_mode = 3
+
+[node name="CopyAiPromptButton" type="Button" parent="SettingsScroll/Content/TipsPanel/Margin/TipsContent"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 78)
+layout_mode = 2
+theme_override_font_sizes/font_size = 27
+text = "AI 프롬프트 복사"
+
 [node name="InfoTitle" type="Label" parent="SettingsScroll/Content"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28

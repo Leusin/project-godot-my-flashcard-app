@@ -61,15 +61,13 @@ const AI_PROMPT_TEMPLATE := """사진에 보이는 영어 단어를 아래 형�
 
 # run
 달리다"""
-const AI_PROMPT_COPIED_MESSAGE := "AI 프롬프트를 복사했습니다. AI 앱에 단어 사진과 함께 붙여넣고, 답변을 복사한 뒤 '클립보드에서 만들기'를 누르세요."
+const AI_PROMPT_COPIED_MESSAGE := "AI 프롬프트를 복사했습니다. AI 앱에 단어장 사진과 함께 붙여넣으세요."
 const CARD_QUESTION_EMPTY_MESSAGE := "질문을 입력하세요."
 const CARD_ANSWER_HEADING_MESSAGE := "답의 줄 시작에는 '# '를 사용할 수 없습니다."
 const CARD_SAVE_FAILED_MESSAGE := "카드를 저장하지 못했습니다. 저장 공간을 확인하세요."
-const LAST_CARD_DELETE_MESSAGE := "덱에는 카드가 최소 1장 필요합니다."
 const PRIVACY_POLICY_URL := "https://leusin.github.io/privacy/my-simple-flash-card/"
 const STUDY_INPUT_LOCK_SECONDS := 0.22
 const DECK_TILE_SCENE := preload("res://src/main/deck_tile.tscn")
-const ADD_DECK_TILE_SCENE := preload("res://src/main/add_deck_tile.tscn")
 const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.tscn")
 
 @export var auto_start := true
@@ -103,8 +101,12 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 	add_deck_menu.find_child("CreateFromClipboardButton", true, false) as Button
 )
 @onready var copy_ai_prompt_button := (
-	add_deck_menu.find_child("CopyAiPromptButton", true, false) as Button
+	settings_view.find_child("CopyAiPromptButton", true, false) as Button
 )
+@onready var open_settings_button := (
+	add_deck_menu.find_child("OpenSettingsButton", true, false) as Button
+)
+@onready var library_menu_button: Button = $Margin/Page/LibraryContainer/Header/LibraryMenuButton
 @onready var deck_context_menu: Control = $DeckContextMenu
 @onready var deck_context_menu_panel: PanelContainer = $DeckContextMenu/DeckContextMenuPanel
 @onready var rename_deck_button := (
@@ -124,8 +126,8 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @onready var edit_card_action_button := (
 	card_context_menu.find_child("EditCardActionButton", true, false) as Button
 )
-@onready var favorite_card_action_button := (
-	card_context_menu.find_child("FavoriteCardActionButton", true, false) as Button
+@onready var delete_card_action_button := (
+	card_context_menu.find_child("DeleteCardActionButton", true, false) as Button
 )
 @onready var rename_deck_overlay: Control = $RenameDeckOverlay
 @onready var rename_deck_input := rename_deck_overlay.find_child("DialogInput", true, false) as LineEdit
@@ -173,15 +175,14 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @onready var card_detail_menu_button: Button = $Margin/Page/CardDetailView/Header/CardDetailMenuButton
 @onready var card_editor_view: VBoxContainer = $Margin/Page/CardEditorView
 @onready var card_editor_title: Label = $Margin/Page/CardEditorView/Header/CardEditorTitle
-@onready var delete_card_button: Button = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/DeleteCardButton
-@onready var wrong_minus_button: Button = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls/WrongMinusButton
-@onready var editor_wrong_count_label: Label = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls/EditorWrongCountLabel
-@onready var wrong_plus_button: Button = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls/WrongPlusButton
-@onready var reset_card_progress_button: Button = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/ResetCardProgressButton
-@onready var card_status_option: OptionButton = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/CardStatusOption
-@onready var card_question_input: SingleLineTextEdit = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardQuestionInput
-@onready var card_answer_input: TextEdit = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardAnswerInput
-@onready var card_editor_error_label: Label = $Margin/Page/CardEditorView/CardEditorFrame/CardMargin/CardContent/CardEditorErrorLabel
+@onready var wrong_minus_button: Button = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls/WrongMinusButton
+@onready var editor_wrong_count_label: Label = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls/EditorWrongCountLabel
+@onready var wrong_plus_button: Button = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls/WrongPlusButton
+@onready var reset_card_progress_button: Button = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/ResetCardProgressButton
+@onready var card_status_option: OptionButton = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/CardStatusOption
+@onready var card_question_input: SingleLineTextEdit = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardQuestionInput
+@onready var card_answer_input: TextEdit = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardAnswerInput
+@onready var card_editor_error_label: Label = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorErrorLabel
 @onready var card_delete_confirmation_overlay: Control = $CardDeleteConfirmationOverlay
 @onready var discard_card_changes_overlay: Control = $DiscardCardChangesOverlay
 @onready var study_flow: VBoxContainer = $Margin/Page/StudyFlow
@@ -234,6 +235,7 @@ var _card_detail_origin: CardDetailOrigin = CardDetailOrigin.CARD_LIST
 var _card_detail_index := -1
 var _card_detail_result_index := -1
 var _card_menu_from_study := false
+var _card_menu_from_list := false
 var _study_edit_source_index := -1
 var _study_edit_return_show_answer := false
 var _study_input_locked := false
@@ -275,7 +277,8 @@ func _ready() -> void:
 	import_markdown_button.pressed.connect(_on_import_from_add_menu_pressed)
 	create_from_clipboard_button.pressed.connect(_on_create_from_clipboard_pressed)
 	copy_ai_prompt_button.pressed.connect(_on_copy_ai_prompt_pressed)
-	$Margin/Page/LibraryContainer/Header/OpenSettingsButton.pressed.connect(show_settings)
+	open_settings_button.pressed.connect(_on_open_settings_pressed)
+	library_menu_button.pressed.connect(_on_library_menu_pressed)
 	$Margin/Page/SettingsView/Header/BackFromSettingsButton.pressed.connect(show_library)
 	$Margin/Page/SettingsView/SettingsScroll/Content/DataPanel/Margin/DataActions/CreateBackupButton.pressed.connect(
 		_on_create_backup_pressed
@@ -292,7 +295,7 @@ func _ready() -> void:
 	$DeckContextMenu/DismissContextMenuButton.pressed.connect(_on_deck_context_dismissed)
 	$CardContextMenu/DismissCardContextMenuButton.pressed.connect(_on_card_context_dismissed)
 	edit_card_action_button.pressed.connect(_on_card_context_edit_pressed)
-	favorite_card_action_button.pressed.connect(_on_card_context_favorite_pressed)
+	delete_card_action_button.pressed.connect(_on_card_context_delete_pressed)
 	(rename_deck_overlay.find_child("SecondaryButton", true, false) as Button).pressed.connect(
 		_on_rename_canceled
 	)
@@ -351,7 +354,6 @@ func _ready() -> void:
 	$Margin/Page/CardEditorView/Header/CancelCardEditButton.pressed.connect(
 		_request_close_card_editor
 	)
-	delete_card_button.pressed.connect(_on_delete_card_pressed)
 	wrong_minus_button.pressed.connect(_on_wrong_minus_pressed)
 	wrong_plus_button.pressed.connect(_on_wrong_plus_pressed)
 	reset_card_progress_button.pressed.connect(_on_reset_card_progress_pressed)
@@ -630,10 +632,6 @@ func _refresh_deck_list() -> void:
 		deck_tile.selected.connect(_on_deck_selected)
 		deck_tile.menu_requested.connect(_on_deck_menu_requested)
 
-	var add_deck_tile := ADD_DECK_TILE_SCENE.instantiate() as AddDeckTileView
-	deck_list.add_child(add_deck_tile)
-	add_deck_tile.pressed.connect(_on_add_deck_requested)
-
 
 func _on_deck_selected(deck_file: String) -> void:
 	add_deck_menu.hide()
@@ -757,6 +755,7 @@ func _refresh_card_rows() -> void:
 		var card := _editing_cards[index]
 		row.setup(index, card)
 		row.selected.connect(_on_card_row_selected)
+		row.menu_requested.connect(_on_card_row_menu_requested)
 
 
 func _on_card_row_selected(index: int) -> void:
@@ -850,18 +849,28 @@ func _on_edit_card_from_detail_pressed() -> void:
 	_open_card_editor(_card_detail_index)
 
 
-func _on_card_context_requested(anchor: Control, from_study: bool) -> void:
+func _on_card_row_menu_requested(index: int, anchor: Control) -> void:
+	if index < 0 or index >= _editing_cards.size():
+		return
+	_card_detail_index = index
+	_on_card_context_requested(anchor, false, true)
+
+
+func _on_card_context_requested(
+	anchor: Control,
+	from_study: bool,
+	from_list: bool = false
+) -> void:
 	_card_menu_from_study = from_study
+	_card_menu_from_list = from_list
 	var card := _card_for_context_menu()
 	if card == null:
 		return
 	var deck_file := _deck_file if from_study else _editing_deck_file
 	if not DeckStorage.deck_exists(deck_file):
 		return
-	var progress := DeckStorage.load_progress(deck_file)
-	favorite_card_action_button.text = (
-		"즐겨찾기 해제" if progress.is_favorite(card.question) else "즐겨찾기"
-	)
+	# 학습 중에는 세션이 흔들리고, 마지막 한 장은 빈 덱이 되므로 삭제를 아예 내보이지 않는다.
+	delete_card_action_button.visible = not from_study and _editing_cards.size() > 1
 	card_context_menu.show()
 	card_context_menu.move_to_front()
 	card_context_menu_panel.reset_size()
@@ -911,23 +920,30 @@ func _on_card_context_edit_pressed() -> void:
 	card_context_menu.hide()
 	if _card_menu_from_study:
 		_on_edit_study_card_pressed()
+	elif _card_menu_from_list:
+		if _card_detail_index < 0 or _card_detail_index >= _editing_cards.size():
+			return
+		_card_editor_origin = CardEditorOrigin.CARD_LIST
+		_open_card_editor(_card_detail_index)
 	else:
 		_on_edit_card_from_detail_pressed()
 
 
-func _on_card_context_favorite_pressed() -> void:
-	var card := _card_for_context_menu()
-	if card == null:
-		card_context_menu.hide()
-		return
-	var deck_file := _deck_file if _card_menu_from_study else _editing_deck_file
-	var progress := DeckStorage.load_progress(deck_file)
-	progress.set_favorite(card.question, not progress.is_favorite(card.question))
-	if not DeckStorage.save_progress(deck_file, progress):
-		push_warning("Card favorite save failed: %s" % deck_file)
+func _on_card_context_delete_pressed() -> void:
 	card_context_menu.hide()
-	if deck_file == _deck_file:
-		_progress = progress
+	if _card_menu_from_study:
+		return
+	if _card_detail_index < 0 or _card_detail_index >= _editing_cards.size():
+		return
+	if _editing_cards.size() <= 1:
+		return
+	_editing_card_index = _card_detail_index
+	_card_editor_origin = (
+		CardEditorOrigin.CARD_LIST
+		if _card_menu_from_list
+		else CardEditorOrigin.CARD_DETAIL
+	)
+	card_delete_confirmation_overlay.show()
 
 
 func _close_card_detail() -> void:
@@ -1031,7 +1047,6 @@ func _open_card_editor(index: int) -> void:
 			if _card_editor_origin == CardEditorOrigin.NEW_DECK
 			else "카드 추가"
 		)
-		delete_card_button.hide()
 	else:
 		var card := _editing_cards[index]
 		_editing_original_question = card.question
@@ -1042,10 +1057,6 @@ func _open_card_editor(index: int) -> void:
 			"학습 중 카드 편집"
 			if _card_editor_origin == CardEditorOrigin.STUDY
 			else "카드 편집"
-		)
-		delete_card_button.visible = (
-			_card_editor_origin == CardEditorOrigin.CARD_LIST
-			or _card_editor_origin == CardEditorOrigin.CARD_DETAIL
 		)
 	_editing_wrong_count = _editing_original_wrong_count
 	_select_card_editor_status(_editing_original_status)
@@ -1271,15 +1282,6 @@ func _on_question_submitted() -> void:
 	card_answer_input.grab_focus()
 
 
-func _on_delete_card_pressed() -> void:
-	if _editing_card_index < 0 or _editing_card_index >= _editing_cards.size():
-		return
-	if _editing_cards.size() <= 1:
-		_show_card_editor_error(LAST_CARD_DELETE_MESSAGE)
-		return
-	card_delete_confirmation_overlay.show()
-
-
 func _on_card_delete_canceled() -> void:
 	card_delete_confirmation_overlay.hide()
 
@@ -1295,7 +1297,12 @@ func _on_card_delete_confirmed() -> void:
 	var updated := _copy_cards(_editing_cards)
 	updated.remove_at(_editing_card_index)
 	if not DeckStorage.write_deck(_editing_deck_file, DeckWriter.to_markdown(updated)):
-		_show_card_editor_error(CARD_SAVE_FAILED_MESSAGE)
+		if card_editor_view.visible:
+			_show_card_editor_error(CARD_SAVE_FAILED_MESSAGE)
+		else:
+			card_detail_view.hide()
+			card_list_view.show()
+			_show_card_list_status(CARD_SAVE_FAILED_MESSAGE)
 		return
 
 	var progress := DeckStorage.load_progress(_editing_deck_file)
@@ -1503,13 +1510,18 @@ func _return_to_study_ready() -> void:
 	show_study_ready(deck_file)
 
 
-func _on_add_deck_requested(anchor: Control) -> void:
+func _on_library_menu_pressed() -> void:
 	_menu_deck_file = ""
 	deck_context_menu.hide()
 	library_status_label.hide()
 	add_deck_menu.show()
 	add_deck_menu_panel.reset_size()
-	_position_add_deck_menu(anchor)
+	_position_add_deck_menu(library_menu_button)
+
+
+func _on_open_settings_pressed() -> void:
+	add_deck_menu.hide()
+	show_settings()
 
 
 func _position_add_deck_menu(anchor: Control) -> void:
@@ -1751,9 +1763,8 @@ func _on_create_from_clipboard_pressed() -> void:
 
 
 func _on_copy_ai_prompt_pressed() -> void:
-	add_deck_menu.hide()
 	DisplayServer.clipboard_set(AI_PROMPT_TEMPLATE)
-	_show_library_status(AI_PROMPT_COPIED_MESSAGE)
+	_show_settings_status(AI_PROMPT_COPIED_MESSAGE)
 
 
 func begin_clipboard_deck_creation(markdown_text: String) -> bool:
@@ -2189,6 +2200,7 @@ func _show_study_results() -> void:
 		var row = CARD_COLLECTION_ROW_SCENE.instantiate()
 		result_rows.add_child(row)
 		row.setup(index, _session_cards[index], study_outcome_text(outcome))
+		row.set_row_actions_visible(false)
 		row.selected.connect(_on_result_card_selected)
 
 	result_good_count_label.text = str(good_count)

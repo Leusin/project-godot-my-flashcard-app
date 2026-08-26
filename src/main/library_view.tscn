@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxMenuButton"]
 
 [node name="LibraryContainer" type="VBoxContainer"]
 layout_mode = 2
@@ -19,11 +21,24 @@ theme_override_font_sizes/font_size = 36
 text = "내 덱"
 vertical_alignment = 1
 
-[node name="OpenSettingsButton" type="Button" parent="Header"]
-custom_minimum_size = Vector2(112, 64)
+[node name="LibraryMenuButton" type="Button" parent="Header"]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "설정"
+size_flags_vertical = 4
+action_mode = 1
+tooltip_text = "덱 추가와 설정"
+theme_override_font_sizes/font_size = 38
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxMenuButton")
+theme_override_styles/pressed = SubResource("StyleBoxMenuButton")
+theme_override_styles/hover = SubResource("StyleBoxMenuButton")
+theme_override_styles/disabled = SubResource("StyleBoxMenuButton")
+theme_override_styles/focus = SubResource("StyleBoxMenuButton")
+text = "⋮"
 
 [node name="DeckListScroll" type="ScrollContainer" parent="."]
 layout_mode = 2

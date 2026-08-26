@@ -2,6 +2,7 @@ class_name CardCollectionRow
 extends PanelContainer
 
 signal selected(index: int)
+signal menu_requested(index: int, anchor: Control)
 
 const FALLBACK_DRAG_THRESHOLD := 12.0
 
@@ -17,17 +18,30 @@ var _drag_distance := Vector2.ZERO
 var _scroll_start := 0
 var _scroll_container: ScrollContainer
 
-@onready var question_label: Label = $Margin/Content/Top/QuestionLabel
-@onready var answer_label: Label = $Margin/Content/AnswerLabel
-@onready var outcome_badge: PanelContainer = $Margin/Content/Top/OutcomeBadge
-@onready var outcome_label: Label = $Margin/Content/Top/OutcomeBadge/Margin/OutcomeLabel
+@onready var question_label: Label = $Margin/Row/Content/Top/QuestionLabel
+@onready var answer_label: Label = $Margin/Row/Content/AnswerLabel
+@onready var outcome_badge: PanelContainer = $Margin/Row/Content/Top/OutcomeBadge
+@onready var outcome_label: Label = $Margin/Row/Content/Top/OutcomeBadge/Margin/OutcomeLabel
+@onready var menu_button: Button = $Margin/Row/RowMenuButton
+# 순서 변경은 아직 기능이 없다. 자리와 크기만 잡아 둔 placeholder다.
+@onready var reorder_handle: Button = $Margin/Row/RowReorderHandle
 
 
 func _ready() -> void:
+	menu_button.pressed.connect(_on_menu_pressed)
 	_scroll_container = _find_scroll_container()
 	if _scroll_container != null:
 		_scroll_container.scroll_started.connect(_on_scroll_started)
 		_scroll_container.scroll_ended.connect(_on_scroll_ended)
+
+
+func set_row_actions_visible(actions_visible: bool) -> void:
+	menu_button.visible = actions_visible
+	reorder_handle.visible = actions_visible
+
+
+func _on_menu_pressed() -> void:
+	menu_requested.emit(card_index, menu_button)
 
 
 func _gui_input(event: InputEvent) -> void:
