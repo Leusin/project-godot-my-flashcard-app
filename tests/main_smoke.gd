@@ -188,6 +188,12 @@ func run_tests() -> void:
 		"Main: 카드 뭉치 타일에 덱 표시 이름 사용"
 	)
 	check(
+		_view(deck_buttons[0], "DeckNameLabel").max_lines_visible == 2
+		and _view(deck_buttons[0], "DeckNameLabel").text_overrun_behavior
+		== TextServer.OVERRUN_TRIM_ELLIPSIS,
+		"Main: 긴 덱 이름은 두 줄 말줄임표로 잘라 타일을 유지"
+	)
+	check(
 		_view(deck_buttons[0], "DeckCountLabel").text == "2장",
 		"Main: 카드 뭉치 타일에 카드 수 표시"
 	)
@@ -467,6 +473,18 @@ func run_tests() -> void:
 	check(
 		not deck_context_menu.visible and rename_overlay.visible,
 		"Main Rename: context list에서 이름 변경창으로 전환"
+	)
+	var rename_input := _dialog(app, "RenameDeckOverlay", "DialogInput") as LineEdit
+	var rename_counter := _dialog(app, "RenameDeckOverlay", "DialogCounter") as Label
+	check(
+		rename_input.max_length == DeckNaming.MAX_DISPLAY_NAME_LENGTH
+		and rename_counter.visible
+		and rename_counter.text == "%d/%d" % [
+			rename_input.text.length(),
+			DeckNaming.MAX_DISPLAY_NAME_LENGTH
+		]
+		and not (_dialog(app, "DeleteConfirmationOverlay", "DialogCounter") as Label).visible,
+		"Main Rename: 이름 입력에 길이 제한과 현재/최대 글자수 표시"
 	)
 	check(
 		_dialog(app, "RenameDeckOverlay", "DialogInput").text == "__gd_main",

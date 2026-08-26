@@ -90,8 +90,9 @@ title_text = "새 덱 만들기"
 description_text = "이름을 정한 뒤 첫 카드를 작성합니다."
 input_visible = true
 input_placeholder = "덱 이름"
+input_max_length = 40
 primary_button_text = "첫 카드 작성"
-panel_height = 430.0
+panel_height = 470.0
 
 [node name="RenameDeckOverlay" parent="." unique_id=1792945415 instance=ExtResource("5_modal")]
 visible = false
@@ -99,8 +100,9 @@ layout_mode = 1
 title_text = "덱 이름 변경"
 input_visible = true
 input_placeholder = "덱 이름"
+input_max_length = 40
 primary_button_text = "변경"
-panel_height = 400.0
+panel_height = 440.0
 
 [node name="DeleteConfirmationOverlay" parent="." unique_id=407182076 instance=ExtResource("5_modal")]
 visible = false

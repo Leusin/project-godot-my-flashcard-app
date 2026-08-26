@@ -55,3 +55,19 @@ func _test_editable_display_name() -> void:
 		DeckNaming.deck_file_name(" 영어 단어 ") == "영어 단어.md",
 		"편집 이름: 공백 제거 후 Markdown 확장자 추가"
 	)
+	check(
+		DeckNaming.is_valid_display_name("가".repeat(DeckNaming.MAX_DISPLAY_NAME_LENGTH)),
+		"편집 이름: 상한과 같은 길이는 허용"
+	)
+	check(
+		not DeckNaming.is_valid_display_name(
+			"가".repeat(DeckNaming.MAX_DISPLAY_NAME_LENGTH + 1)
+		),
+		"편집 이름: 상한을 넘는 길이 거부"
+	)
+	check(
+		DeckNaming.deck_file_name(
+			"가".repeat(DeckNaming.MAX_DISPLAY_NAME_LENGTH) + " (2)"
+		).to_utf8_buffer().size() < 255,
+		"편집 이름: 중복 번호와 확장자를 붙여도 파일 이름 byte 한계 안"
+	)

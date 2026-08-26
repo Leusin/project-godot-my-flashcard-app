@@ -3,6 +3,11 @@ class_name DeckNaming
 const EXTENSION := ".md"
 const INVALID_DISPLAY_NAME_CHARACTERS := '<>:"/\\|?*'
 
+# 덱 이름은 그대로 파일 이름이 된다. Android/Linux는 파일 이름을 255 byte로 자르는데
+# 한글은 UTF-8에서 한 자당 3 byte라 이름만으로 85자가 상한이다.
+# 여기에 진행도 파일의 ".json"과 중복 시 붙는 " (2)"까지 들어가야 하므로 넉넉히 낮춰 잡는다.
+const MAX_DISPLAY_NAME_LENGTH := 40
+
 # 확장자를 제거하고 표시할 이름
 static func display_name(file_name: String) -> String:
 	var name := file_name.strip_edges()
@@ -19,6 +24,9 @@ static func is_deck_file(file_name: String) -> bool:
 static func is_valid_display_name(display: String) -> bool:
 	var trimmed := display.strip_edges()
 	if trimmed.is_empty() or trimmed == "." or trimmed == ".." or trimmed.ends_with("."):
+		return false
+
+	if trimmed.length() > MAX_DISPLAY_NAME_LENGTH:
 		return false
 
 	for character in INVALID_DISPLAY_NAME_CHARACTERS:

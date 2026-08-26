@@ -1734,7 +1734,7 @@ func _on_create_new_deck_pressed() -> void:
 	create_deck_title.text = "새 덱 만들기"
 	create_deck_description.text = "이름을 정한 뒤 첫 카드를 작성합니다."
 	confirm_create_deck_button.text = "첫 카드 작성"
-	create_deck_input.clear()
+	(create_deck_overlay as ModalDialog).clear_input()
 	create_deck_error_label.hide()
 	create_deck_overlay.show()
 	create_deck_input.call_deferred("grab_focus")
@@ -1742,7 +1742,7 @@ func _on_create_new_deck_pressed() -> void:
 
 func _on_create_deck_canceled() -> void:
 	create_deck_overlay.hide()
-	create_deck_input.clear()
+	(create_deck_overlay as ModalDialog).clear_input()
 	create_deck_error_label.hide()
 	_reset_create_deck_state()
 
@@ -1780,7 +1780,7 @@ func begin_clipboard_deck_creation(markdown_text: String) -> bool:
 	create_deck_title.text = "클립보드로 덱 만들기"
 	create_deck_description.text = "복사한 Markdown에서 %d장의 카드를 찾았습니다." % card_count
 	confirm_create_deck_button.text = "덱 만들기"
-	create_deck_input.clear()
+	(create_deck_overlay as ModalDialog).clear_input()
 	create_deck_error_label.hide()
 	create_deck_overlay.show()
 	create_deck_input.call_deferred("grab_focus")
@@ -1930,7 +1930,9 @@ func _on_rename_pressed() -> void:
 		_show_library_status(RENAME_DECK_NOT_FOUND_MESSAGE)
 		return
 
-	rename_deck_input.text = DeckNaming.display_name(_menu_deck_file)
+	(rename_deck_overlay as ModalDialog).set_input_text(
+		DeckNaming.display_name(_menu_deck_file)
+	)
 	rename_error_label.hide()
 	rename_deck_overlay.show()
 	rename_deck_input.call_deferred("grab_focus")
