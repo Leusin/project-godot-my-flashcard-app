@@ -221,6 +221,7 @@ var _card_detail_result_index := -1
 var _card_menu_from_study := false
 var _card_menu_from_list := false
 var _reordering_cards := false
+var _card_rows_settled := true
 var _reorder_original_cards: Array[FlashCard] = []
 var _study_edit_source_index := -1
 var _study_edit_return_show_answer := false
@@ -235,6 +236,7 @@ func _ready() -> void:
 	get_tree().root.size_changed.connect(_apply_safe_area)
 	call_deferred("_apply_safe_area")
 	library_view.deck_selected.connect(_on_deck_selected)
+	library_view.deck_order_changed.connect(_on_deck_order_changed)
 	library_view.import_file_selected.connect(import_deck_from_path)
 	library_view.export_file_selected.connect(_on_export_file_selected)
 	library_view.export_canceled.connect(_on_export_canceled)
@@ -632,6 +634,14 @@ func _refresh_deck_list() -> void:
 	library_view.render(decks)
 
 
+func _on_deck_order_changed(order: Array[String]) -> void:
+	var settings := DeckStorage.load_settings()
+	if settings.deck_order == order:
+		return
+	settings.deck_order = order
+	_save_settings_or_warn(settings)
+
+
 func _on_deck_selected(deck_file: String) -> void:
 	add_deck_menu.hide()
 	deck_context_menu.hide()
@@ -745,6 +755,7 @@ func _refresh_card_rows() -> void:
 
 func _on_card_row_reorder_started(_index: int) -> void:
 	_reordering_cards = true
+	_card_rows_settled = true
 	_reorder_original_cards = _copy_cards(_editing_cards)
 
 
@@ -753,7 +764,7 @@ func _on_card_row_reorder_moved(index: int, pointer_y: float) -> void:
 
 
 func _move_card_row(index: int, target: int) -> void:
-	if not _reordering_cards:
+	if not _reordering_cards or not _card_rows_settled:
 		return
 	if target < 0 or target == index or index < 0 or index >= _editing_cards.size():
 		return
@@ -762,6 +773,14 @@ func _move_card_row(index: int, target: int) -> void:
 	card_rows.move_child(card_rows.get_child(index), target)
 	for row_index in card_rows.get_child_count():
 		(card_rows.get_child(row_index) as CardCollectionRow).set_index(row_index)
+	# 옮긴 직후에는 행 좌표가 아직 그대로라, 그 좌표로 또 옮기면 자리가 튄다.
+	_card_rows_settled = false
+	_settle_card_rows()
+
+
+func _settle_card_rows() -> void:
+	await get_tree().process_frame
+	_card_rows_settled = true
 
 
 func _on_card_row_reorder_ended(_index: int) -> void:

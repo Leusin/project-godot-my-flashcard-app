@@ -281,6 +281,11 @@ func run_tests() -> void:
 		DeckStorage.load_settings().deck_order.has(TEST_DECK),
 		"Main: 화면에 그린 덱 차례를 설정에 남긴다"
 	)
+	var library := _view(app, "LibraryContainer") as LibraryView
+	check(
+		library.current_order() == DeckStorage.load_settings().deck_order,
+		"Main: 화면 차례와 저장된 차례가 같다"
+	)
 	check(
 		_view(app, "DeckList").alignment == FlowContainer.ALIGNMENT_BEGIN,
 		"Main: 덱 목록을 왼쪽부터 정렬"
@@ -1622,6 +1627,26 @@ func run_tests() -> void:
 	first_card_row._gui_input(row_press)
 	first_card_row._gui_input(row_release)
 	check(row_selection_count[0] == 1, "Main Card List: 짧은 tap은 카드 열기로 유지")
+	var long_press_started := [0]
+	first_card_row.reorder_started.connect(
+		func(_index: int) -> void: long_press_started[0] += 1
+	)
+	first_card_row._gui_input(row_press)
+	first_card_row.call("_on_long_press", first_card_row.get("_press_generation"))
+	check(
+		long_press_started[0] == 1 and first_card_row.get("_reordering"),
+		"Main Card List: 행을 길게 누르면 카드를 집어 올린다"
+	)
+	check(
+		(first_card_row as Control).z_index == 1,
+		"Main Card List: 집어 올린 카드를 다른 행 위로 띄운다"
+	)
+	first_card_row._gui_input(row_release)
+	check(
+		row_selection_count[0] == 1 and not first_card_row.get("_reordering")
+		and (first_card_row as Control).z_index == 0,
+		"Main Card List: 집어 올린 뒤 손을 떼도 카드를 열지 않는다"
+	)
 	check(
 		_view(app, "CardDetailView").visible
 		and not _view(app, "CardEditorView").visible

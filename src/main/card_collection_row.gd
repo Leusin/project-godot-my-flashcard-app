@@ -8,6 +8,9 @@ signal reorder_moved(index: int, pointer_y: float)
 signal reorder_ended(index: int)
 
 const FALLBACK_DRAG_THRESHOLD := 12.0
+const LONG_PRESS_SECONDS := 0.45
+const PICKED_SCALE := 1.03
+const PICK_TWEEN_SECONDS := 0.12
 
 @export var good_badge_style: StyleBoxFlat
 @export var again_badge_style: StyleBoxFlat
@@ -15,6 +18,7 @@ const FALLBACK_DRAG_THRESHOLD := 12.0
 
 var card_index := -1
 var _reordering := false
+var _press_generation := 0
 var _pointer_down := false
 var _dragged := false
 var _scrolling := false
@@ -53,6 +57,25 @@ func set_index(index: int) -> void:
 	card_index = index
 
 
+func _arm_long_press() -> void:
+	_press_generation += 1
+	var generation := _press_generation
+	get_tree().create_timer(LONG_PRESS_SECONDS).timeout.connect(
+		func() -> void: _on_long_press(generation)
+	)
+
+
+func _on_long_press(generation: int) -> void:
+	# 길게 누르는 동안 스크롤이나 드래그가 시작됐다면 집지 않는다.
+	if generation != _press_generation:
+		return
+	if not _pointer_down or _reordering or _dragged:
+		return
+	_reordering = true
+	_apply_pick_visual(true)
+	reorder_started.emit(card_index)
+
+
 func _on_reorder_handle_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var button_event := event as InputEventMouseButton
@@ -60,9 +83,11 @@ func _on_reorder_handle_input(event: InputEvent) -> void:
 			return
 		if button_event.pressed:
 			_reordering = true
+			_apply_pick_visual(true)
 			reorder_started.emit(card_index)
 		elif _reordering:
 			_reordering = false
+			_apply_pick_visual(false)
 			reorder_ended.emit(card_index)
 		accept_event()
 		return
@@ -115,10 +140,16 @@ func _handle_mouse_button(event: InputEventMouseButton) -> void:
 		_drag_distance = Vector2.ZERO
 		_scroll_start = _scroll_container.scroll_vertical if _scroll_container != null else 0
 		grab_focus()
+		_arm_long_press()
 		return
 	if not _pointer_down:
 		return
 	_pointer_down = false
+	if _reordering:
+		_reordering = false
+		_apply_pick_visual(false)
+		reorder_ended.emit(card_index)
+		return
 	if not _dragged:
 		activate()
 
@@ -126,6 +157,12 @@ func _handle_mouse_button(event: InputEventMouseButton) -> void:
 func _handle_mouse_motion(event: InputEventMouseMotion) -> void:
 	if not _pointer_down or (event.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
 		return
+
+	# 집어 올린 뒤에는 목록을 스크롤하지 않고 카드 자리만 옮긴다.
+	if _reordering:
+		reorder_moved.emit(card_index, event.global_position.y)
+		return
+
 	_drag_distance += event.relative
 	if _drag_distance.length() >= _drag_threshold():
 		_dragged = true
@@ -170,3 +207,13 @@ func _on_scroll_started() -> void:
 
 func _on_scroll_ended() -> void:
 	_scrolling = false
+
+
+# 집어 올린 항목은 살짝 커지고 다른 항목 위로 떠서, 지금 무엇을 옮기는지 보이게 한다.
+func _apply_pick_visual(picked: bool) -> void:
+	pivot_offset = size * 0.5
+	z_index = 1 if picked else 0
+	var target := Vector2.ONE * PICKED_SCALE if picked else Vector2.ONE
+	create_tween().set_ease(Tween.EASE_OUT).tween_property(
+		self, "scale", target, PICK_TWEEN_SECONDS
+	)
