@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bil5lbdkhdh02"]
 
 [ext_resource type="Script" uid="uid://c8y0godulqtq4" path="res://src/main/deck_tile.gd" id="1_script"]
-[ext_resource type="Theme" uid="uid://cqshs8ofnmh0w" path="res://src/main/main_theme.tres" id="2_theme"]
+[ext_resource type="Theme" uid="uid://bu5jyw4ehw6ya" path="res://src/main/main_theme.tres" id="2_theme"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxStackCard"]
 bg_color = Color(1, 1, 1, 1)

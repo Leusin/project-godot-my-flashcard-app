@@ -44,10 +44,6 @@ func deck_file() -> String:
 	return _deck_file
 
 
-func is_reordering() -> bool:
-	return _reordering
-
-
 func _on_deck_pressed() -> void:
 	# 집어 옮긴 뒤 손을 뗀 것은 덱을 여는 신호가 아니다.
 	if _suppress_press:

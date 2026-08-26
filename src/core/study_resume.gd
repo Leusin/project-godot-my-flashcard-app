@@ -20,7 +20,13 @@ static func from_json(json: String) -> StudyResume:
 	if json.strip_edges().is_empty():
 		return null
 
-	var parsed: Variant = JSON.parse_string(json)
+	# parse_string은 깨진 입력에 엔진 오류를 남긴다.
+	# 깨진 파일을 조용히 버리는 것이 여기 규칙이라 오류 코드만 받는다.
+	var parser := JSON.new()
+	if parser.parse(json) != OK:
+		return null
+
+	var parsed: Variant = parser.data
 	if parsed is not Dictionary:
 		return null
 

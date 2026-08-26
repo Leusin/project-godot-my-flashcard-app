@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bdds61ydptmja"]
 
-[ext_resource type="Theme" uid="uid://cqshs8ofnmh0w" path="res://src/main/main_theme.tres" id="1_theme"]
+[ext_resource type="Theme" uid="uid://bu5jyw4ehw6ya" path="res://src/main/main_theme.tres" id="1_theme"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxBackdrop"]
 
