@@ -59,6 +59,8 @@ $godot = "C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windo
 & $godot --headless --path . --export-release "Android Release AAB" build/android/my-simple-flash-card-0.9.2.aab
 ```
 
+debug 빌드는 `tools\deploy_android_debug.bat` 한 번 실행으로 export, 연결된 폰 설치, 앱 실행까지 끝낼 수 있다.
+
 ### 버전 올릴 때 함께 바꾸는 곳
 
 1. `project.godot`의 `config/version`과 `apply_project_settings.gd` (같은 값 유지)
