@@ -1,7 +1,8 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
 [ext_resource type="Script" path="res://src/main/keyboard_avoider.gd" id="2_keyboard"]
+[ext_resource type="Script" path="res://src/main/single_line_text_edit.gd" id="3_single_line"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxEditorCard"]
 bg_color = Color(1, 1, 1, 1)
@@ -169,12 +170,12 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "질문"
 
-[node name="CardQuestionInput" type="LineEdit" parent="CardEditorFrame/CardMargin/CardContent"]
-custom_minimum_size = Vector2(0, 72)
+[node name="CardQuestionInput" type="TextEdit" parent="CardEditorFrame/CardMargin/CardContent"]
+custom_minimum_size = Vector2(0, 132)
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_selected_color = Color(0, 0, 0, 1)
-theme_override_colors/font_uneditable_color = Color(0.25, 0.25, 0.25, 1)
+theme_override_colors/font_readonly_color = Color(0.25, 0.25, 0.25, 1)
 theme_override_colors/font_placeholder_color = Color(0.42, 0.42, 0.42, 1)
 theme_override_colors/caret_color = Color(0, 0, 0, 1)
 theme_override_colors/selection_color = Color(0.75, 0.75, 0.75, 1)
@@ -183,6 +184,9 @@ theme_override_styles/normal = SubResource("StyleBoxFieldNormal")
 theme_override_styles/focus = SubResource("StyleBoxFieldFocus")
 theme_override_styles/read_only = SubResource("StyleBoxFieldReadOnly")
 placeholder_text = "질문을 입력하세요"
+wrap_mode = 1
+scroll_fit_content_height = true
+script = ExtResource("3_single_line")
 
 [node name="AnswerCaption" type="Label" parent="CardEditorFrame/CardMargin/CardContent"]
 layout_mode = 2

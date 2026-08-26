@@ -1463,6 +1463,21 @@ func run_tests() -> void:
 		== CardStatus.Value.LEARNING,
 		"Main Card Edit: 질문·답과 기존 학습 정보를 편집기에 표시"
 	)
+	var question_input := _view(app, "CardQuestionInput") as TextEdit
+	check(
+		question_input is SingleLineTextEdit
+		and question_input.wrap_mode == TextEdit.LINE_WRAPPING_BOUNDARY
+		and question_input.scroll_fit_content_height
+		and question_input.custom_minimum_size.y == 132.0,
+		"Main Card Edit: 질문을 여러 줄로 감싸는 넓은 입력 field 사용"
+	)
+	question_input.text = "Line one\nLine two"
+	question_input.call("_strip_newlines")
+	check(
+		question_input.text == "Line one Line two",
+		"Main Card Edit: 질문에 들어온 줄바꿈을 공백으로 정리"
+	)
+	question_input.text = "Old"
 	var card_editor_content := _view(app, "CardEditorProperties").get_parent()
 	var card_editor_style := (
 		_view(app, "CardEditorFrame").get_theme_stylebox("panel") as StyleBoxFlat
