@@ -2,7 +2,7 @@ class_name LibraryView
 extends VBoxContainer
 
 # 덱 목록 화면의 골격. 받은 목록을 그리고 입력을 사실 그대로 올린다.
-# 어떤 덱을 열지, 상태 문구를 언제 지울지 같은 해석은 main.gd가 맡는다.
+# 어떤 덱을 열지 같은 해석은 main.gd가 맡는다.
 
 signal deck_selected(deck_file: String)
 signal deck_order_changed(order: Array[String])
@@ -18,7 +18,6 @@ var _dragging_tile := false
 
 @onready var deck_list: HFlowContainer = $DeckListScroll/DeckList
 @onready var empty_decks_label: Label = $EmptyDecksLabel
-@onready var status_label: Label = $LibraryStatusLabel
 @onready var add_button: Button = $Header/RightActions/LibraryAddButton
 @onready var settings_button: Button = $Header/RightActions/LibrarySettingsButton
 @onready var import_dialog: FileDialog = $ImportDialog
@@ -49,15 +48,6 @@ func render(decks: Array[DeckInfo]) -> void:
 		deck_tile.selected.connect(_on_deck_tile_selected)
 		deck_tile.reorder_started.connect(_on_tile_reorder_started)
 		deck_tile.reorder_ended.connect(_on_tile_reorder_ended)
-
-
-func show_status(message: String) -> void:
-	status_label.text = message
-	status_label.visible = true
-
-
-func hide_status() -> void:
-	status_label.visible = false
 
 
 func popup_import() -> void:

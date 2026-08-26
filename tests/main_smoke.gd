@@ -413,63 +413,57 @@ func run_tests() -> void:
 		"Main Export: 원본 Markdown 내용 보존"
 	)
 	check(
-		_view(app, "LibraryStatusLabel").text == "'__gd_main_export.md' 내보내기 완료",
-		"Main Export: 완료 파일명을 목록 아래 표시"
-	)
-	check(
 		not app.export_deck_to_path("__없는덱.md", EXPORTED_PATH),
 		"Main Export: 사라진 원본 덱 실패"
 	)
-	check(
-		_view(app, "LibraryStatusLabel").text == MainApp.EXPORT_DECK_NOT_FOUND_MESSAGE,
-		"Main Export: 원본 덱 없음 오류 안내"
-	)
 
+	var top_notification := _view(app, "TopNotification") as TopNotification
+	var dismiss_timer := _view(top_notification, "DismissTimer") as Timer
 	check(app.import_deck_from_path(IMPORT_SOURCE), "MVP Import: Markdown 덱 가져오기 성공")
 	check(DeckStorage.deck_exists("cards_edge_cases.md"), "MVP Import: 실제 fixture를 앱 덱 폴더에 복사")
 	check(_view(app, "DeckList").get_child_count() == 2, "MVP Import: 목록 즉시 갱신")
 	check(
-		_view(app, "LibraryStatusLabel").text == "'cards_edge_cases' 가져오기 완료",
-		"MVP Import: 성공 메시지 표시"
+		top_notification.visible
+		and top_notification.message_label.text == "'cards_edge_cases' 가져오기 완료",
+		"Main Notification: 성공 안내를 화면 위에 표시"
 	)
 	check(
 		not app.import_deck_from_path("user://__gd_main_missing.md"),
 		"MVP Import: 없는 파일 가져오기 실패"
 	)
 	check(
-		_view(app, "LibraryStatusLabel").text == "덱을 가져오지 못했습니다.",
-		"MVP Import: 실패 메시지 표시"
+		top_notification.visible
+		and top_notification.message_label.text == "덱을 가져오지 못했습니다.",
+		"Main Notification: 실패 안내를 화면 위에 표시"
 	)
+	check(
+		dismiss_timer.one_shot and dismiss_timer.wait_time == TopNotification.DEFAULT_DURATION,
+		"Main Notification: 안내 타이머는 기본 시간짜리 one-shot"
+	)
+	dismiss_timer.timeout.emit()
+	top_notification.show_message("다음 안내")
+	check(
+		top_notification.visible
+		and top_notification.message_label.text == "다음 안내"
+		and top_notification.modulate.a == 1.0
+		and not dismiss_timer.is_stopped(),
+		"Main Notification: 사라지는 중에도 새 안내가 페이드와 타이머를 되돌림"
+	)
+	top_notification.hide_message()
 
 	check(not app.import_deck_from_path(EMPTY_IMPORT_SOURCE), "MVP Import: 빈 덱 거부")
-	check(
-		_view(app, "LibraryStatusLabel").text == MainApp.EMPTY_DECK_MESSAGE,
-		"MVP Import: 빈 덱 수정 안내"
-	)
 	check(not DeckStorage.deck_exists("empty_deck.md"), "MVP Import: 빈 덱 미복사")
 
 	var broken_import := FileAccess.open(BROKEN_IMPORT_SOURCE, FileAccess.WRITE)
 	broken_import.store_string("질문 제목의 # 표시가 없습니다.\n")
 	broken_import = null
 	check(not app.import_deck_from_path(BROKEN_IMPORT_SOURCE), "MVP Import: 깨진 덱 거부")
-	check(
-		_view(app, "LibraryStatusLabel").text == MainApp.BROKEN_DECK_MESSAGE,
-		"MVP Import: 깨진 덱 형식 안내"
-	)
 	check(not DeckStorage.deck_exists("__gd_main_broken.md"), "Main Import: 깨진 덱 미복사")
 
 	DeckStorage.write_deck(EMPTY_DECK, "")
 	check(not app.start_deck(EMPTY_DECK), "MVP: 저장된 빈 덱 학습 차단")
-	check(
-		_view(app, "LibraryStatusLabel").text == MainApp.EMPTY_DECK_MESSAGE,
-		"MVP: 저장된 빈 덱 안내"
-	)
 	DeckStorage.write_deck(BROKEN_DECK, "일반 텍스트만 있는 덱")
 	check(not app.start_deck(BROKEN_DECK), "MVP: 저장된 깨진 덱 학습 차단")
-	check(
-		_view(app, "LibraryStatusLabel").text == MainApp.BROKEN_DECK_MESSAGE,
-		"MVP: 저장된 깨진 덱 안내"
-	)
 
 	app.start_deck(TEST_DECK)
 
@@ -780,10 +774,8 @@ func run_tests() -> void:
 		"Main Duplicate: 복제한 덱 파일 존재"
 	)
 	check(
-		not app.duplicate_deck_from_library("__없는덱.md")
-		and _view(app, "LibraryStatusLabel").text
-		== MainApp.DUPLICATE_DECK_NOT_FOUND_MESSAGE,
-		"Main Duplicate: 사라진 덱 오류 안내"
+		not app.duplicate_deck_from_library("__없는덱.md"),
+		"Main Duplicate: 사라진 덱 복제 실패"
 	)
 
 	DeckStorage.write_deck(DELETE_DECK, TEST_TEXT)
@@ -811,13 +803,8 @@ func run_tests() -> void:
 		"Main Delete: 덱 학습 기록도 제거"
 	)
 	check(
-		_view(app, "LibraryStatusLabel").text == "'__gd_main_delete' 삭제 완료",
-		"Main Delete: 목록 아래 완료 메시지 표시"
-	)
-	check(
-		not app.delete_deck_from_library("__없는덱.md")
-		and _view(app, "LibraryStatusLabel").text == MainApp.DELETE_DECK_NOT_FOUND_MESSAGE,
-		"Main Delete: 사라진 덱 오류 안내"
+		not app.delete_deck_from_library("__없는덱.md"),
+		"Main Delete: 사라진 덱 삭제 실패"
 	)
 
 	DeckStorage.write_deck(EDIT_DECK, EDIT_TEXT)

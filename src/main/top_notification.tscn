@@ -1,0 +1,57 @@
+[gd_scene format=3 uid="uid://d1dgqyifn8gbx"]
+
+[ext_resource type="Script" uid="uid://dmafe81p0hqn8" path="res://src/main/top_notification.gd" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxNotification"]
+content_margin_left = 24.0
+content_margin_top = 16.0
+content_margin_right = 24.0
+content_margin_bottom = 16.0
+bg_color = Color(0.08, 0.08, 0.08, 0.96)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.22)
+shadow_size = 8
+shadow_offset = Vector2(0, 5)
+
+[node name="TopNotification" type="Control" unique_id=847580185]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="Positioner" type="CenterContainer" parent="." unique_id=1088408542]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 32.0
+offset_top = 32.0
+offset_right = -32.0
+offset_bottom = 176.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Positioner" unique_id=382730707]
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxNotification")
+
+[node name="Message" type="Label" parent="Positioner/Panel" unique_id=1199092096]
+custom_minimum_size = Vector2(444, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 24
+text = "알림 메시지"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="DismissTimer" type="Timer" parent="." unique_id=999041582]
+wait_time = 2.5
+one_shot = true

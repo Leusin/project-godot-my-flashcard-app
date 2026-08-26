@@ -192,6 +192,7 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @onready var result_rows: VBoxContainer = $Margin/Page/StudyFlow/StudyResultView/ResultListScroll/Rows
 @onready var retry_again_button: Button = $Margin/Page/StudyFlow/StudyResultView/Actions/RetryAgainButton
 @onready var result_return_to_ready_button: Button = $Margin/Page/StudyFlow/StudyResultView/Actions/ReturnToReadyButton
+@onready var top_notification: TopNotification = $TopNotification
 
 var _deck_file := ""
 var _order := DeckOrdering.StudyOrder.SEQUENTIAL
@@ -415,6 +416,7 @@ func _apply_safe_area() -> void:
 	page_margin.offset_top = BASE_PAGE_MARGIN + safe_insets.y
 	page_margin.offset_right = -(BASE_PAGE_MARGIN + safe_insets.z)
 	page_margin.offset_bottom = -(BASE_PAGE_MARGIN + safe_insets.w)
+	top_notification.set_safe_insets(safe_insets)
 
 	for overlay in [
 		create_deck_overlay,
@@ -518,7 +520,6 @@ func show_library() -> void:
 	discard_card_changes_overlay.hide()
 	restore_backup_confirmation_overlay.hide()
 	_pending_restore_path = ""
-	library_view.hide_status()
 	_show_page(library_view)
 	study_container.visible = false
 	study_result_view.visible = false
@@ -537,13 +538,13 @@ func show_settings() -> void:
 
 func show_study_ready(deck_file: String) -> bool:
 	if not DeckStorage.deck_exists(deck_file):
-		_show_library_status("덱 파일을 읽지 못했습니다.")
+		_show_library_notice("덱 파일을 읽지 못했습니다.")
 		return false
 
 	var deck_text := DeckStorage.read_deck(deck_file)
 	var error_message := deck_content_error(deck_text)
 	if not error_message.is_empty():
-		_show_library_status(error_message)
+		_show_library_notice(error_message)
 		return false
 
 	_ready_deck_file = deck_file
@@ -565,13 +566,13 @@ func start_deck(
 	order: DeckOrdering.StudyOrder = DeckOrdering.StudyOrder.SEQUENTIAL
 ) -> bool:
 	if not DeckStorage.deck_exists(deck_file):
-		_show_library_status("덱 파일을 읽지 못했습니다.")
+		_show_library_notice("덱 파일을 읽지 못했습니다.")
 		return false
 
 	var deck_text := DeckStorage.read_deck(deck_file)
 	var error_message := deck_content_error(deck_text)
 	if not error_message.is_empty():
-		_show_library_status(error_message)
+		_show_library_notice(error_message)
 		return false
 
 	var cards := DeckParser.parse(deck_text)
@@ -703,7 +704,7 @@ func _on_manage_cards_pressed() -> void:
 
 func _open_card_list(deck_file: String) -> bool:
 	if not DeckStorage.deck_exists(deck_file):
-		_show_library_status("편집할 덱 파일을 찾을 수 없습니다.")
+		_show_library_notice("편집할 덱 파일을 찾을 수 없습니다.")
 		return false
 
 	_editing_deck_file = deck_file
@@ -1417,7 +1418,7 @@ static func card_indices_for_scope(
 func _on_start_study_pressed() -> void:
 	if _ready_deck_file.is_empty() or not DeckStorage.deck_exists(_ready_deck_file):
 		show_library()
-		_show_library_status("덱 파일을 읽지 못했습니다.")
+		_show_library_notice("덱 파일을 읽지 못했습니다.")
 		return
 
 	var scope := study_ready_view.selected_scope() as StudyScope
@@ -1510,7 +1511,6 @@ func _on_library_add_pressed(anchor: Control) -> void:
 	_menu_deck_file = ""
 	library_context_menu.hide()
 	deck_context_menu.hide()
-	library_view.hide_status()
 	add_deck_menu.show()
 	add_deck_menu_panel.reset_size()
 	_position_add_deck_menu(anchor)
@@ -1577,7 +1577,7 @@ func _on_library_context_menu_dismissed() -> void:
 func _on_ready_deck_menu_pressed(anchor: Control) -> void:
 	if _ready_deck_file.is_empty() or not DeckStorage.deck_exists(_ready_deck_file):
 		show_library()
-		_show_library_status("덱 파일을 읽지 못했습니다.")
+		_show_library_notice("덱 파일을 읽지 못했습니다.")
 		return
 	_on_deck_menu_requested(_ready_deck_file, anchor)
 
@@ -1811,7 +1811,7 @@ func begin_clipboard_deck_creation(markdown_text: String) -> bool:
 	add_deck_menu.hide()
 	var clipboard_error := clipboard_content_error(markdown_text)
 	if not clipboard_error.is_empty():
-		_show_library_status(clipboard_error)
+		_show_library_notice(clipboard_error)
 		return false
 
 	_create_deck_mode = CreateDeckMode.CLIPBOARD
@@ -1904,14 +1904,13 @@ func _on_import_from_add_menu_pressed() -> void:
 
 func _on_import_pressed() -> void:
 	add_deck_menu.hide()
-	library_view.hide_status()
 	library_view.popup_import()
 
 
 func _on_export_pressed() -> void:
 	if _menu_deck_file.is_empty():
 		deck_context_menu.hide()
-		_show_library_status(EXPORT_DECK_NOT_FOUND_MESSAGE)
+		_show_library_notice(EXPORT_DECK_NOT_FOUND_MESSAGE)
 		return
 
 	deck_context_menu.hide()
@@ -1939,17 +1938,17 @@ func _on_duplicate_pressed() -> void:
 
 func duplicate_deck_from_library(deck_file: String) -> bool:
 	if not DeckStorage.deck_exists(deck_file):
-		_show_library_status(DUPLICATE_DECK_NOT_FOUND_MESSAGE)
+		_show_library_notice(DUPLICATE_DECK_NOT_FOUND_MESSAGE)
 		return false
 
 	var duplicated: Variant = DeckStorage.duplicate_deck(deck_file)
 	if duplicated is not String:
 		push_warning("Deck duplicate failed (source=%s)" % deck_file)
-		_show_library_status(DUPLICATE_DECK_FAILED_MESSAGE)
+		_show_library_notice(DUPLICATE_DECK_FAILED_MESSAGE)
 		return false
 
 	_refresh_deck_list()
-	_show_deck_action_status(
+	_show_deck_action_notice(
 		deck_file,
 		"'%s' → '%s' 복제 완료"
 		% [DeckNaming.display_name(deck_file), DeckNaming.display_name(duplicated)]
@@ -1961,7 +1960,7 @@ func _on_rename_pressed() -> void:
 	deck_context_menu.hide()
 	if not DeckStorage.deck_exists(_menu_deck_file):
 		_menu_deck_file = ""
-		_show_library_status(RENAME_DECK_NOT_FOUND_MESSAGE)
+		_show_library_notice(RENAME_DECK_NOT_FOUND_MESSAGE)
 		return
 
 	(rename_deck_overlay as ModalDialog).set_input_text(
@@ -2003,7 +2002,7 @@ func rename_deck_from_library(deck_file: String, new_display_name: String) -> bo
 	if new_file.to_lower() == deck_file.to_lower():
 		rename_deck_overlay.hide()
 		_menu_deck_file = ""
-		_show_deck_action_status(deck_file, "이름이 변경되지 않았습니다.")
+		_show_deck_action_notice(deck_file, "이름이 변경되지 않았습니다.")
 		return true
 
 	for existing_file in DeckStorage.list_deck_files():
@@ -2025,7 +2024,7 @@ func rename_deck_from_library(deck_file: String, new_display_name: String) -> bo
 	if study_ready_view.visible and _ready_deck_file == deck_file:
 		show_study_ready(new_file)
 	else:
-		_show_library_status(
+		_show_library_notice(
 			"'%s' → '%s' 이름 변경 완료" % [old_display_name, trimmed_name]
 		)
 	return true
@@ -2040,7 +2039,7 @@ func _on_delete_pressed() -> void:
 	deck_context_menu.hide()
 	if not DeckStorage.deck_exists(_menu_deck_file):
 		_menu_deck_file = ""
-		_show_library_status(DELETE_DECK_NOT_FOUND_MESSAGE)
+		_show_library_notice(DELETE_DECK_NOT_FOUND_MESSAGE)
 		return
 
 	delete_confirmation_title.text = "'%s' 덱을 삭제할까요?" % DeckNaming.display_name(
@@ -2063,18 +2062,18 @@ func _on_delete_confirmed() -> void:
 
 func delete_deck_from_library(deck_file: String) -> bool:
 	if not DeckStorage.deck_exists(deck_file):
-		_show_library_status(DELETE_DECK_NOT_FOUND_MESSAGE)
+		_show_library_notice(DELETE_DECK_NOT_FOUND_MESSAGE)
 		return false
 
 	var display_name := DeckNaming.display_name(deck_file)
 	if not DeckStorage.delete_deck(deck_file):
 		push_warning("Deck delete failed (source=%s)" % deck_file)
-		_show_library_status(DELETE_DECK_FAILED_MESSAGE)
+		_show_library_notice(DELETE_DECK_FAILED_MESSAGE)
 		return false
 
 	_replace_last_study_deck(deck_file, "")
 	_refresh_deck_list()
-	_show_library_status("'%s' 삭제 완료" % display_name)
+	_show_library_notice("'%s' 삭제 완료" % display_name)
 	return true
 
 
@@ -2082,7 +2081,7 @@ func export_deck_to_path(deck_file: String, target_path: String) -> bool:
 	var markdown_path := ensure_markdown_extension(target_path)
 	var result := DeckStorage.export_deck_result(deck_file, markdown_path)
 	if result == DeckStorage.ExportResult.OK:
-		_show_deck_action_status(
+		_show_deck_action_notice(
 			deck_file,
 			"'%s' 내보내기 완료" % markdown_path.uri_decode().get_file()
 		)
@@ -2093,7 +2092,7 @@ func export_deck_to_path(deck_file: String, target_path: String) -> bool:
 		"Deck export failed (result=%s, source=%s, target=%s)"
 		% [result, deck_file, markdown_path]
 	)
-	_show_library_status(message)
+	_show_library_notice(message)
 	return false
 
 
@@ -2118,21 +2117,21 @@ static func export_error_message(result: DeckStorage.ExportResult) -> String:
 func import_deck_from_path(source_path: String) -> bool:
 	var source := FileAccess.open(source_path, FileAccess.READ)
 	if source == null:
-		_show_library_status("덱을 가져오지 못했습니다.")
+		_show_library_notice("덱을 가져오지 못했습니다.")
 		return false
 
 	var error_message := deck_content_error(source.get_as_text())
 	if not error_message.is_empty():
-		_show_library_status(error_message)
+		_show_library_notice(error_message)
 		return false
 
 	var imported: Variant = DeckStorage.import_deck(source_path)
 	if imported is not String:
-		_show_library_status("덱을 가져오지 못했습니다.")
+		_show_library_notice("덱을 가져오지 못했습니다.")
 		return false
 
 	_refresh_deck_list()
-	_show_library_status("'%s' 가져오기 완료" % DeckNaming.display_name(imported))
+	_show_library_notice("'%s' 가져오기 완료" % DeckNaming.display_name(imported))
 	return true
 
 
@@ -2154,20 +2153,21 @@ static func clipboard_content_error(markdown_text: String) -> String:
 	return ""
 
 
-func _show_library_status(message: String) -> void:
+# 예전 상태 문구처럼 덱 목록으로 돌아온 뒤 화면 위쪽에 잠깐 띄운다.
+func _show_library_notice(message: String) -> void:
 	if not library_view.visible:
 		show_library()
 
-	library_view.show_status(message)
+	top_notification.show_message(message)
 
 
 # 덱 목록을 보고 있을 때만 알린다. 다른 화면은 제목이나 목록이 바로 바뀌어 결과가 드러난다.
-func _show_deck_action_status(deck_file: String, message: String) -> void:
+func _show_deck_action_notice(deck_file: String, message: String) -> void:
 	if study_ready_view.visible and _ready_deck_file == deck_file:
 		return
 	if not library_view.visible:
 		return
-	_show_library_status(message)
+	_show_library_notice(message)
 
 
 func _show_settings_status(message: String) -> void:
