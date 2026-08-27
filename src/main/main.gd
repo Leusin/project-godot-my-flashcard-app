@@ -40,16 +40,14 @@ const EXPORT_WRITE_FAILED_MESSAGE := "파일을 저장하지 못했습니다. �
 const EXPORT_UNKNOWN_FAILED_MESSAGE := "덱을 내보내지 못했습니다. 다른 위치를 선택해 다시 시도하세요."
 const DELETE_DECK_NOT_FOUND_MESSAGE := "삭제할 덱 파일을 찾을 수 없습니다."
 const DELETE_DECK_FAILED_MESSAGE := "덱을 삭제하지 못했습니다. 파일이 사용 중인지 확인하고 다시 시도하세요."
-const RENAME_EMPTY_MESSAGE := "덱 이름을 입력하세요."
-const RENAME_INVALID_MESSAGE := "덱 이름에 < > : \" / \\ | ? * 문자나 끝 마침표를 사용할 수 없습니다."
-const RENAME_DUPLICATE_MESSAGE := "같은 이름의 덱이 이미 있습니다."
+# 이름 만들기와 이름 바꾸기는 같은 규칙을 쓴다.
+const DECK_NAME_EMPTY_MESSAGE := "덱 이름을 입력하세요."
+const DECK_NAME_INVALID_MESSAGE := "덱 이름에 < > : \" / \\ | ? * 문자나 끝 마침표를 사용할 수 없습니다."
+const DECK_NAME_DUPLICATE_MESSAGE := "같은 이름의 덱이 이미 있습니다."
 const RENAME_DECK_NOT_FOUND_MESSAGE := "이름을 변경할 덱 파일을 찾을 수 없습니다."
 const RENAME_FAILED_MESSAGE := "덱 이름을 변경하지 못했습니다. 다시 시도하세요."
 const DUPLICATE_DECK_NOT_FOUND_MESSAGE := "복제할 덱 파일을 찾을 수 없습니다."
 const DUPLICATE_DECK_FAILED_MESSAGE := "덱을 복제하지 못했습니다. 저장 공간을 확인하고 다시 시도하세요."
-const CREATE_DECK_EMPTY_MESSAGE := "덱 이름을 입력하세요."
-const CREATE_DECK_INVALID_MESSAGE := "덱 이름에 < > : \" / \\ | ? * 문자나 끝 마침표를 사용할 수 없습니다."
-const CREATE_DECK_DUPLICATE_MESSAGE := "같은 이름의 덱이 이미 있습니다."
 const CREATE_DECK_SAVE_FAILED_MESSAGE := "덱을 저장하지 못했습니다. 저장 공간을 확인하세요."
 const CLIPBOARD_EMPTY_MESSAGE := "클립보드에 Markdown 텍스트가 없습니다."
 const CLIPBOARD_BROKEN_MESSAGE := "클립보드에서 카드를 찾지 못했습니다. 각 질문을 '# 질문' 형식으로 작성하세요."
@@ -1203,7 +1201,7 @@ func _on_save_card_pressed() -> void:
 		_show_card_editor_error(CARD_ANSWER_HEADING_MESSAGE)
 		return
 	if creating_deck and _deck_file_name_is_taken(_editing_deck_file):
-		_show_card_editor_error(CREATE_DECK_DUPLICATE_MESSAGE)
+		_show_card_editor_error(DECK_NAME_DUPLICATE_MESSAGE)
 		return
 
 	var updated := _copy_cards(_editing_cards)
@@ -1865,15 +1863,15 @@ func _begin_new_deck(display_name: String) -> bool:
 func _new_deck_file(display_name: String) -> String:
 	var trimmed_name := display_name.strip_edges()
 	if trimmed_name.is_empty():
-		_show_create_deck_error(CREATE_DECK_EMPTY_MESSAGE)
+		_show_create_deck_error(DECK_NAME_EMPTY_MESSAGE)
 		return ""
 	if not DeckNaming.is_valid_display_name(trimmed_name):
-		_show_create_deck_error(CREATE_DECK_INVALID_MESSAGE)
+		_show_create_deck_error(DECK_NAME_INVALID_MESSAGE)
 		return ""
 
 	var deck_file := DeckNaming.deck_file_name(trimmed_name)
 	if _deck_file_name_is_taken(deck_file):
-		_show_create_deck_error(CREATE_DECK_DUPLICATE_MESSAGE)
+		_show_create_deck_error(DECK_NAME_DUPLICATE_MESSAGE)
 		return ""
 	return deck_file
 
@@ -1986,10 +1984,10 @@ func rename_deck_from_library(deck_file: String, new_display_name: String) -> bo
 
 	var trimmed_name := new_display_name.strip_edges()
 	if trimmed_name.is_empty():
-		_show_rename_error(RENAME_EMPTY_MESSAGE)
+		_show_rename_error(DECK_NAME_EMPTY_MESSAGE)
 		return false
 	if not DeckNaming.is_valid_display_name(trimmed_name):
-		_show_rename_error(RENAME_INVALID_MESSAGE)
+		_show_rename_error(DECK_NAME_INVALID_MESSAGE)
 		return false
 
 	var new_file := DeckNaming.deck_file_name(trimmed_name)
@@ -2001,7 +1999,7 @@ func rename_deck_from_library(deck_file: String, new_display_name: String) -> bo
 
 	for existing_file in DeckStorage.list_deck_files():
 		if existing_file.to_lower() == new_file.to_lower():
-			_show_rename_error(RENAME_DUPLICATE_MESSAGE)
+			_show_rename_error(DECK_NAME_DUPLICATE_MESSAGE)
 			return false
 
 	var old_display_name := DeckNaming.display_name(deck_file)

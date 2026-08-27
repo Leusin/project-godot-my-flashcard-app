@@ -264,7 +264,7 @@ func run_tests() -> void:
 	check(
 		_dialog(app, "RenameDeckOverlay", "DialogError").visible
 		and _dialog(app, "RenameDeckOverlay", "DialogError").text
-		== MainApp.RENAME_EMPTY_MESSAGE,
+		== MainApp.DECK_NAME_EMPTY_MESSAGE,
 		"Main Rename: 빈 이름 오류를 입력창 안에 표시"
 	)
 	_dialog(app, "RenameDeckOverlay", "SecondaryButton").pressed.emit()
@@ -732,7 +732,7 @@ func run_tests() -> void:
 		_dialog(app, "RenameDeckOverlay", "PrimaryButton").pressed.emit()
 		check(
 			_dialog(app, "RenameDeckOverlay", "DialogError").text
-			== MainApp.RENAME_DUPLICATE_MESSAGE
+			== MainApp.DECK_NAME_DUPLICATE_MESSAGE
 			and DeckStorage.deck_exists(RENAME_DECK),
 			"Main Rename: 중복 이름을 거부하고 원본 유지"
 		)
@@ -1176,21 +1176,21 @@ func run_tests() -> void:
 	_dialog(app, "CreateDeckOverlay", "PrimaryButton").pressed.emit()
 	check(
 		_dialog(app, "CreateDeckOverlay", "DialogError").text
-		== MainApp.CREATE_DECK_EMPTY_MESSAGE,
+		== MainApp.DECK_NAME_EMPTY_MESSAGE,
 		"Main Create: 빈 덱 이름 오류 안내"
 	)
 	_dialog(app, "CreateDeckOverlay", "DialogInput").text = "bad/name"
 	_dialog(app, "CreateDeckOverlay", "PrimaryButton").pressed.emit()
 	check(
 		_dialog(app, "CreateDeckOverlay", "DialogError").text
-		== MainApp.CREATE_DECK_INVALID_MESSAGE,
+		== MainApp.DECK_NAME_INVALID_MESSAGE,
 		"Main Create: 파일명에 쓸 수 없는 덱 이름 차단"
 	)
 	_dialog(app, "CreateDeckOverlay", "DialogInput").text = "__gd_main"
 	_dialog(app, "CreateDeckOverlay", "PrimaryButton").pressed.emit()
 	check(
 		_dialog(app, "CreateDeckOverlay", "DialogError").text
-		== MainApp.CREATE_DECK_DUPLICATE_MESSAGE,
+		== MainApp.DECK_NAME_DUPLICATE_MESSAGE,
 		"Main Create: 기존 덱과 중복되는 이름 차단"
 	)
 	_dialog(app, "CreateDeckOverlay", "DialogInput").text = "  __gd_main_created  "
