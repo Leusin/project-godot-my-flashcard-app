@@ -226,6 +226,7 @@ icon_alignment = 1
 [node name="EditorWrongCountLabel" type="Label" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountFrame/WrongCountControls" unique_id=1198271294]
 custom_minimum_size = Vector2(72, 64)
 layout_mode = 2
+mouse_filter = 1
 tooltip_text = "오답 0회"
 theme_override_font_sizes/font_size = 32
 theme_override_styles/normal = SubResource("StyleBoxCountDivider")
