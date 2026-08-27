@@ -4,7 +4,8 @@ extends Control
 const EDGE_MARGIN := 32.0
 const HOST_HEIGHT := 144.0
 const DEFAULT_DURATION := 2.5
-const FADE_DURATION := 0.5
+const FADE_IN_DURATION := 0.18
+const FADE_OUT_DURATION := 0.5
 
 @onready var positioner: CenterContainer = $Positioner
 @onready var message_label: Label = $Positioner/Panel/Message
@@ -24,11 +25,18 @@ func show_message(message: String, duration: float = DEFAULT_DURATION) -> void:
 		hide_message()
 		return
 
+	var was_visible := visible
 	_stop_fade()
 	dismiss_timer.stop()
 	message_label.text = message
-	modulate.a = 1.0
 	show()
+	if was_visible:
+		# 떠 있는 안내를 갈아 끼울 때는 곧바로 또렷하게 되돌린다.
+		modulate.a = 1.0
+	else:
+		modulate.a = 0.0
+		_fade_tween = create_tween()
+		_fade_tween.tween_property(self, "modulate:a", 1.0, FADE_IN_DURATION)
 	dismiss_timer.start(duration)
 
 
@@ -49,7 +57,7 @@ func set_safe_insets(safe_insets: Vector4) -> void:
 func _on_dismiss_timer_timeout() -> void:
 	_stop_fade()
 	_fade_tween = create_tween()
-	_fade_tween.tween_property(self, "modulate:a", 0.0, FADE_DURATION)
+	_fade_tween.tween_property(self, "modulate:a", 0.0, FADE_OUT_DURATION)
 	_fade_tween.finished.connect(_on_fade_finished)
 
 

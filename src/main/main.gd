@@ -1946,11 +1946,7 @@ func duplicate_deck_from_library(deck_file: String) -> bool:
 		return false
 
 	_refresh_deck_list()
-	_show_deck_action_notice(
-		deck_file,
-		"'%s' → '%s' 복제 완료"
-		% [DeckNaming.display_name(deck_file), DeckNaming.display_name(duplicated)]
-	)
+	_show_action_notice("'%s' 복제 완료" % DeckNaming.display_name(duplicated))
 	return true
 
 
@@ -2000,7 +1996,7 @@ func rename_deck_from_library(deck_file: String, new_display_name: String) -> bo
 	if new_file.to_lower() == deck_file.to_lower():
 		rename_deck_overlay.hide()
 		_menu_deck_file = ""
-		_show_deck_action_notice(deck_file, "이름이 변경되지 않았습니다.")
+		_show_action_notice("이름이 변경되지 않았습니다.")
 		return true
 
 	for existing_file in DeckStorage.list_deck_files():
@@ -2079,8 +2075,7 @@ func export_deck_to_path(deck_file: String, target_path: String) -> bool:
 	var markdown_path := ensure_markdown_extension(target_path)
 	var result := DeckStorage.export_deck_result(deck_file, markdown_path)
 	if result == DeckStorage.ExportResult.OK:
-		_show_deck_action_notice(
-			deck_file,
+		_show_action_notice(
 			"'%s' 내보내기 완료" % markdown_path.uri_decode().get_file()
 		)
 		return true
@@ -2159,13 +2154,10 @@ func _show_library_notice(message: String) -> void:
 	top_notification.show_message(message)
 
 
-# 덱 목록을 보고 있을 때만 알린다. 다른 화면은 제목이나 목록이 바로 바뀌어 결과가 드러난다.
-func _show_deck_action_notice(deck_file: String, message: String) -> void:
-	if study_ready_view.visible and _ready_deck_file == deck_file:
-		return
-	if not library_view.visible:
-		return
-	_show_library_notice(message)
+# 복제나 내보내기는 어느 화면에서 해도 결과가 화면에 드러나지 않는다.
+# _show_library_notice()와 달리 화면을 옮기지 않고 그 자리에서 알린다.
+func _show_action_notice(message: String) -> void:
+	top_notification.show_message(message)
 
 
 func _show_settings_status(message: String) -> void:

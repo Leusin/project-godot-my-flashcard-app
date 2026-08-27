@@ -774,6 +774,11 @@ func run_tests() -> void:
 		"Main Duplicate: 복제한 덱 파일 존재"
 	)
 	check(
+		_view(app, "StudyReadyView").visible
+		and top_notification.message_label.text == "'__gd_main (2)' 복제 완료",
+		"Main Duplicate: 준비 화면에서 복제해도 화면 이동 없이 알림"
+	)
+	check(
 		not app.duplicate_deck_from_library("__없는덱.md"),
 		"Main Duplicate: 사라진 덱 복제 실패"
 	)
