@@ -97,7 +97,7 @@ content_margin_left = 19.0
 content_margin_top = 15.0
 content_margin_right = 19.0
 content_margin_bottom = 15.0
-bg_color = Color(1, 1, 1, 1)
+bg_color = Color(0.965, 0.961, 0.945, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -109,15 +109,15 @@ corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFieldFocus"]
-content_margin_left = 18.0
-content_margin_top = 14.0
-content_margin_right = 18.0
-content_margin_bottom = 14.0
+content_margin_left = 17.0
+content_margin_top = 13.0
+content_margin_right = 17.0
+content_margin_bottom = 13.0
 bg_color = Color(1, 1, 1, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
 border_color = Color(0, 0, 0, 1)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
@@ -129,7 +129,7 @@ content_margin_left = 19.0
 content_margin_top = 15.0
 content_margin_right = 19.0
 content_margin_bottom = 15.0
-bg_color = Color(0.94, 0.94, 0.94, 1)
+bg_color = Color(0.9, 0.897, 0.883, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -201,7 +201,7 @@ theme_override_constants/margin_bottom = 26
 
 [node name="CardContent" type="VBoxContainer" parent="CardEditorStage/CardEditorFrame/CardMargin" unique_id=854212748]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 20
 
 [node name="CardEditorProperties" type="HBoxContainer" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent" unique_id=162193523]
 custom_minimum_size = Vector2(0, 68)
@@ -269,13 +269,17 @@ theme_override_styles/hover = SubResource("StyleBoxOptionSlimHover")
 theme_override_styles/disabled = SubResource("StyleBoxOptionSlim")
 theme_override_styles/focus = SubResource("StyleBoxOptionSlim")
 
-[node name="QuestionCaption" type="Label" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent" unique_id=1207546486]
+[node name="QuestionField" type="VBoxContainer" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.42, 0.42, 0.42, 1)
-theme_override_font_sizes/font_size = 24
+theme_override_constants/separation = 8
+
+[node name="QuestionCaption" type="Label" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/QuestionField" unique_id=1207546486]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 25
 text = "질문"
 
-[node name="CardQuestionInput" type="TextEdit" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent" unique_id=1870400686]
+[node name="CardQuestionInput" type="TextEdit" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/QuestionField" unique_id=1870400686]
 custom_minimum_size = Vector2(0, 132)
 layout_mode = 2
 theme_override_colors/caret_color = Color(0, 0, 0, 1)
@@ -283,7 +287,7 @@ theme_override_colors/font_selected_color = Color(0, 0, 0, 1)
 theme_override_colors/selection_color = Color(0.75, 0.75, 0.75, 1)
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_readonly_color = Color(0.25, 0.25, 0.25, 1)
-theme_override_colors/font_placeholder_color = Color(0.42, 0.42, 0.42, 1)
+theme_override_colors/font_placeholder_color = Color(0.55, 0.55, 0.55, 1)
 theme_override_font_sizes/font_size = 36
 theme_override_styles/normal = SubResource("StyleBoxFieldNormal")
 theme_override_styles/focus = SubResource("StyleBoxFieldFocus")
@@ -292,21 +296,27 @@ placeholder_text = "질문을 입력하세요"
 wrap_mode = 1
 script = ExtResource("3_single_line")
 
-[node name="AnswerCaption" type="Label" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent" unique_id=2068454724]
+[node name="AnswerField" type="VBoxContainer" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.42, 0.42, 0.42, 1)
-theme_override_font_sizes/font_size = 24
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="AnswerCaption" type="Label" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/AnswerField" unique_id=2068454724]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 25
 text = "답"
 
-[node name="CardAnswerInput" type="TextEdit" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent" unique_id=2023486867]
+[node name="CardAnswerInput" type="TextEdit" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/AnswerField" unique_id=2023486867]
 custom_minimum_size = Vector2(0, 360)
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_colors/caret_color = Color(0, 0, 0, 1)
+theme_override_colors/font_selected_color = Color(0, 0, 0, 1)
 theme_override_colors/selection_color = Color(0.75, 0.75, 0.75, 1)
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_readonly_color = Color(0.25, 0.25, 0.25, 1)
-theme_override_colors/font_placeholder_color = Color(0.42, 0.42, 0.42, 1)
+theme_override_colors/font_placeholder_color = Color(0.55, 0.55, 0.55, 1)
 theme_override_font_sizes/font_size = 32
 theme_override_styles/normal = SubResource("StyleBoxFieldNormal")
 theme_override_styles/focus = SubResource("StyleBoxFieldFocus")

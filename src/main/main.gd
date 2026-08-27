@@ -171,8 +171,12 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @onready var wrong_plus_button: Button = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountFrame/WrongCountControls/WrongPlusButton
 @onready var reset_card_progress_button: Button = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/ResetCardProgressButton
 @onready var card_status_option: OptionButton = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/CardStatusOption
-@onready var card_question_input: SingleLineTextEdit = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardQuestionInput
-@onready var card_answer_input: TextEdit = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardAnswerInput
+@onready var card_question_input := (
+	card_editor_view.find_child("CardQuestionInput", true, false) as SingleLineTextEdit
+)
+@onready var card_answer_input := (
+	card_editor_view.find_child("CardAnswerInput", true, false) as TextEdit
+)
 @onready var card_delete_confirmation_overlay: Control = $CardDeleteConfirmationOverlay
 @onready var discard_card_changes_overlay: Control = $DiscardCardChangesOverlay
 @onready var study_flow: VBoxContainer = $Margin/Page/StudyFlow
