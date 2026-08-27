@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://src/main/study_result_view.tscn" id="4_result"]
 [ext_resource type="Texture2D" path="res://assets/icons/chevron_left.svg" id="5_back"]
 [ext_resource type="PackedScene" path="res://src/main/app_header.tscn" id="6_header"]
+[ext_resource type="Script" path="res://src/main/max_width_box.gd" id="7_max_width"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxStudyCard"]
 bg_color = Color(1, 1, 1, 1)
@@ -61,7 +62,7 @@ theme_override_constants/separation = 32
 layout_mode = 2
 
 [node name="BackToReadyButton" type="Button" parent="Header/LeftActions" unique_id=2108732561]
-custom_minimum_size = Vector2(140, 72)
+custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 icon = ExtResource("5_back")
 icon_alignment = 1
@@ -75,7 +76,7 @@ tooltip_text = "뒤로"
 [node name="DeckLabel" type="Label" parent="Header/TitleSlot" unique_id=586662298]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 32
 text = "덱"
 horizontal_alignment = 0
 vertical_alignment = 1
@@ -89,22 +90,31 @@ text = "0장 남음"
 horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="StudyContainer" type="VBoxContainer" parent="." unique_id=1437127725]
+[node name="ContentBounds" type="MarginContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("7_max_width")
+
+[node name="Content" type="VBoxContainer" parent="ContentBounds"]
+layout_mode = 2
+theme_override_constants/separation = 32
+
+[node name="StudyContainer" type="VBoxContainer" parent="ContentBounds/Content" unique_id=1437127725]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 16
 
-[node name="CardStage" type="Control" parent="StudyContainer" unique_id=900848077]
+[node name="CardStage" type="Control" parent="ContentBounds/Content/StudyContainer" unique_id=900848077]
 custom_minimum_size = Vector2(0, 540)
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="CardSlot" type="Control" parent="StudyContainer/CardStage"]
+[node name="CardSlot" type="Control" parent="ContentBounds/Content/StudyContainer/CardStage"]
 layout_mode = 0
 offset_right = 656.0
 offset_bottom = 984.0
 
-[node name="CardFrame" type="PanelContainer" parent="StudyContainer/CardStage/CardSlot" unique_id=871367939]
+[node name="CardFrame" type="PanelContainer" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot" unique_id=871367939]
 z_index = 2
 layout_mode = 1
 anchors_preset = 15
@@ -116,32 +126,32 @@ theme_override_styles/panel = SubResource("StyleBoxStudyCard")
 script = ExtResource("3_gesture")
 action_active_style = SubResource("StyleBoxActionActive")
 
-[node name="CardMargin" type="MarginContainer" parent="StudyContainer/CardStage/CardSlot/CardFrame" unique_id=770412333]
+[node name="CardMargin" type="MarginContainer" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame" unique_id=770412333]
 layout_mode = 2
 theme_override_constants/margin_left = 32
 theme_override_constants/margin_top = 30
 theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 30
 
-[node name="CardContent" type="VBoxContainer" parent="StudyContainer/CardStage/CardSlot/CardFrame/CardMargin" unique_id=1658595310]
+[node name="CardContent" type="VBoxContainer" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin" unique_id=1658595310]
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="CardProperties" type="HBoxContainer" parent="StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent" unique_id=671315536]
+[node name="CardProperties" type="HBoxContainer" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent" unique_id=671315536]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="WrongTally" type="Control" parent="StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/CardProperties" unique_id=1362740289]
+[node name="WrongTally" type="Control" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/CardProperties" unique_id=1362740289]
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
 script = ExtResource("2_tally")
 
-[node name="Spacer" type="Control" parent="StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/CardProperties" unique_id=1818353796]
+[node name="Spacer" type="Control" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/CardProperties" unique_id=1818353796]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 
-[node name="StatusBadge" type="Label" parent="StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/CardProperties"]
+[node name="StatusBadge" type="Label" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/CardProperties"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 42)
 layout_mode = 2
@@ -154,12 +164,12 @@ horizontal_alignment = 1
 vertical_alignment = 1
 tooltip_text = "카드 상태"
 
-[node name="QuestionScroll" type="ScrollContainer" parent="StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent" unique_id=1980546292]
+[node name="QuestionScroll" type="ScrollContainer" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent" unique_id=1980546292]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="QuestionLabel" type="Label" parent="StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/QuestionScroll" unique_id=1335517739]
+[node name="QuestionLabel" type="Label" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/QuestionScroll" unique_id=1335517739]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -169,13 +179,13 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 
-[node name="AnswerScroll" type="ScrollContainer" parent="StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent" unique_id=1726778592]
+[node name="AnswerScroll" type="ScrollContainer" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent" unique_id=1726778592]
 visible = false
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="AnswerLabel" type="Label" parent="StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/AnswerScroll" unique_id=1501853469]
+[node name="AnswerLabel" type="Label" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/AnswerScroll" unique_id=1501853469]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -183,7 +193,7 @@ theme_override_font_sizes/font_size = 36
 text = "답"
 autowrap_mode = 2
 
-[node name="GestureHints" type="Control" parent="StudyContainer/CardStage" unique_id=597136455]
+[node name="GestureHints" type="Control" parent="ContentBounds/Content/StudyContainer/CardStage" unique_id=597136455]
 z_index = 1
 layout_mode = 1
 anchors_preset = 15
@@ -193,7 +203,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="SkipHint" type="Label" parent="StudyContainer/CardStage/GestureHints" unique_id=1344649837]
+[node name="SkipHint" type="Label" parent="ContentBounds/Content/StudyContainer/CardStage/GestureHints" unique_id=1344649837]
 visible = false
 layout_mode = 1
 anchors_preset = 7
@@ -212,7 +222,7 @@ theme_override_font_sizes/font_size = 36
 text = "↑  SKIP"
 horizontal_alignment = 1
 
-[node name="PreviousHint" type="Label" parent="StudyContainer/CardStage/GestureHints" unique_id=1986694635]
+[node name="PreviousHint" type="Label" parent="ContentBounds/Content/StudyContainer/CardStage/GestureHints" unique_id=1986694635]
 visible = false
 layout_mode = 1
 anchors_preset = 5
@@ -228,11 +238,11 @@ theme_override_font_sizes/font_size = 36
 text = "↓  PREV"
 horizontal_alignment = 1
 
-[node name="Actions" type="HBoxContainer" parent="StudyContainer" unique_id=128708548]
+[node name="Actions" type="HBoxContainer" parent="ContentBounds/Content/StudyContainer" unique_id=128708548]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="AgainButton" type="Button" parent="StudyContainer/Actions" unique_id=613358101]
+[node name="AgainButton" type="Button" parent="ContentBounds/Content/StudyContainer/Actions" unique_id=613358101]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -240,7 +250,7 @@ theme_override_font_sizes/font_size = 28
 text = "AGAIN"
 tooltip_text = "왼쪽 방향키"
 
-[node name="GoodButton" type="Button" parent="StudyContainer/Actions" unique_id=1868244667]
+[node name="GoodButton" type="Button" parent="ContentBounds/Content/StudyContainer/Actions" unique_id=1868244667]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -248,7 +258,7 @@ theme_override_font_sizes/font_size = 28
 text = "GOOD"
 tooltip_text = "오른쪽 방향키"
 
-[node name="StudyResultView" parent="." unique_id=1976919345 instance=ExtResource("4_result")]
+[node name="StudyResultView" parent="ContentBounds/Content" unique_id=1976919345 instance=ExtResource("4_result")]
 visible = false
 
 [editable path="Header"]

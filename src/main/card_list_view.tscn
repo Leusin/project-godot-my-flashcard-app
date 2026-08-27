@@ -12,20 +12,12 @@
 layout_mode = 2
 size_flags_vertical = 3
 theme = ExtResource("1_theme")
-
-[node name="ScreenBounds" type="MarginContainer" parent="."]
-layout_mode = 2
-size_flags_vertical = 3
-script = ExtResource("5_max_width")
-
-[node name="Content" type="VBoxContainer" parent="ScreenBounds"]
-layout_mode = 2
 theme_override_constants/separation = 32
 
-[node name="Header" parent="ScreenBounds/Content" instance=ExtResource("4_header")]
+[node name="Header" parent="." instance=ExtResource("4_header")]
 layout_mode = 2
 
-[node name="BackFromCardListButton" type="Button" parent="ScreenBounds/Content/Header/LeftActions"]
+[node name="BackFromCardListButton" type="Button" parent="Header/LeftActions"]
 custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 icon = ExtResource("3_back")
@@ -37,7 +29,7 @@ theme_override_styles/disabled = SubResource("StyleBoxHeaderButton")
 theme_override_styles/focus = SubResource("StyleBoxHeaderButton")
 tooltip_text = "뒤로"
 
-[node name="CardListDeckLabel" type="Label" parent="ScreenBounds/Content/Header/TitleSlot"]
+[node name="CardListDeckLabel" type="Label" parent="Header/TitleSlot"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 32
@@ -46,13 +38,22 @@ horizontal_alignment = 0
 vertical_alignment = 1
 text_overrun_behavior = 3
 
-[node name="CardListScroll" parent="ScreenBounds/Content" instance=ExtResource("2_collection")]
+[node name="ContentBounds" type="MarginContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("5_max_width")
+
+[node name="Content" type="VBoxContainer" parent="ContentBounds"]
+layout_mode = 2
+theme_override_constants/separation = 32
+
+[node name="CardListScroll" parent="ContentBounds/Content" instance=ExtResource("2_collection")]
 layout_mode = 2
 
-[node name="AddCardButton" type="Button" parent="ScreenBounds/Content"]
+[node name="AddCardButton" type="Button" parent="ContentBounds/Content"]
 custom_minimum_size = Vector2(0, 82)
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "+ 카드 추가"
 
-[editable path="ScreenBounds/Content/Header"]
+[editable path="Header"]
