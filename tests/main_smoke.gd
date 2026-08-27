@@ -1014,8 +1014,7 @@ func run_tests() -> void:
 	_view(app, "CardAnswerInput").text = "# 잘못된 답 제목"
 	_view(app, "SaveCardButton").pressed.emit()
 	check(
-		_view(app, "CardEditorErrorLabel").text
-		== MainApp.CARD_ANSWER_HEADING_MESSAGE
+		top_notification.message_label.text == MainApp.CARD_ANSWER_HEADING_MESSAGE
 		and DeckStorage.read_deck(EDIT_DECK) == EDIT_TEXT,
 		"Main Card Edit: 카드를 분리시키는 답의 # 제목 저장 차단"
 	)

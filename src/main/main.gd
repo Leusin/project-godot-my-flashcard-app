@@ -167,7 +167,6 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @onready var card_status_option: OptionButton = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/CardStatusOption
 @onready var card_question_input: SingleLineTextEdit = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardQuestionInput
 @onready var card_answer_input: TextEdit = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardAnswerInput
-@onready var card_editor_error_label: Label = $Margin/Page/CardEditorView/CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorErrorLabel
 @onready var card_delete_confirmation_overlay: Control = $CardDeleteConfirmationOverlay
 @onready var discard_card_changes_overlay: Control = $DiscardCardChangesOverlay
 @onready var study_flow: VBoxContainer = $Margin/Page/StudyFlow
@@ -1065,7 +1064,6 @@ func _current_study_deck_index(
 func _open_card_editor(index: int) -> void:
 	card_context_menu.hide()
 	_editing_card_index = index
-	card_editor_error_label.hide()
 	card_delete_confirmation_overlay.hide()
 	discard_card_changes_overlay.hide()
 	var progress := DeckStorage.load_progress(_editing_deck_file)
@@ -1290,9 +1288,9 @@ static func answer_has_question_heading(answer: String) -> bool:
 	return false
 
 
+# 카드 프레임은 2:3 비율로 고정이라 안에서 문구가 늘면 입력창이 눌린다.
 func _show_card_editor_error(message: String) -> void:
-	card_editor_error_label.text = message
-	card_editor_error_label.show()
+	top_notification.show_message(message)
 
 
 func _on_question_submitted() -> void:

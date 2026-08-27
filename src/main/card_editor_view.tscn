@@ -9,7 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://brlkj4ac2ya5s" path="res://assets/icons/rotate_ccw.svg" id="7_reset"]
 [ext_resource type="Texture2D" uid="uid://cby3cdg6jnfyh" path="res://assets/icons/minus.svg" id="8_minus"]
 [ext_resource type="Texture2D" uid="uid://c56sg3sop2p8n" path="res://assets/icons/plus.svg" id="9_plus"]
-[ext_resource type="Texture2D" path="res://assets/icons/check.svg" id="10_save"]
+[ext_resource type="Texture2D" uid="uid://cdiyw35huq3gn" path="res://assets/icons/check.svg" id="10_save"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxHeaderButton"]
 
@@ -309,12 +309,5 @@ theme_override_styles/focus = SubResource("StyleBoxFieldFocus")
 theme_override_styles/read_only = SubResource("StyleBoxFieldReadOnly")
 placeholder_text = "답을 입력하세요"
 wrap_mode = 1
-
-[node name="CardEditorErrorLabel" type="Label" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent" unique_id=1676408915]
-visible = false
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "오류"
-autowrap_mode = 3
 
 [editable path="Header"]
