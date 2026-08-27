@@ -158,6 +158,7 @@ theme_override_styles/hover = SubResource("StyleBoxHeaderButton")
 theme_override_styles/disabled = SubResource("StyleBoxHeaderButton")
 theme_override_styles/focus = SubResource("StyleBoxHeaderButton")
 icon = ExtResource("5_back")
+icon_alignment = 1
 
 [node name="CardEditorTitle" type="Label" parent="Header/TitleSlot" index="0" unique_id=939664966]
 layout_mode = 2

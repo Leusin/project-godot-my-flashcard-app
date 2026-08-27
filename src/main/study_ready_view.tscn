@@ -112,6 +112,7 @@ theme_override_styles/hover = SubResource("StyleBoxIconButton")
 theme_override_styles/disabled = SubResource("StyleBoxIconButton")
 theme_override_styles/focus = SubResource("StyleBoxIconButton")
 icon = ExtResource("2_back")
+icon_alignment = 1
 
 [node name="StudyReadyTitle" type="Label" parent="Header/TitleSlot" index="0" unique_id=887270744]
 layout_mode = 2
@@ -130,6 +131,7 @@ theme_override_styles/hover = SubResource("StyleBoxIconButton")
 theme_override_styles/disabled = SubResource("StyleBoxIconButton")
 theme_override_styles/focus = SubResource("StyleBoxIconButton")
 icon = ExtResource("3_more")
+icon_alignment = 1
 
 [node name="DeckStage" type="AspectRatioContainer" parent="." unique_id=754939950]
 custom_minimum_size = Vector2(0, 880)
