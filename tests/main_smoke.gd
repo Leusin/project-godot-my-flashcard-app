@@ -705,12 +705,16 @@ func run_tests() -> void:
 		"Main Ready: 학습 결과를 진행상황 요약에 반영"
 	)
 
+	var sample_cards := DeckParser.parse(
+		FileAccess.get_file_as_string(DeckStorage.SAMPLE_DECK_PATH)
+	)
 	app.start_sample_deck()
 	check(_view(app, "StudyContainer").visible, "MVP: 샘플 덱으로 학습 시작")
 	check(
-		_view(app, "QuestionLabel").text == "My Simple Flash Card는 어떤 앱인가요?"
-		and _view(app, "RemainingLabel").text == "15장 남음",
-		"MVP: 최신 앱 사용법 15장으로 구성된 샘플 덱 시작"
+		not sample_cards.is_empty()
+		and _view(app, "QuestionLabel").text == sample_cards[0].question
+		and _view(app, "RemainingLabel").text == "%d장 남음" % sample_cards.size(),
+		"MVP: 번들 샘플 덱 내용으로 학습 시작"
 	)
 
 	DeckStorage.write_deck(RENAME_DECK, TEST_TEXT)
