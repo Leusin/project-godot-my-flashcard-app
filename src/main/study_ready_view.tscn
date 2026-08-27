@@ -1,10 +1,12 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene format=3 uid="uid://02u6i65bfr7"]
 
-[ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
-[ext_resource type="Texture2D" path="res://assets/icons/chevron_left.svg" id="2_back"]
-[ext_resource type="Texture2D" path="res://assets/icons/more_vertical.svg" id="3_more"]
+[ext_resource type="Theme" uid="uid://bu5jyw4ehw6ya" path="res://src/main/main_theme.tres" id="1_theme"]
+[ext_resource type="Texture2D" uid="uid://cgmb1vy6yvoc0" path="res://assets/icons/chevron_left.svg" id="2_back"]
+[ext_resource type="Texture2D" uid="uid://33rmlntwrfjd" path="res://assets/icons/more_vertical.svg" id="3_more"]
 [ext_resource type="PackedScene" path="res://src/main/app_header.tscn" id="4_header"]
-[ext_resource type="Script" path="res://src/main/study_ready_view.gd" id="5_script"]
+[ext_resource type="Script" uid="uid://cbe1pd3y6x5vy" path="res://src/main/study_ready_view.gd" id="5_script"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxIconButton"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxDeckLayer"]
 bg_color = Color(1, 1, 1, 1)
@@ -60,22 +62,6 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxOptionHover"]
-content_margin_left = 22.0
-content_margin_top = 12.0
-content_margin_right = 52.0
-content_margin_bottom = 12.0
-bg_color = Color(0.94, 0.94, 0.94, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0, 0, 0, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxOptionPressed"]
 content_margin_left = 22.0
 content_margin_top = 12.0
@@ -92,61 +78,69 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxIconButton"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxOptionHover"]
+content_margin_left = 22.0
+content_margin_top = 12.0
+content_margin_right = 52.0
+content_margin_bottom = 12.0
+bg_color = Color(0.94, 0.94, 0.94, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
-[node name="StudyReadyView" type="VBoxContainer"]
-layout_mode = 2
+[node name="StudyReadyView" type="VBoxContainer" unique_id=1518606333]
 size_flags_vertical = 3
 theme = ExtResource("1_theme")
 theme_override_constants/separation = 32
 script = ExtResource("5_script")
 
-[node name="Header" parent="." instance=ExtResource("4_header")]
-layout_mode = 2
+[node name="Header" parent="." unique_id=484647984 instance=ExtResource("4_header")]
 
-[node name="BackToLibraryButton" type="Button" parent="Header/LeftActions"]
+[node name="BackToLibraryButton" type="Button" parent="Header/LeftActions" index="0" unique_id=1171395161]
 custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
-icon = ExtResource("2_back")
+tooltip_text = "뒤로"
 theme_override_styles/normal = SubResource("StyleBoxIconButton")
 theme_override_styles/pressed = SubResource("StyleBoxIconButton")
 theme_override_styles/hover = SubResource("StyleBoxIconButton")
 theme_override_styles/disabled = SubResource("StyleBoxIconButton")
 theme_override_styles/focus = SubResource("StyleBoxIconButton")
-tooltip_text = "뒤로"
+icon = ExtResource("2_back")
 
-[node name="StudyReadyTitle" type="Label" parent="Header/TitleSlot"]
+[node name="StudyReadyTitle" type="Label" parent="Header/TitleSlot" index="0" unique_id=887270744]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 36
 text = "학습 준비"
-horizontal_alignment = 0
 vertical_alignment = 1
 
-[node name="ReadyDeckMenuButton" type="Button" parent="Header/RightActions"]
+[node name="ReadyDeckMenuButton" type="Button" parent="Header/RightActions" index="0" unique_id=1330767776]
 custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
-icon = ExtResource("3_more")
+tooltip_text = "덱 관리"
 theme_override_styles/normal = SubResource("StyleBoxIconButton")
 theme_override_styles/pressed = SubResource("StyleBoxIconButton")
 theme_override_styles/hover = SubResource("StyleBoxIconButton")
 theme_override_styles/disabled = SubResource("StyleBoxIconButton")
 theme_override_styles/focus = SubResource("StyleBoxIconButton")
-tooltip_text = "덱 관리"
+icon = ExtResource("3_more")
 
-[node name="DeckStage" type="AspectRatioContainer" parent="."]
+[node name="DeckStage" type="AspectRatioContainer" parent="." unique_id=754939950]
 custom_minimum_size = Vector2(0, 880)
 layout_mode = 2
 size_flags_vertical = 3
 ratio = 0.666667
-stretch_mode = 2
-alignment_horizontal = 1
-alignment_vertical = 1
 
-[node name="DeckStack" type="Control" parent="DeckStage"]
+[node name="DeckStack" type="Control" parent="DeckStage" unique_id=643700645]
 layout_mode = 2
 
-[node name="BackCardFar" type="PanelContainer" parent="DeckStage/DeckStack"]
+[node name="BackCardFar" type="PanelContainer" parent="DeckStage/DeckStack" unique_id=1843618713]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -158,7 +152,7 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxDeckLayer")
 
-[node name="BackCardNear" type="PanelContainer" parent="DeckStage/DeckStack"]
+[node name="BackCardNear" type="PanelContainer" parent="DeckStage/DeckStack" unique_id=486177423]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -172,7 +166,7 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxDeckLayer")
 
-[node name="DeckCover" type="PanelContainer" parent="DeckStage/DeckStack"]
+[node name="DeckCover" type="PanelContainer" parent="DeckStage/DeckStack" unique_id=1919344178]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -183,36 +177,36 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxDeckCover")
 
-[node name="Margin" type="MarginContainer" parent="DeckStage/DeckStack/DeckCover"]
+[node name="Margin" type="MarginContainer" parent="DeckStage/DeckStack/DeckCover" unique_id=1914242724]
 layout_mode = 2
 theme_override_constants/margin_left = 32
 theme_override_constants/margin_top = 32
 theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 32
 
-[node name="OverviewContent" type="VBoxContainer" parent="DeckStage/DeckStack/DeckCover/Margin"]
+[node name="OverviewContent" type="VBoxContainer" parent="DeckStage/DeckStack/DeckCover/Margin" unique_id=1038619523]
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="ReadyDeckNameLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent"]
+[node name="ReadyDeckNameLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent" unique_id=732952670]
 layout_mode = 2
 theme_override_font_sizes/font_size = 48
 text = "덱 이름"
 horizontal_alignment = 1
 autowrap_mode = 3
-max_lines_visible = 3
 text_overrun_behavior = 3
+max_lines_visible = 3
 
-[node name="Divider" type="HSeparator" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent"]
+[node name="Divider" type="HSeparator" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent" unique_id=116847965]
 layout_mode = 2
 
-[node name="SummaryTitle" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent"]
+[node name="SummaryTitle" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent" unique_id=1988773911]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "학습 진행상황"
 horizontal_alignment = 1
 
-[node name="MasteryProgress" type="ProgressBar" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent"]
+[node name="MasteryProgress" type="ProgressBar" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent" unique_id=2046221203]
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 mouse_filter = 2
@@ -221,157 +215,157 @@ theme_override_styles/background = SubResource("StyleBoxProgressBackground")
 theme_override_styles/fill = SubResource("StyleBoxProgressFill")
 show_percentage = false
 
-[node name="Stats" type="HBoxContainer" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent"]
+[node name="Stats" type="HBoxContainer" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent" unique_id=1189908009]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Total" type="VBoxContainer" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats"]
+[node name="Total" type="VBoxContainer" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats" unique_id=1552638318]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
 
-[node name="ReadyTotalCountLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/Total"]
+[node name="ReadyTotalCountLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/Total" unique_id=508255937]
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
 text = "0"
 horizontal_alignment = 1
 
-[node name="Caption" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/Total"]
+[node name="Caption" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/Total" unique_id=179061261]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "전체"
 horizontal_alignment = 1
 
-[node name="New" type="VBoxContainer" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats"]
+[node name="New" type="VBoxContainer" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats" unique_id=758952214]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
 
-[node name="ReadyNewCountLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/New"]
+[node name="ReadyNewCountLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/New" unique_id=172543168]
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
 text = "0"
 horizontal_alignment = 1
 
-[node name="Caption" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/New"]
+[node name="Caption" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/New" unique_id=1656701117]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "새 카드"
 horizontal_alignment = 1
 
-[node name="Learning" type="VBoxContainer" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats"]
+[node name="Learning" type="VBoxContainer" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats" unique_id=1129500078]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
 
-[node name="ReadyLearningCountLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/Learning"]
+[node name="ReadyLearningCountLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/Learning" unique_id=1532955362]
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
 text = "0"
 horizontal_alignment = 1
 
-[node name="Caption" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/Learning"]
+[node name="Caption" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/Learning" unique_id=1837589547]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "학습 중"
 horizontal_alignment = 1
 
-[node name="Mastered" type="VBoxContainer" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats"]
+[node name="Mastered" type="VBoxContainer" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats" unique_id=683674196]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
 
-[node name="ReadyMasteredCountLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/Mastered"]
+[node name="ReadyMasteredCountLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/Mastered" unique_id=1602854435]
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
 text = "0"
 horizontal_alignment = 1
 
-[node name="Caption" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/Mastered"]
+[node name="Caption" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent/Stats/Mastered" unique_id=1996409792]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "완료"
 horizontal_alignment = 1
 
-[node name="Spacer" type="Control" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent"]
+[node name="Spacer" type="Control" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent" unique_id=682391130]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="ContinueStudyButton" type="Button" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent"]
+[node name="ContinueStudyButton" type="Button" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent" unique_id=1359200511]
 visible = false
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "이어서 학습"
 
-[node name="OpenStudySetupButton" type="Button" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent"]
+[node name="OpenStudySetupButton" type="Button" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent" unique_id=2053195186]
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "새 학습 설정"
 
-[node name="ManageCardsButton" type="Button" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent"]
+[node name="ManageCardsButton" type="Button" parent="DeckStage/DeckStack/DeckCover/Margin/OverviewContent" unique_id=424004642]
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "카드 관리"
 
-[node name="NewStudyContent" type="VBoxContainer" parent="DeckStage/DeckStack/DeckCover/Margin"]
+[node name="NewStudyContent" type="VBoxContainer" parent="DeckStage/DeckStack/DeckCover/Margin" unique_id=2042546070]
 visible = false
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 20
 
-[node name="SetupDeckNameLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
+[node name="SetupDeckNameLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent" unique_id=425095896]
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
 text = "덱 이름"
 horizontal_alignment = 1
 autowrap_mode = 3
-max_lines_visible = 2
 text_overrun_behavior = 3
+max_lines_visible = 2
 
-[node name="SetupDescription" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
+[node name="SetupDescription" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent" unique_id=330996785]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "진행 기록은 유지하고 새로운 학습 세션을 시작합니다."
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="Divider" type="HSeparator" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
+[node name="Divider" type="HSeparator" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent" unique_id=618742066]
 layout_mode = 2
 
-[node name="ScopeLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
+[node name="ScopeLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent" unique_id=1096151499]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "학습 범위"
 
-[node name="StudyScopeOption" type="OptionButton" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
+[node name="StudyScopeOption" type="OptionButton" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent" unique_id=1195427747]
 custom_minimum_size = Vector2(0, 68)
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
-theme_override_styles/disabled = SubResource("StyleBoxOptionNormal")
-theme_override_styles/focus = SubResource("StyleBoxOptionNormal")
-theme_override_styles/hover = SubResource("StyleBoxOptionHover")
 theme_override_styles/normal = SubResource("StyleBoxOptionNormal")
 theme_override_styles/pressed = SubResource("StyleBoxOptionPressed")
+theme_override_styles/hover = SubResource("StyleBoxOptionHover")
+theme_override_styles/disabled = SubResource("StyleBoxOptionNormal")
+theme_override_styles/focus = SubResource("StyleBoxOptionNormal")
 
-[node name="OrderLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
+[node name="OrderLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent" unique_id=1990909693]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "카드 순서"
 
-[node name="StudyOrderOption" type="OptionButton" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
+[node name="StudyOrderOption" type="OptionButton" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent" unique_id=1399878065]
 custom_minimum_size = Vector2(0, 68)
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
-theme_override_styles/disabled = SubResource("StyleBoxOptionNormal")
-theme_override_styles/focus = SubResource("StyleBoxOptionNormal")
-theme_override_styles/hover = SubResource("StyleBoxOptionHover")
 theme_override_styles/normal = SubResource("StyleBoxOptionNormal")
 theme_override_styles/pressed = SubResource("StyleBoxOptionPressed")
+theme_override_styles/hover = SubResource("StyleBoxOptionHover")
+theme_override_styles/disabled = SubResource("StyleBoxOptionNormal")
+theme_override_styles/focus = SubResource("StyleBoxOptionNormal")
 
-[node name="ReadyStatusLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
+[node name="ReadyStatusLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent" unique_id=2049963099]
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
@@ -379,18 +373,18 @@ text = "안내"
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="Spacer" type="Control" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
+[node name="Spacer" type="Control" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent" unique_id=1316275626]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="StartStudyButton" type="Button" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
+[node name="StartStudyButton" type="Button" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent" unique_id=143251102]
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "새 학습 시작"
 
-[node name="CancelStudySetupButton" type="Button" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent"]
+[node name="CancelStudySetupButton" type="Button" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent" unique_id=470534480]
 custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
