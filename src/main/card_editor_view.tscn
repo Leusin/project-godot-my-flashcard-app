@@ -1,11 +1,17 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene format=3 uid="uid://cigveii0iumha"]
 
-[ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
-[ext_resource type="Script" path="res://src/main/keyboard_avoider.gd" id="2_keyboard"]
-[ext_resource type="Script" path="res://src/main/single_line_text_edit.gd" id="3_single_line"]
-[ext_resource type="Script" path="res://src/main/card_ratio_frame.gd" id="4_card_frame"]
-[ext_resource type="Texture2D" path="res://assets/icons/chevron_left.svg" id="5_back"]
+[ext_resource type="Theme" uid="uid://bu5jyw4ehw6ya" path="res://src/main/main_theme.tres" id="1_theme"]
+[ext_resource type="Script" uid="uid://bfvm5h7ycpr1v" path="res://src/main/keyboard_avoider.gd" id="2_keyboard"]
+[ext_resource type="Script" uid="uid://hreeobv2nfvk" path="res://src/main/single_line_text_edit.gd" id="3_single_line"]
+[ext_resource type="Script" uid="uid://br1f0itp1bor5" path="res://src/main/card_ratio_frame.gd" id="4_card_frame"]
+[ext_resource type="Texture2D" uid="uid://cgmb1vy6yvoc0" path="res://assets/icons/chevron_left.svg" id="5_back"]
 [ext_resource type="PackedScene" path="res://src/main/app_header.tscn" id="6_header"]
+[ext_resource type="Texture2D" uid="uid://brlkj4ac2ya5s" path="res://assets/icons/rotate_ccw.svg" id="7_reset"]
+[ext_resource type="Texture2D" uid="uid://cby3cdg6jnfyh" path="res://assets/icons/minus.svg" id="8_minus"]
+[ext_resource type="Texture2D" uid="uid://c56sg3sop2p8n" path="res://assets/icons/plus.svg" id="9_plus"]
+[ext_resource type="Texture2D" path="res://assets/icons/check.svg" id="10_save"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxHeaderButton"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxEditorCard"]
 bg_color = Color(1, 1, 1, 1)
@@ -22,16 +28,80 @@ shadow_color = Color(0, 0, 0, 0.16)
 shadow_size = 7
 shadow_offset = Vector2(4, 6)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFieldNormal"]
-content_margin_left = 18.0
-content_margin_top = 14.0
-content_margin_right = 18.0
-content_margin_bottom = 14.0
+[sub_resource type="StyleBoxFlat" id="StyleBoxStepper"]
 bg_color = Color(1, 1, 1, 1)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxCountDivider"]
+content_margin_left = 8.0
+content_margin_top = 0.0
+content_margin_right = 8.0
+content_margin_bottom = 0.0
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 2
+border_width_right = 2
+border_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxOptionSlim"]
+content_margin_left = 21.0
+content_margin_right = 21.0
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxOptionSlimPressed"]
+content_margin_left = 21.0
+content_margin_right = 21.0
+bg_color = Color(0.84, 0.84, 0.84, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxOptionSlimHover"]
+content_margin_left = 21.0
+content_margin_right = 21.0
+bg_color = Color(0.94, 0.94, 0.94, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFieldNormal"]
+content_margin_left = 19.0
+content_margin_top = 15.0
+content_margin_right = 19.0
+content_margin_bottom = 15.0
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
 border_color = Color(0, 0, 0, 1)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
@@ -39,27 +109,11 @@ corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFieldFocus"]
-content_margin_left = 17.0
-content_margin_top = 13.0
-content_margin_right = 17.0
-content_margin_bottom = 13.0
-bg_color = Color(1, 1, 1, 1)
-border_width_left = 4
-border_width_top = 4
-border_width_right = 4
-border_width_bottom = 4
-border_color = Color(0, 0, 0, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFieldReadOnly"]
 content_margin_left = 18.0
 content_margin_top = 14.0
 content_margin_right = 18.0
 content_margin_bottom = 14.0
-bg_color = Color(0.94, 0.94, 0.94, 1)
+bg_color = Color(1, 1, 1, 1)
 border_width_left = 3
 border_width_top = 3
 border_width_right = 3
@@ -70,49 +124,66 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxHeaderButton"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFieldReadOnly"]
+content_margin_left = 19.0
+content_margin_top = 15.0
+content_margin_right = 19.0
+content_margin_bottom = 15.0
+bg_color = Color(0.94, 0.94, 0.94, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
-[node name="CardEditorView" type="VBoxContainer"]
-layout_mode = 2
+[node name="CardEditorView" type="VBoxContainer" unique_id=1646288942]
 size_flags_vertical = 3
 theme = ExtResource("1_theme")
 theme_override_constants/separation = 32
 script = ExtResource("2_keyboard")
 
-[node name="Header" parent="." instance=ExtResource("6_header")]
-layout_mode = 2
+[node name="Header" parent="." unique_id=48451942 instance=ExtResource("6_header")]
 
-[node name="CancelCardEditButton" type="Button" parent="Header/LeftActions"]
+[node name="CancelCardEditButton" type="Button" parent="Header/LeftActions" index="0" unique_id=547036742]
 custom_minimum_size = Vector2(112, 72)
 layout_mode = 2
-icon = ExtResource("5_back")
+tooltip_text = "취소"
 theme_override_styles/normal = SubResource("StyleBoxHeaderButton")
 theme_override_styles/pressed = SubResource("StyleBoxHeaderButton")
 theme_override_styles/hover = SubResource("StyleBoxHeaderButton")
 theme_override_styles/disabled = SubResource("StyleBoxHeaderButton")
 theme_override_styles/focus = SubResource("StyleBoxHeaderButton")
-tooltip_text = "취소"
+icon = ExtResource("5_back")
 
-[node name="CardEditorTitle" type="Label" parent="Header/TitleSlot"]
+[node name="CardEditorTitle" type="Label" parent="Header/TitleSlot" index="0" unique_id=939664966]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 32
 text = "카드 편집"
-horizontal_alignment = 0
 vertical_alignment = 1
 
-[node name="SaveCardButton" type="Button" parent="Header/RightActions"]
+[node name="SaveCardButton" type="Button" parent="Header/RightActions" index="0" unique_id=1523711243]
 custom_minimum_size = Vector2(112, 72)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "저장"
+tooltip_text = "저장"
+theme_override_styles/normal = SubResource("StyleBoxHeaderButton")
+theme_override_styles/pressed = SubResource("StyleBoxHeaderButton")
+theme_override_styles/hover = SubResource("StyleBoxHeaderButton")
+theme_override_styles/disabled = SubResource("StyleBoxHeaderButton")
+theme_override_styles/focus = SubResource("StyleBoxHeaderButton")
+icon = ExtResource("10_save")
+icon_alignment = 1
 
-[node name="CardEditorStage" type="Control" parent="."]
+[node name="CardEditorStage" type="Control" parent="." unique_id=2000996764]
 custom_minimum_size = Vector2(0, 540)
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="CardEditorFrame" type="PanelContainer" parent="CardEditorStage"]
+[node name="CardEditorFrame" type="PanelContainer" parent="CardEditorStage" unique_id=1502249207]
 unique_name_in_owner = true
 layout_mode = 0
 offset_right = 656.0
@@ -120,81 +191,95 @@ offset_bottom = 984.0
 theme_override_styles/panel = SubResource("StyleBoxEditorCard")
 script = ExtResource("4_card_frame")
 
-[node name="CardMargin" type="MarginContainer" parent="CardEditorStage/CardEditorFrame"]
+[node name="CardMargin" type="MarginContainer" parent="CardEditorStage/CardEditorFrame" unique_id=1829894530]
 layout_mode = 2
 theme_override_constants/margin_left = 30
 theme_override_constants/margin_top = 26
 theme_override_constants/margin_right = 30
 theme_override_constants/margin_bottom = 26
 
-[node name="CardContent" type="VBoxContainer" parent="CardEditorStage/CardEditorFrame/CardMargin"]
+[node name="CardContent" type="VBoxContainer" parent="CardEditorStage/CardEditorFrame/CardMargin" unique_id=854212748]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="CardEditorProperties" type="HBoxContainer" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent"]
+[node name="CardEditorProperties" type="HBoxContainer" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent" unique_id=162193523]
 custom_minimum_size = Vector2(0, 68)
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="WrongCountControls" type="HBoxContainer" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties"]
+[node name="WrongCountFrame" type="PanelContainer" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties" unique_id=1307087190]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_styles/panel = SubResource("StyleBoxStepper")
 
-[node name="WrongMinusButton" type="Button" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls"]
+[node name="WrongCountControls" type="HBoxContainer" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountFrame" unique_id=1358712336]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="WrongMinusButton" type="Button" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountFrame/WrongCountControls" unique_id=1963329541]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
-theme_override_font_sizes/font_size = 36
-text = "−"
 tooltip_text = "오답 횟수 줄이기"
+icon = ExtResource("8_minus")
+flat = true
+icon_alignment = 1
 
-[node name="EditorWrongCountLabel" type="Label" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls"]
+[node name="EditorWrongCountLabel" type="Label" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountFrame/WrongCountControls" unique_id=1198271294]
 custom_minimum_size = Vector2(72, 64)
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
-text = "0"
 tooltip_text = "오답 0회"
+theme_override_font_sizes/font_size = 32
+theme_override_styles/normal = SubResource("StyleBoxCountDivider")
+text = "0"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="WrongPlusButton" type="Button" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountControls"]
+[node name="WrongPlusButton" type="Button" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountFrame/WrongCountControls" unique_id=1685071353]
 custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
-text = "+"
 tooltip_text = "오답 횟수 늘리기"
+icon = ExtResource("9_plus")
+flat = true
+icon_alignment = 1
 
-[node name="PropertiesSpacer" type="Control" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties"]
+[node name="PropertiesSpacer" type="Control" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties" unique_id=1808135731]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 
-[node name="ResetCardProgressButton" type="Button" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties"]
-custom_minimum_size = Vector2(112, 64)
+[node name="ResetCardProgressButton" type="Button" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties" unique_id=689929390]
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "초기화"
 tooltip_text = "상태와 오답 횟수를 초기화"
+icon = ExtResource("7_reset")
+flat = true
+icon_alignment = 1
 
-[node name="CardStatusOption" type="OptionButton" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties"]
+[node name="CardStatusOption" type="OptionButton" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties" unique_id=1797753190]
 custom_minimum_size = Vector2(210, 64)
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
 tooltip_text = "카드 학습 상태"
+theme_override_font_sizes/font_size = 28
+theme_override_styles/normal = SubResource("StyleBoxOptionSlim")
+theme_override_styles/pressed = SubResource("StyleBoxOptionSlimPressed")
+theme_override_styles/hover = SubResource("StyleBoxOptionSlimHover")
+theme_override_styles/disabled = SubResource("StyleBoxOptionSlim")
+theme_override_styles/focus = SubResource("StyleBoxOptionSlim")
 
-[node name="QuestionCaption" type="Label" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent"]
+[node name="QuestionCaption" type="Label" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent" unique_id=1207546486]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.42, 0.42, 0.42, 1)
 theme_override_font_sizes/font_size = 24
 text = "질문"
 
-[node name="CardQuestionInput" type="TextEdit" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent"]
+[node name="CardQuestionInput" type="TextEdit" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent" unique_id=1870400686]
 custom_minimum_size = Vector2(0, 132)
 layout_mode = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/caret_color = Color(0, 0, 0, 1)
 theme_override_colors/font_selected_color = Color(0, 0, 0, 1)
+theme_override_colors/selection_color = Color(0.75, 0.75, 0.75, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_readonly_color = Color(0.25, 0.25, 0.25, 1)
 theme_override_colors/font_placeholder_color = Color(0.42, 0.42, 0.42, 1)
-theme_override_colors/caret_color = Color(0, 0, 0, 1)
-theme_override_colors/selection_color = Color(0.75, 0.75, 0.75, 1)
 theme_override_font_sizes/font_size = 36
 theme_override_styles/normal = SubResource("StyleBoxFieldNormal")
 theme_override_styles/focus = SubResource("StyleBoxFieldFocus")
@@ -203,20 +288,21 @@ placeholder_text = "질문을 입력하세요"
 wrap_mode = 1
 script = ExtResource("3_single_line")
 
-[node name="AnswerCaption" type="Label" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent"]
+[node name="AnswerCaption" type="Label" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent" unique_id=2068454724]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.42, 0.42, 0.42, 1)
 theme_override_font_sizes/font_size = 24
 text = "답"
 
-[node name="CardAnswerInput" type="TextEdit" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent"]
+[node name="CardAnswerInput" type="TextEdit" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent" unique_id=2023486867]
 custom_minimum_size = Vector2(0, 360)
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_colors/caret_color = Color(0, 0, 0, 1)
+theme_override_colors/selection_color = Color(0.75, 0.75, 0.75, 1)
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_readonly_color = Color(0.25, 0.25, 0.25, 1)
 theme_override_colors/font_placeholder_color = Color(0.42, 0.42, 0.42, 1)
-theme_override_colors/caret_color = Color(0, 0, 0, 1)
-theme_override_colors/selection_color = Color(0.75, 0.75, 0.75, 1)
 theme_override_font_sizes/font_size = 32
 theme_override_styles/normal = SubResource("StyleBoxFieldNormal")
 theme_override_styles/focus = SubResource("StyleBoxFieldFocus")
@@ -224,7 +310,7 @@ theme_override_styles/read_only = SubResource("StyleBoxFieldReadOnly")
 placeholder_text = "답을 입력하세요"
 wrap_mode = 1
 
-[node name="CardEditorErrorLabel" type="Label" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent"]
+[node name="CardEditorErrorLabel" type="Label" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent" unique_id=1676408915]
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
