@@ -151,8 +151,12 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @onready var confirm_create_deck_button := create_deck_overlay.find_child("PrimaryButton", true, false) as Button
 @onready var study_ready_view: StudyReadyView = $Margin/Page/StudyReadyView
 @onready var card_list_view: VBoxContainer = $Margin/Page/CardListView
-@onready var card_list_deck_label: Label = $Margin/Page/CardListView/Header/TitleSlot/CardListDeckLabel
-@onready var card_rows: VBoxContainer = $Margin/Page/CardListView/CardListScroll/Rows
+@onready var card_list_deck_label := (
+	card_list_view.find_child("CardListDeckLabel", true, false) as Label
+)
+@onready var card_rows := (
+	card_list_view.find_child("Rows", true, false) as VBoxContainer
+)
 @onready var card_detail_view: VBoxContainer = $Margin/Page/CardDetailView
 @onready var card_detail_surface: PanelContainer = $Margin/Page/CardDetailView/CardDetailStage/CardDetailFrame
 @onready var card_detail_deck_label: Label = $Margin/Page/CardDetailView/Header/TitleSlot/CardDetailDeckLabel
@@ -336,10 +340,12 @@ func _ready() -> void:
 	study_ready_view.start_study_pressed.connect(_on_start_study_pressed)
 	study_ready_view.cancel_setup_pressed.connect(_on_cancel_study_setup)
 	study_ready_view.manage_cards_pressed.connect(_on_manage_cards_pressed)
-	$Margin/Page/CardListView/Header/LeftActions/BackFromCardListButton.pressed.connect(
-		_return_to_ready_from_card_list
+	(
+		card_list_view.find_child("BackFromCardListButton", true, false) as Button
+	).pressed.connect(_return_to_ready_from_card_list)
+	(card_list_view.find_child("AddCardButton", true, false) as Button).pressed.connect(
+		_on_add_card_pressed
 	)
-	$Margin/Page/CardListView/AddCardButton.pressed.connect(_on_add_card_pressed)
 	$Margin/Page/CardDetailView/Header/LeftActions/BackFromCardDetailButton.pressed.connect(
 		_close_card_detail
 	)
