@@ -56,6 +56,8 @@ func run_tests() -> void:
 	var app := MAIN_SCENE.instantiate()
 	app.auto_start = false
 	add_child(app)
+	var top_notification := _view(app, "TopNotification") as TopNotification
+	var dismiss_timer := _view(top_notification, "DismissTimer") as Timer
 	(_view(app, "CardFrame") as StudyGestureSurface).animations_enabled = false
 	_view(app, "CardDetailFrame").set("animations_enabled", false)
 	app.show_library()
@@ -215,9 +217,8 @@ func run_tests() -> void:
 	app.call("_on_copy_ai_prompt_pressed")
 	check(
 		_view(app, "SettingsView").visible
-		and (_view(app, "SettingsStatusLabel") as Label).visible
-		and (_view(app, "SettingsStatusLabel") as Label).text
-		== MainApp.AI_PROMPT_COPIED_MESSAGE
+		and top_notification.visible
+		and top_notification.message_label.text == MainApp.AI_PROMPT_COPIED_MESSAGE
 		and DeckParser.parse(MainApp.AI_PROMPT_TEMPLATE).size() == 2,
 		"Main Settings: AI 프롬프트 복사 후 다음 단계 안내"
 	)
@@ -326,7 +327,7 @@ func run_tests() -> void:
 	_view(app, "StartStudyButton").pressed.emit()
 	check(
 		_view(app, "StudyReadyView").visible
-		and _view(app, "ReadyStatusLabel").text == "오답 카드가 없습니다.",
+		and top_notification.message_label.text == "오답 카드가 없습니다.",
 		"Main Ready: 대상 카드가 없는 설정은 구체적으로 안내"
 	)
 	_view(app, "StudyScopeOption").select(MainApp.StudyScope.ALL)
@@ -417,8 +418,6 @@ func run_tests() -> void:
 		"Main Export: 사라진 원본 덱 실패"
 	)
 
-	var top_notification := _view(app, "TopNotification") as TopNotification
-	var dismiss_timer := _view(top_notification, "DismissTimer") as Timer
 	check(app.import_deck_from_path(IMPORT_SOURCE), "MVP Import: Markdown 덱 가져오기 성공")
 	check(DeckStorage.deck_exists("cards_edge_cases.md"), "MVP Import: 실제 fixture를 앱 덱 폴더에 복사")
 	check(_view(app, "DeckList").get_child_count() == 2, "MVP Import: 목록 즉시 갱신")

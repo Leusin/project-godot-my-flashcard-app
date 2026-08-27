@@ -73,7 +73,6 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @onready var page_container: TabContainer = $Margin/Page
 @onready var library_view: LibraryView = $Margin/Page/LibraryContainer
 @onready var settings_view: VBoxContainer = $Margin/Page/SettingsView
-@onready var settings_status_label: Label = $Margin/Page/SettingsView/SettingsStatusLabel
 @onready var haptics_toggle: CheckButton = (
 	$Margin/Page/SettingsView/SettingsScroll/Content/InteractionPanel/Margin/InteractionContent/HapticsRow/HapticsToggle
 )
@@ -526,7 +525,6 @@ func show_library() -> void:
 func show_settings() -> void:
 	show_library()
 	_show_page(settings_view)
-	settings_status_label.hide()
 	app_version_label.text = "버전 %s" % ProjectSettings.get_setting(
 		"application/config/version",
 		""
@@ -551,7 +549,6 @@ func show_study_ready(deck_file: String) -> bool:
 	deck_context_menu.hide()
 	card_context_menu.hide()
 	_show_page(study_ready_view)
-	study_ready_view.hide_status()
 	_update_study_ready_summary()
 	_update_continue_action()
 	_show_ready_overview()
@@ -1424,14 +1421,13 @@ func _on_start_study_pressed() -> void:
 		scope
 	)
 	if selected_indices.is_empty():
-		study_ready_view.show_status(
+		_show_action_notice(
 			"오답 카드가 없습니다."
 			if scope == StudyScope.WRONG
 			else "학습할 미완료 카드가 없습니다."
 		)
 		return
 
-	study_ready_view.hide_status()
 	var order := study_ready_view.selected_order() as DeckOrdering.StudyOrder
 	_begin_indexed_study(selected_indices, order, scope, true)
 
@@ -1440,7 +1436,7 @@ func _on_continue_study_pressed() -> void:
 	var resume := DeckStorage.load_study_resume(_ready_deck_file)
 	if not _is_valid_resume(resume):
 		_update_continue_action()
-		study_ready_view.show_status("이어서 학습할 기록이 없습니다.")
+		_show_action_notice("이어서 학습할 기록이 없습니다.")
 		return
 
 	var resume_scope := resume.scope as StudyScope
@@ -1706,11 +1702,10 @@ func _on_exit_confirmed() -> void:
 func _on_privacy_policy_pressed() -> void:
 	var open_error := OS.shell_open(PRIVACY_POLICY_URL)
 	if open_error != OK:
-		_show_settings_status("개인정보처리방침 페이지를 열 수 없습니다.")
+		_show_settings_notice("개인정보처리방침 페이지를 열 수 없습니다.")
 
 
 func _on_create_backup_pressed() -> void:
-	settings_status_label.hide()
 	var backup_time := Time.get_time_string_from_system().replace(":", "")
 	backup_dialog.current_file = "my-flashcard-backup-%s-%s.zip" % [
 		Time.get_date_string_from_system(),
@@ -1725,13 +1720,12 @@ func _on_backup_path_selected(target_path: String) -> void:
 	# It is an opaque address, so changing it after selection can make it invalid.
 	var result := AppBackup.create_backup(target_path)
 	if result == AppBackup.Result.OK:
-		_show_settings_status("전체 백업을 저장했습니다.")
+		_show_settings_notice("전체 백업을 저장했습니다.")
 		return
-	_show_settings_status(AppBackup.result_message(result))
+	_show_settings_notice(AppBackup.result_message(result))
 
 
 func _on_restore_backup_pressed() -> void:
-	settings_status_label.hide()
 	restore_dialog.popup_file_dialog()
 
 
@@ -1752,10 +1746,10 @@ func _on_restore_backup_confirmed() -> void:
 	_pending_restore_path = ""
 	var result := AppBackup.restore_backup(source_path)
 	if result != AppBackup.Result.OK:
-		_show_settings_status(AppBackup.result_message(result))
+		_show_settings_notice(AppBackup.result_message(result))
 		return
 	show_settings()
-	_show_settings_status("전체 복원을 완료했습니다.")
+	_show_settings_notice("전체 복원을 완료했습니다.")
 
 
 func _dismiss_virtual_keyboard() -> void:
@@ -1800,7 +1794,7 @@ func _on_create_from_clipboard_pressed() -> void:
 
 func _on_copy_ai_prompt_pressed() -> void:
 	DisplayServer.clipboard_set(AI_PROMPT_TEMPLATE)
-	_show_settings_status(AI_PROMPT_COPIED_MESSAGE)
+	_show_settings_notice(AI_PROMPT_COPIED_MESSAGE)
 
 
 func begin_clipboard_deck_creation(markdown_text: String) -> bool:
@@ -2158,11 +2152,12 @@ func _show_action_notice(message: String) -> void:
 	top_notification.show_message(message)
 
 
-func _show_settings_status(message: String) -> void:
+# 백업이나 복원 결과는 화면에 드러나지 않으므로 설정 화면으로 돌아가 알린다.
+func _show_settings_notice(message: String) -> void:
 	if not settings_view.visible:
 		show_settings()
-	settings_status_label.text = message
-	settings_status_label.show()
+
+	top_notification.show_message(message)
 
 
 func _restart_session() -> void:

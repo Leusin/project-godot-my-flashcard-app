@@ -36,7 +36,6 @@ signal cancel_setup_pressed
 @onready var setup_description: Label = setup.get_node("SetupDescription")
 @onready var scope_option: OptionButton = setup.get_node("StudyScopeOption")
 @onready var order_option: OptionButton = setup.get_node("StudyOrderOption")
-@onready var status_label: Label = setup.get_node("ReadyStatusLabel")
 @onready var start_button: Button = setup.get_node("StartStudyButton")
 @onready var cancel_setup_button: Button = setup.get_node("CancelStudySetupButton")
 
@@ -101,13 +100,11 @@ func render_summary(
 func show_overview() -> void:
 	setup.hide()
 	overview.show()
-	status_label.hide()
 
 
 func show_setup(description: String, start_label: String) -> void:
 	setup_description.text = description
 	start_button.text = start_label
-	status_label.hide()
 	overview.hide()
 	setup.show()
 
@@ -123,13 +120,3 @@ func set_continue_action(label: String) -> void:
 
 func hide_continue_action() -> void:
 	continue_button.hide()
-
-
-func show_status(message: String) -> void:
-	status_label.text = message
-	status_label.show()
-
-
-func hide_status() -> void:
-	status_label.hide()
-

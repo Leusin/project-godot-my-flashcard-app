@@ -367,14 +367,6 @@ theme_override_styles/hover = SubResource("StyleBoxOptionHover")
 theme_override_styles/disabled = SubResource("StyleBoxOptionNormal")
 theme_override_styles/focus = SubResource("StyleBoxOptionNormal")
 
-[node name="ReadyStatusLabel" type="Label" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent" unique_id=2049963099]
-visible = false
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "안내"
-horizontal_alignment = 1
-autowrap_mode = 3
-
 [node name="Spacer" type="Control" parent="DeckStage/DeckStack/DeckCover/Margin/NewStudyContent" unique_id=1316275626]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
