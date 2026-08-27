@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
 [ext_resource type="Texture2D" path="res://assets/icons/toggle_on.svg" id="2_toggle_on"]
@@ -8,10 +8,10 @@
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxSection"]
 bg_color = Color(1, 1, 1, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
 border_color = Color(0, 0, 0, 1)
 corner_radius_top_left = 14
 corner_radius_top_right = 14
@@ -23,6 +23,13 @@ color = Color(0.82, 0.82, 0.8, 1)
 thickness = 2
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxIconButton"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxPromptPreview"]
+bg_color = Color(0.945, 0.941, 0.925, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [node name="SettingsView" type="VBoxContainer"]
 layout_mode = 2
@@ -57,57 +64,61 @@ vertical_alignment = 1
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
-scroll_deadzone = 12
+scroll_deadzone = 18
 
 [node name="Content" type="VBoxContainer" parent="SettingsScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 24
+theme_override_constants/separation = 28
 
-[node name="InteractionTitle" type="Label" parent="SettingsScroll/Content"]
+[node name="LearningSection" type="VBoxContainer" parent="SettingsScroll/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="InteractionTitle" type="Label" parent="SettingsScroll/Content/LearningSection"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "학습"
 
-[node name="InteractionPanel" type="PanelContainer" parent="SettingsScroll/Content"]
+[node name="InteractionPanel" type="PanelContainer" parent="SettingsScroll/Content/LearningSection"]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxSection")
 
-[node name="Margin" type="MarginContainer" parent="SettingsScroll/Content/InteractionPanel"]
+[node name="Margin" type="MarginContainer" parent="SettingsScroll/Content/LearningSection/InteractionPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 28
 theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 28
 theme_override_constants/margin_bottom = 24
 
-[node name="InteractionContent" type="VBoxContainer" parent="SettingsScroll/Content/InteractionPanel/Margin"]
+[node name="InteractionContent" type="VBoxContainer" parent="SettingsScroll/Content/LearningSection/InteractionPanel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 8
 
-[node name="HapticsRow" type="HBoxContainer" parent="SettingsScroll/Content/InteractionPanel/Margin/InteractionContent"]
+[node name="HapticsRow" type="HBoxContainer" parent="SettingsScroll/Content/LearningSection/InteractionPanel/Margin/InteractionContent"]
 layout_mode = 2
 theme_override_constants/separation = 24
 
-[node name="HapticsText" type="VBoxContainer" parent="SettingsScroll/Content/InteractionPanel/Margin/InteractionContent/HapticsRow"]
+[node name="HapticsText" type="VBoxContainer" parent="SettingsScroll/Content/LearningSection/InteractionPanel/Margin/InteractionContent/HapticsRow"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 4
 theme_override_constants/separation = 8
 
-[node name="HapticsLabel" type="Label" parent="SettingsScroll/Content/InteractionPanel/Margin/InteractionContent/HapticsRow/HapticsText"]
+[node name="HapticsLabel" type="Label" parent="SettingsScroll/Content/LearningSection/InteractionPanel/Margin/InteractionContent/HapticsRow/HapticsText"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 27
 text = "햅틱 사용"
 
-[node name="HapticsDescription" type="Label" parent="SettingsScroll/Content/InteractionPanel/Margin/InteractionContent/HapticsRow/HapticsText"]
+[node name="HapticsDescription" type="Label" parent="SettingsScroll/Content/LearningSection/InteractionPanel/Margin/InteractionContent/HapticsRow/HapticsText"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.45, 0.45, 0.45, 1)
-theme_override_font_sizes/font_size = 21
-text = "카드 판정선을 넘을 때 짧게 진동합니다."
+theme_override_colors/font_color = Color(0.35, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 23
+text = "카드를 판정할 때 짧게 진동합니다."
 autowrap_mode = 3
 
-[node name="HapticsToggle" type="CheckButton" parent="SettingsScroll/Content/InteractionPanel/Margin/InteractionContent/HapticsRow"]
+[node name="HapticsToggle" type="CheckButton" parent="SettingsScroll/Content/LearningSection/InteractionPanel/Margin/InteractionContent/HapticsRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(92, 64)
+custom_minimum_size = Vector2(96, 64)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_default_cursor_shape = 2
@@ -122,135 +133,176 @@ theme_override_styles/hover = SubResource("StyleBoxIconButton")
 theme_override_styles/disabled = SubResource("StyleBoxIconButton")
 theme_override_styles/focus = SubResource("StyleBoxIconButton")
 
-[node name="DataTitle" type="Label" parent="SettingsScroll/Content"]
+[node name="DataSection" type="VBoxContainer" parent="SettingsScroll/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="DataTitle" type="Label" parent="SettingsScroll/Content/DataSection"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "데이터"
 
-[node name="DataPanel" type="PanelContainer" parent="SettingsScroll/Content"]
+[node name="DataPanel" type="PanelContainer" parent="SettingsScroll/Content/DataSection"]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxSection")
 
-[node name="Margin" type="MarginContainer" parent="SettingsScroll/Content/DataPanel"]
+[node name="Margin" type="MarginContainer" parent="SettingsScroll/Content/DataSection/DataPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 28
 theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 28
 theme_override_constants/margin_bottom = 24
 
-[node name="DataActions" type="VBoxContainer" parent="SettingsScroll/Content/DataPanel/Margin"]
+[node name="DataActions" type="VBoxContainer" parent="SettingsScroll/Content/DataSection/DataPanel/Margin"]
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="BackupDescription" type="Label" parent="SettingsScroll/Content/DataPanel/Margin/DataActions"]
+[node name="BackupDescription" type="Label" parent="SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 0.35, 0.35, 1)
 theme_override_font_sizes/font_size = 23
 text = "덱, 학습 기록, 즐겨찾기, 설정을 ZIP 하나로 보관합니다."
 autowrap_mode = 3
 
-[node name="CreateBackupButton" type="Button" parent="SettingsScroll/Content/DataPanel/Margin/DataActions"]
+[node name="CreateBackupButton" type="Button" parent="SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions"]
 custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
+mouse_default_cursor_shape = 2
 theme_override_font_sizes/font_size = 27
 text = "전체 백업"
 
-[node name="Separator" type="HSeparator" parent="SettingsScroll/Content/DataPanel/Margin/DataActions"]
+[node name="Separator" type="HSeparator" parent="SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions"]
 layout_mode = 2
 theme_override_styles/separator = SubResource("StyleBoxSeparator")
 
-[node name="RestoreBackupButton" type="Button" parent="SettingsScroll/Content/DataPanel/Margin/DataActions"]
-custom_minimum_size = Vector2(0, 78)
+[node name="RestoreDescription" type="Label" parent="SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 27
-text = "전체 복원"
-
-[node name="RestoreDescription" type="Label" parent="SettingsScroll/Content/DataPanel/Margin/DataActions"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.45, 0.45, 0.45, 1)
-theme_override_font_sizes/font_size = 21
+theme_override_colors/font_color = Color(0.35, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 23
 text = "백업에 포함된 데이터로 현재 앱 데이터를 교체합니다."
 autowrap_mode = 3
 
-[node name="TipsTitle" type="Label" parent="SettingsScroll/Content"]
+[node name="RestoreBackupButton" type="Button" parent="SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions"]
+custom_minimum_size = Vector2(0, 78)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 27
+text = "전체 복원"
+
+[node name="TipsSection" type="VBoxContainer" parent="SettingsScroll/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TipsTitle" type="Label" parent="SettingsScroll/Content/TipsSection"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
-text = "덱 만들기 팁"
+text = "AI 덱 만들기"
 
-[node name="TipsPanel" type="PanelContainer" parent="SettingsScroll/Content"]
+[node name="TipsPanel" type="PanelContainer" parent="SettingsScroll/Content/TipsSection"]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxSection")
 
-[node name="Margin" type="MarginContainer" parent="SettingsScroll/Content/TipsPanel"]
+[node name="Margin" type="MarginContainer" parent="SettingsScroll/Content/TipsSection/TipsPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 28
 theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 28
 theme_override_constants/margin_bottom = 24
 
-[node name="TipsContent" type="VBoxContainer" parent="SettingsScroll/Content/TipsPanel/Margin"]
+[node name="TipsContent" type="VBoxContainer" parent="SettingsScroll/Content/TipsSection/TipsPanel/Margin"]
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="TipTitleLabel" type="Label" parent="SettingsScroll/Content/TipsPanel/Margin/TipsContent"]
+[node name="TipDescription" type="Label" parent="SettingsScroll/Content/TipsSection/TipsPanel/Margin/TipsContent"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 25
-text = "단어장 사진으로 덱 만들기"
+text = "단어장 사진과 함께 아래 프롬프트를 AI 앱에 보내세요."
 autowrap_mode = 3
 
-[node name="TipDescription" type="Label" parent="SettingsScroll/Content/TipsPanel/Margin/TipsContent"]
+[node name="PromptPreviewPanel" type="PanelContainer" parent="SettingsScroll/Content/TipsSection/TipsPanel/Margin/TipsContent"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.35, 0.35, 0.35, 1)
-theme_override_font_sizes/font_size = 23
-text = "1. 아래 버튼으로 AI 프롬프트를 복사합니다.
-2. AI 앱에 단어장 사진과 함께 붙여넣습니다.
-3. 답변을 복사한 뒤 덱 목록의 ⋮에서 '클립보드에서 만들기'를 누릅니다."
+theme_override_styles/panel = SubResource("StyleBoxPromptPreview")
+
+[node name="Margin" type="MarginContainer" parent="SettingsScroll/Content/TipsSection/TipsPanel/Margin/TipsContent/PromptPreviewPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 16
+
+[node name="AiPromptPreviewLabel" type="Label" parent="SettingsScroll/Content/TipsSection/TipsPanel/Margin/TipsContent/PromptPreviewPanel/Margin"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_constants/line_spacing = 4
+theme_override_font_sizes/font_size = 22
+text = "프롬프트 미리보기"
 autowrap_mode = 3
 
-[node name="CopyAiPromptButton" type="Button" parent="SettingsScroll/Content/TipsPanel/Margin/TipsContent"]
+[node name="CopyAiPromptButton" type="Button" parent="SettingsScroll/Content/TipsSection/TipsPanel/Margin/TipsContent"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 78)
 layout_mode = 2
+mouse_default_cursor_shape = 2
 theme_override_font_sizes/font_size = 27
 text = "AI 프롬프트 복사"
 
-[node name="InfoTitle" type="Label" parent="SettingsScroll/Content"]
+[node name="TipNextStep" type="Label" parent="SettingsScroll/Content/TipsSection/TipsPanel/Margin/TipsContent"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 23
+text = "AI 답변은 덱 목록의 '클립보드에서 만들기'로 가져오세요."
+autowrap_mode = 3
+
+[node name="InfoSection" type="VBoxContainer" parent="SettingsScroll/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="InfoTitle" type="Label" parent="SettingsScroll/Content/InfoSection"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
-text = "정보"
+text = "앱 정보"
 
-[node name="InfoPanel" type="PanelContainer" parent="SettingsScroll/Content"]
+[node name="InfoPanel" type="PanelContainer" parent="SettingsScroll/Content/InfoSection"]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxSection")
 
-[node name="Margin" type="MarginContainer" parent="SettingsScroll/Content/InfoPanel"]
+[node name="Margin" type="MarginContainer" parent="SettingsScroll/Content/InfoSection/InfoPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 28
 theme_override_constants/margin_top = 22
 theme_override_constants/margin_right = 28
 theme_override_constants/margin_bottom = 22
 
-[node name="Content" type="VBoxContainer" parent="SettingsScroll/Content/InfoPanel/Margin"]
+[node name="Content" type="HBoxContainer" parent="SettingsScroll/Content/InfoSection/InfoPanel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 16
 
-[node name="PrivacyPolicyLink" type="LinkButton" parent="SettingsScroll/Content/InfoPanel/Margin/Content"]
+[node name="PrivacyPolicyLink" type="LinkButton" parent="SettingsScroll/Content/InfoSection/InfoPanel/Margin/Content"]
 custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
 theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
 theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 25
+theme_override_font_sizes/font_size = 26
 text = "개인정보처리방침"
 underline = 1
 alignment = 0
 
-[node name="AppVersionLabel" type="Label" parent="SettingsScroll/Content/InfoPanel/Margin/Content"]
+[node name="AppVersionLabel" type="Label" parent="SettingsScroll/Content/InfoSection/InfoPanel/Margin/Content"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.45, 0.45, 0.45, 1)
-theme_override_font_sizes/font_size = 21
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(0.35, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 23
 text = "버전"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="BottomSpacer" type="Control" parent="SettingsScroll/Content"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
 
 [node name="BackupDialog" type="FileDialog" parent="."]
 title = "전체 백업 저장"

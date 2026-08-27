@@ -122,10 +122,16 @@ func run_tests() -> void:
 		== "https://leusin.github.io/privacy/my-simple-flash-card/",
 		"Main Settings: 별도 설정 화면에서 공개 개인정보처리방침 연결"
 	)
+	var create_backup_button := _view(settings_view, "CreateBackupButton") as Button
+	var restore_backup_button := _view(settings_view, "RestoreBackupButton") as Button
 	check(
 		_view(settings_view, "AppVersionLabel").text == "버전 0.10.0"
-		and _view(settings_view, "CreateBackupButton").text == "전체 백업"
-		and _view(settings_view, "RestoreBackupButton").text == "전체 복원",
+		and create_backup_button.pressed.is_connected(
+			Callable(app, "_on_create_backup_pressed")
+		)
+		and restore_backup_button.pressed.is_connected(
+			Callable(app, "_on_restore_backup_pressed")
+		),
 		"Main Settings: 버전과 전체 백업·복원 작업 표시"
 	)
 	var haptics_toggle := _view(settings_view, "HapticsToggle") as CheckButton
@@ -209,8 +215,9 @@ func run_tests() -> void:
 		(_view(app, "CopyAiPromptButton") as Button).pressed.is_connected(
 			Callable(app, "_on_copy_ai_prompt_pressed")
 		)
-		and _view(app, "TipDescription").text.contains("클립보드에서 만들기"),
-		"Main Settings: AI 프롬프트 복사 signal과 다음 단계 안내"
+		and _view(app, "AiPromptPreviewLabel").text == MainApp.AI_PROMPT_TEMPLATE
+		and _view(app, "TipNextStep").text.contains("클립보드에서 만들기"),
+		"Main Settings: AI 프롬프트 미리보기·복사 signal·다음 단계 안내"
 	)
 	check(app.handle_back_request(), "Main Create: 추가 선택창에서 뒤로가기 요청 소비")
 	check(not add_deck_menu.visible, "Main Create: 뒤로가기로 추가 선택창 닫기")

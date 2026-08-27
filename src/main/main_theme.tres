@@ -4,8 +4,6 @@
 [ext_resource type="Texture2D" uid="uid://boedh2l27wvrk" path="res://assets/icons/radio_checked.svg" id="2_checked"]
 [ext_resource type="Texture2D" uid="uid://dcq55eljcy15l" path="res://assets/icons/radio_unchecked.svg" id="3_unchecked"]
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxPageHost"]
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxWhite"]
 bg_color = Color(1, 1, 1, 1)
 border_width_left = 3
@@ -109,6 +107,8 @@ corner_radius_bottom_left = 10
 shadow_color = Color(0, 0, 0, 0.22)
 shadow_size = 8
 shadow_offset = Vector2(4, 6)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxPageHost"]
 
 [resource]
 default_font_size = 24

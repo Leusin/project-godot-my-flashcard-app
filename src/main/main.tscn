@@ -6,9 +6,9 @@
 [ext_resource type="PackedScene" uid="uid://dxsva43l2lvu6" path="res://src/main/study_view.tscn" id="4_study"]
 [ext_resource type="PackedScene" uid="uid://ci2qn2pq2a26x" path="res://src/main/modal_dialog.tscn" id="5_modal"]
 [ext_resource type="PackedScene" uid="uid://bdds61ydptmja" path="res://src/main/deck_context_menu.tscn" id="6_context"]
-[ext_resource type="PackedScene" uid="uid://csuy1vpop404j" path="res://src/main/study_ready_view.tscn" id="9_ready"]
+[ext_resource type="PackedScene" uid="uid://02u6i65bfr7" path="res://src/main/study_ready_view.tscn" id="9_ready"]
 [ext_resource type="PackedScene" path="res://src/main/card_list_view.tscn" id="10_card_list"]
-[ext_resource type="PackedScene" path="res://src/main/card_editor_view.tscn" id="11_card_editor"]
+[ext_resource type="PackedScene" uid="uid://cigveii0iumha" path="res://src/main/card_editor_view.tscn" id="11_card_editor"]
 [ext_resource type="PackedScene" path="res://src/main/add_deck_menu.tscn" id="14_add_menu"]
 [ext_resource type="PackedScene" path="res://src/main/card_detail_view.tscn" id="16_card_detail"]
 [ext_resource type="PackedScene" path="res://src/main/card_context_menu.tscn" id="17_card_context"]
@@ -50,6 +50,7 @@ grow_vertical = 2
 
 [node name="Page" type="TabContainer" parent="Margin" unique_id=87873192]
 layout_mode = 2
+tab_alignment = 1
 current_tab = 0
 tabs_visible = false
 
@@ -59,6 +60,7 @@ metadata/_tab_index = 0
 
 [node name="SettingsView" parent="Margin/Page" unique_id=869316785 instance=ExtResource("18_settings")]
 visible = false
+theme_override_constants/separation = 32
 metadata/_tab_index = 1
 
 [node name="StudyReadyView" parent="Margin/Page" unique_id=1934807985 instance=ExtResource("9_ready")]
@@ -76,6 +78,7 @@ metadata/_tab_index = 4
 
 [node name="CardEditorView" parent="Margin/Page" unique_id=1975507747 instance=ExtResource("11_card_editor")]
 visible = false
+layout_mode = 2
 metadata/_tab_index = 5
 
 [node name="StudyFlow" parent="Margin/Page" unique_id=884868553 instance=ExtResource("4_study")]

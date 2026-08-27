@@ -73,14 +73,14 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @onready var page_container: TabContainer = $Margin/Page
 @onready var library_view: LibraryView = $Margin/Page/LibraryContainer
 @onready var settings_view: VBoxContainer = $Margin/Page/SettingsView
-@onready var haptics_toggle: CheckButton = (
-	$Margin/Page/SettingsView/SettingsScroll/Content/InteractionPanel/Margin/InteractionContent/HapticsRow/HapticsToggle
+@onready var haptics_toggle := (
+	settings_view.find_child("HapticsToggle", true, false) as CheckButton
 )
-@onready var privacy_policy_link: LinkButton = (
-	$Margin/Page/SettingsView/SettingsScroll/Content/InfoPanel/Margin/Content/PrivacyPolicyLink
+@onready var privacy_policy_link := (
+	settings_view.find_child("PrivacyPolicyLink", true, false) as LinkButton
 )
-@onready var app_version_label: Label = (
-	$Margin/Page/SettingsView/SettingsScroll/Content/InfoPanel/Margin/Content/AppVersionLabel
+@onready var app_version_label := (
+	settings_view.find_child("AppVersionLabel", true, false) as Label
 )
 @onready var backup_dialog: FileDialog = $Margin/Page/SettingsView/BackupDialog
 @onready var restore_dialog: FileDialog = $Margin/Page/SettingsView/RestoreDialog
@@ -104,6 +104,15 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 )
 @onready var copy_ai_prompt_button := (
 	settings_view.find_child("CopyAiPromptButton", true, false) as Button
+)
+@onready var ai_prompt_preview_label := (
+	settings_view.find_child("AiPromptPreviewLabel", true, false) as Label
+)
+@onready var create_backup_button := (
+	settings_view.find_child("CreateBackupButton", true, false) as Button
+)
+@onready var restore_backup_button := (
+	settings_view.find_child("RestoreBackupButton", true, false) as Button
 )
 @onready var deck_context_menu: Control = $DeckContextMenu
 @onready var deck_context_menu_panel: PanelContainer = $DeckContextMenu/DeckContextMenuPanel
@@ -253,23 +262,28 @@ func _ready() -> void:
 	import_markdown_button.pressed.connect(_on_import_from_add_menu_pressed)
 	create_from_clipboard_button.pressed.connect(_on_create_from_clipboard_pressed)
 	copy_ai_prompt_button.pressed.connect(_on_copy_ai_prompt_pressed)
+	ai_prompt_preview_label.text = AI_PROMPT_TEMPLATE
 	var settings := DeckStorage.load_settings()
 	haptics_toggle.button_pressed = settings.haptics_enabled
 	study_gesture_surface.haptics_enabled = settings.haptics_enabled
 	haptics_toggle.toggled.connect(_on_haptics_toggled)
 	# 진동이 없는 데스크톱에서는 학습 설정 항목 자체를 감춘다.
-	(settings_view.find_child("InteractionTitle", true, false) as Control).visible = is_mobile()
-	(settings_view.find_child("InteractionPanel", true, false) as Control).visible = is_mobile()
+	var interaction_settings_visible := is_mobile()
+	(settings_view.find_child("LearningSection", true, false) as Control).visible = (
+		interaction_settings_visible
+	)
+	(settings_view.find_child("InteractionTitle", true, false) as Control).visible = (
+		interaction_settings_visible
+	)
+	(settings_view.find_child("InteractionPanel", true, false) as Control).visible = (
+		interaction_settings_visible
+	)
 	library_view.add_pressed.connect(_on_library_add_pressed)
 	library_view.settings_pressed.connect(_on_library_settings_pressed)
 	open_settings_button.pressed.connect(_on_open_settings_pressed)
 	$Margin/Page/SettingsView/Header/LeftActions/BackFromSettingsButton.pressed.connect(show_library)
-	$Margin/Page/SettingsView/SettingsScroll/Content/DataPanel/Margin/DataActions/CreateBackupButton.pressed.connect(
-		_on_create_backup_pressed
-	)
-	$Margin/Page/SettingsView/SettingsScroll/Content/DataPanel/Margin/DataActions/RestoreBackupButton.pressed.connect(
-		_on_restore_backup_pressed
-	)
+	create_backup_button.pressed.connect(_on_create_backup_pressed)
+	restore_backup_button.pressed.connect(_on_restore_backup_pressed)
 	privacy_policy_link.pressed.connect(_on_privacy_policy_pressed)
 	$AddDeckMenu/DismissAddDeckMenuButton.pressed.connect(_on_add_deck_menu_dismissed)
 	$LibraryContextMenu/DismissLibraryContextMenuButton.pressed.connect(
