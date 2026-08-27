@@ -9,7 +9,8 @@ extends ColorRect
 @export var input_max_length := 0
 @export var secondary_button_text := "취소"
 @export var primary_button_text := "확인"
-@export var panel_height := 360.0
+# 0이면 내용 높이를 그대로 따른다. 확인 전용 시트끼리 높이를 맞추고 싶을 때만 값을 준다.
+@export var minimum_panel_height := 0.0
 @export var bottom_margin := 40.0
 
 # Android 시스템 바에 시트가 겹치지 않도록 App이 안전 영역 하단 값을 넣어 준다.
@@ -71,7 +72,7 @@ func set_bottom_inset(inset: float) -> void:
 
 
 func _layout_panel() -> void:
-	dialog_panel.custom_minimum_size = Vector2(600.0, panel_height)
+	dialog_panel.custom_minimum_size = Vector2(600.0, minimum_panel_height)
 	dialog_panel.anchor_left = 0.5
 	dialog_panel.anchor_right = 0.5
 	dialog_panel.anchor_top = 1.0
@@ -79,5 +80,7 @@ func _layout_panel() -> void:
 	dialog_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	dialog_panel.offset_left = -300.0
 	dialog_panel.offset_right = 300.0
+	# 아래 모서리만 고정하고 높이는 0으로 둔다.
+	# grow_vertical이 BEGIN이라 패널이 내용 높이만큼 위로 자란다.
 	dialog_panel.offset_bottom = -(bottom_margin + bottom_inset)
-	dialog_panel.offset_top = -(bottom_margin + bottom_inset + panel_height)
+	dialog_panel.offset_top = dialog_panel.offset_bottom

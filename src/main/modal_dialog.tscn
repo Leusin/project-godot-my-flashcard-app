@@ -97,7 +97,7 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -300.0
-offset_top = -400.0
+offset_top = -40.0
 offset_right = 300.0
 offset_bottom = -40.0
 grow_horizontal = 2
@@ -107,18 +107,17 @@ theme_override_styles/panel = SubResource("StyleBoxDialog")
 [node name="Margin" type="MarginContainer" parent="KeyboardShift/DialogPanel" unique_id=1746708311]
 layout_mode = 2
 theme_override_constants/margin_left = 32
-theme_override_constants/margin_top = 28
+theme_override_constants/margin_top = 48
 theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 28
 
 [node name="Content" type="VBoxContainer" parent="KeyboardShift/DialogPanel/Margin" unique_id=636679622]
 layout_mode = 2
-theme_override_constants/separation = 24
+theme_override_constants/separation = 48
 
 [node name="Body" type="VBoxContainer" parent="KeyboardShift/DialogPanel/Margin/Content" unique_id=1610961664]
 layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/separation = 16
+theme_override_constants/separation = 24
 
 [node name="DialogTitle" type="Label" parent="KeyboardShift/DialogPanel/Margin/Content/Body" unique_id=1679844548]
 custom_minimum_size = Vector2(1, 0)
@@ -166,10 +165,11 @@ horizontal_alignment = 2
 
 [node name="Buttons" type="HBoxContainer" parent="KeyboardShift/DialogPanel/Margin/Content" unique_id=1350125699]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 20
+alignment = 2
 
 [node name="PrimaryButton" type="Button" parent="KeyboardShift/DialogPanel/Margin/Content/Buttons" unique_id=1972507155]
-custom_minimum_size = Vector2(0, 88)
+custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -185,7 +185,7 @@ theme_override_styles/focus = SubResource("StyleBoxPrimary")
 text = "확인"
 
 [node name="SecondaryButton" type="Button" parent="KeyboardShift/DialogPanel/Margin/Content/Buttons" unique_id=1614885142]
-custom_minimum_size = Vector2(0, 88)
+custom_minimum_size = Vector2(0, 80)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
