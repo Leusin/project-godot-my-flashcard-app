@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://ddgdtijoqnwpg" path="res://src/main/card_collection_row.gd" id="1_script"]
 [ext_resource type="Theme" uid="uid://bu5jyw4ehw6ya" path="res://src/main/main_theme.tres" id="2_theme"]
+[ext_resource type="Texture2D" uid="uid://33rmlntwrfjd" path="res://assets/icons/more_vertical.svg" id="3_more"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxCardRow"]
 bg_color = Color(1, 1, 1, 1)
@@ -62,9 +63,9 @@ skip_badge_style = SubResource("StyleBoxSkipBadge")
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 16
+theme_override_constants/margin_top = 14
 theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_bottom = 14
 
 [node name="Row" type="HBoxContainer" parent="Margin" unique_id=2139102573]
 layout_mode = 2
@@ -91,6 +92,7 @@ text = "≡"
 [node name="Content" type="VBoxContainer" parent="Margin/Row" unique_id=1236552827]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 4
 mouse_filter = 2
 theme_override_constants/separation = 10
 
@@ -141,15 +143,11 @@ custom_minimum_size = Vector2(64, 64)
 layout_mode = 2
 size_flags_vertical = 4
 tooltip_text = "카드 관리"
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
-theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
-theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
-theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 34
+theme_override_constants/icon_max_width = 40
 theme_override_styles/normal = SubResource("StyleBoxRowMenu")
 theme_override_styles/pressed = SubResource("StyleBoxRowMenu")
 theme_override_styles/hover = SubResource("StyleBoxRowMenu")
 theme_override_styles/disabled = SubResource("StyleBoxRowMenu")
 theme_override_styles/focus = SubResource("StyleBoxRowMenu")
-text = "⋮"
+icon = ExtResource("3_more")
+icon_alignment = 1
