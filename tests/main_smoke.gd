@@ -557,9 +557,10 @@ func run_tests() -> void:
 	)
 	check(
 		export_presets_text.count(
-			"exclude_filter=\"store-listing/*,tests/*,tools/*\""
+			"exclude_filter=\"store-listing/*,tests/*,tools/*,"
+			+ "addons/mobile_foundation/tests/*\""
 		) == 2,
-		"Main Android: 배포와 무관한 스토어 자료·테스트·도구 제외"
+		"Main Android: 배포와 무관한 스토어 자료·테스트·도구·모듈 테스트 제외"
 	)
 	check(
 		export_presets_text.count("include_filter=\"sample_deck.md\"") == 2,
