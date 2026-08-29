@@ -27,15 +27,6 @@ static func apply(order: Array[String], deck_files: Array[String]) -> Array[Stri
 
 
 static func moved(order: Array[String], from_index: int, to_index: int) -> Array[String]:
-	var result: Array[String] = order.duplicate()
-	if from_index < 0 or from_index >= result.size():
-		return result
-
-	var target := clampi(to_index, 0, result.size() - 1)
-	if target == from_index:
-		return result
-
-	var deck_file := result[from_index]
-	result.remove_at(from_index)
-	result.insert(target, deck_file)
+	var result: Array[String] = []
+	result.assign(ArrayOrder.moved(order, from_index, to_index))
 	return result

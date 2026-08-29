@@ -142,7 +142,7 @@ func _tile_drop_target_at(deck_file: String, pointer: Vector2) -> int:
 
 	if closest_tile == null:
 		return -1
-	var target := DropInsertion.target_index(
+	var target := ListInsertion.target_index(
 		deck_list.get_child_count(),
 		moving.get_index(),
 		closest_tile.get_index(),

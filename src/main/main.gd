@@ -401,33 +401,15 @@ static func safe_insets_in_viewport(
 	window_size: Vector2i,
 	viewport_size: Vector2
 ) -> Vector4:
-	if window_size.x <= 0 or window_size.y <= 0:
-		return Vector4.ZERO
-
-	var viewport_scale := Vector2(
-		viewport_size.x / float(window_size.x),
-		viewport_size.y / float(window_size.y)
-	)
-	return Vector4(
-		maxi(safe_area.position.x, 0) * viewport_scale.x,
-		maxi(safe_area.position.y, 0) * viewport_scale.y,
-		maxi(window_size.x - safe_area.end.x, 0) * viewport_scale.x,
-		maxi(window_size.y - safe_area.end.y, 0) * viewport_scale.y
-	)
+	return SafeArea.insets_in_viewport(safe_area, window_size, viewport_size)
 
 
 static func is_mobile() -> bool:
-	return OS.get_name() == "Android" or OS.get_name() == "iOS"
+	return SafeArea.is_handheld()
 
 
 func _apply_safe_area() -> void:
-	var safe_insets := Vector4.ZERO
-	if is_mobile():
-		safe_insets = safe_insets_in_viewport(
-			DisplayServer.get_display_safe_area(),
-			DisplayServer.window_get_size(),
-			get_viewport_rect().size
-		)
+	var safe_insets := SafeArea.current_insets(get_viewport_rect().size)
 
 	page_margin.offset_left = BASE_PAGE_MARGIN + safe_insets.x
 	page_margin.offset_top = BASE_PAGE_MARGIN + safe_insets.y
@@ -815,7 +797,7 @@ func _card_drop_target_at(moving_index: int, pointer_y: float) -> int:
 
 	if closest_row == null:
 		return -1
-	var target := DropInsertion.target_index(
+	var target := ListInsertion.target_index(
 		card_rows.get_child_count(),
 		moving_index,
 		closest_row.get_index(),

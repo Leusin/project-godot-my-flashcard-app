@@ -10,15 +10,6 @@ static func moved(
 	from_index: int,
 	to_index: int
 ) -> Array[FlashCard]:
-	var result: Array[FlashCard] = cards.duplicate()
-	if from_index < 0 or from_index >= result.size():
-		return result
-
-	var target := clampi(to_index, 0, result.size() - 1)
-	if target == from_index:
-		return result
-
-	var card := result[from_index]
-	result.remove_at(from_index)
-	result.insert(target, card)
+	var result: Array[FlashCard] = []
+	result.assign(ArrayOrder.moved(cards, from_index, to_index))
 	return result

@@ -7,9 +7,12 @@
 [ext_resource type="PackedScene" uid="uid://b4ejb5ii4jrf6" path="res://tests/phase3_smoke.tscn" id="5_phase3"]
 [ext_resource type="PackedScene" path="res://tests/phase4_smoke.tscn" id="6_phase4"]
 [ext_resource type="PackedScene" path="res://tests/main_smoke.tscn" id="7_main"]
+[ext_resource type="PackedScene" path="res://tests/mobile_foundation_smoke.tscn" id="8_mobile_foundation"]
 
 [node name="Tests" type="Node" unique_id=1981310814]
 script = ExtResource("1_runner")
+
+[node name="MobileFoundationSmoke" parent="." instance=ExtResource("8_mobile_foundation")]
 
 [node name="Phase0Smoke" parent="." unique_id=1220511921 instance=ExtResource("2_qpm35")]
 

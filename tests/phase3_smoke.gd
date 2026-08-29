@@ -21,8 +21,6 @@ func run_tests() -> void:
 	_test_progress_fixtures()
 	_test_card_ordering()
 	_test_deck_library_order()
-	_test_drop_insertion()
-	_test_drag_bounds()
 
 
 func _test_queue_progression() -> void:
@@ -520,67 +518,4 @@ func _test_deck_library_order() -> void:
 	check(
 		AppSettings.from_json("{}").deck_order.is_empty(),
 		"설정: 덱 차례 기본값은 빈 목록"
-	)
-
-
-func _test_drop_insertion() -> void:
-	check(
-		DropInsertion.target_index(4, 0, 2, false) == 1
-		and DropInsertion.target_index(4, 0, 2, true) == 2,
-		"삽입 위치: 아래 항목의 앞·뒤 경계를 최종 index로 변환"
-	)
-	check(
-		DropInsertion.target_index(4, 3, 1, false) == 1
-		and DropInsertion.target_index(4, 3, 1, true) == 2,
-		"삽입 위치: 위로 끌어도 앞·뒤 경계를 최종 index로 변환"
-	)
-	check(
-		DropInsertion.target_index(4, 1, 0, true) == 1
-		and DropInsertion.target_index(4, 1, 2, false) == 1,
-		"삽입 위치: 현재 자리의 양쪽 경계는 순서를 유지"
-	)
-	check(
-		DropInsertion.target_index(1, 0, 0, false) == -1
-		and DropInsertion.target_index(3, 0, 0, true) == -1,
-		"삽입 위치: 목적 경계가 없거나 움직이는 항목 자체면 거부"
-	)
-
-
-func _test_drag_bounds() -> void:
-	var bounds := Rect2(0, 0, 300, 300)
-	var size := Vector2(100, 100)
-
-	check(
-		DragBounds.clamped_position(Vector2(50, 50), size, Vector2.ONE, bounds)
-		== Vector2(50, 50),
-		"끌기 범위: 안쪽 자리는 그대로 둔다"
-	)
-	check(
-		DragBounds.clamped_position(Vector2(-40, -40), size, Vector2.ONE, bounds)
-		== Vector2.ZERO,
-		"끌기 범위: 왼쪽 위로 넘치면 경계에 붙인다"
-	)
-	check(
-		DragBounds.clamped_position(Vector2(999, 999), size, Vector2.ONE, bounds)
-		== Vector2(200, 200),
-		"끌기 범위: 오른쪽 아래로 넘치면 경계에 붙인다"
-	)
-
-	# 1.1배로 커지면 각 변이 5씩 밖으로 나오므로 그만큼 안쪽으로 묶여야 한다.
-	var scaled := Vector2.ONE * 1.1
-	check(
-		DragBounds.clamped_position(Vector2(-40, -40), size, scaled, bounds)
-		== Vector2(5, 5),
-		"끌기 범위: 커진 항목은 삐져나온 폭만큼 더 안쪽에서 멈춘다"
-	)
-	check(
-		DragBounds.clamped_position(Vector2(999, 999), size, scaled, bounds)
-		== Vector2(195, 195),
-		"끌기 범위: 커진 항목의 오른쪽 아래도 테두리가 잘리지 않는다"
-	)
-	check(
-		DragBounds.clamped_position(
-			Vector2(999, 999), Vector2(400, 400), Vector2.ONE, bounds
-		) == Vector2.ZERO,
-		"끌기 범위: 항목이 영역보다 크면 시작 지점에 둔다"
 	)

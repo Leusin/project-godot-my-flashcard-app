@@ -10,7 +10,7 @@
 | 2 | `src/core/deck_parser.gd` · `deck_writer.gd` | Markdown ↔ 카드 배열 |
 | 3 | `src/core/study_session.gd` · `deck_ordering.gd` | 현재 카드, 이전/다음, 학습 순서 |
 | 4 | `src/core/progress.gd` · `study_resume.gd` · `app_settings.gd` | 덱별 학습 기록과 이어서 학습 데이터 |
-| 5 | `src/core/deck_naming.gd` · `deck_info.gd` · `card_row.gd` · `card_ordering.gd` · `deck_library_order.gd` · `drop_insertion.gd` | 이름 규칙, 목록 데이터, 드래그 순서와 삽입 위치 계산 |
+| 5 | `src/core/deck_naming.gd` · `deck_info.gd` · `card_row.gd` · `card_ordering.gd` · `deck_library_order.gd` | 이름 규칙, 목록 데이터, 카드/덱 순서 (자리 옮기기 자체는 `ArrayOrder`) |
 | 6 | `src/storage/deck_storage.gd` | 덱·진행도·설정·이어하기 파일 IO |
 | 7 | `src/main/main.tscn` · `main.gd` | 화면 전환, 덱 관리, 학습 판정, 편집 저장 |
 | 8 | `src/main/study_gesture_surface.gd` | 탭·드래그 판정과 카드 이동/플립 애니메이션 |
@@ -18,16 +18,23 @@
 | 10 | `src/main/*_view.tscn` · 작은 row/tile 씬 | 편집 가능한 화면 골격과 반복 UI |
 | 11 | `tests/test_runner.gd` · `phase*_smoke.gd` · `main_smoke.gd` | 순수 로직, 저장소, 전체 앱 smoke test |
 
+앱과 무관한 바닥 기능은 [`addons/mobile_foundation/`](../addons/mobile_foundation/README.md)에 따로 있다.
+끌기 범위(`DragBounds`), 삽입 위치(`ListInsertion`), 배열 자리 옮기기(`ArrayOrder`),
+안전 영역(`SafeArea`), 가상 키보드 피하기(`KeyboardInsetAvoider`)가 거기 산다.
+다른 프로젝트로 폴더째 복사할 수 있도록 `res://src/`를 모른다.
+
 ## 의존 방향
 
 ```text
 main.gd
 ├─ src/main/*.tscn, 작은 UI script
 ├─ DeckStorage
-└─ src/core/*
+├─ src/core/*
+└─ addons/mobile_foundation/*
 
 DeckStorage → src/core/*
 src/core/* → Godot UI와 파일 IO를 모름
+addons/mobile_foundation/* → 이 앱을 모름 (반대 방향 의존은 없다)
 ```
 
 입력 표면은 `tapped`, `swiped`, 버튼 `pressed` 같은 사실만 전달한다. AGAIN/GOOD 처리, 진행도 저장, 다음 화면 선택은 `main.gd`가 맡는다.

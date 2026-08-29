@@ -1,0 +1,102 @@
+class_name KeyboardInsetAvoider
+extends Control
+
+# 가상 키보드가 덮은 만큼 자기 자신을 위로 올려, 포커스된 입력창이 가려지지 않게 한다.
+# 자식으로 LineEdit이나 TextEdit을 두는 화면(편집 화면, 하단 시트)에 씌운다.
+
+@export var keyboard_padding := 24.0
+@export var top_padding := 16.0
+# 지정하면 포커스된 입력창 대신 이 노드 전체를 키보드 위로 올린다 (하단 시트용).
+@export var avoid_target: NodePath
+
+
+func _ready() -> void:
+	# 데스크톱의 IME와 모바일 가상 키보드는 별개 기능이다.
+	# 지원하지 않는 플랫폼에서 높이를 조회하면 매 frame 경고가 발생하고 입력을 방해한다.
+	set_process(DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD))
+
+
+func _process(delta: float) -> void:
+	if not is_visible_in_tree():
+		if not position.is_equal_approx(Vector2.ZERO):
+			position = Vector2.ZERO
+		return
+	_apply_shift(_desired_shift(), delta)
+
+
+func _desired_shift() -> float:
+	var focus_owner := get_viewport().gui_get_focus_owner() as Control
+	if (
+		focus_owner == null
+		or not is_ancestor_of(focus_owner)
+		or (focus_owner is not LineEdit and focus_owner is not TextEdit)
+	):
+		return 0.0
+
+	var keyboard_height := DisplayServer.virtual_keyboard_get_height()
+	if keyboard_height <= 0:
+		return 0.0
+
+	var window_size := DisplayServer.window_get_size()
+	var viewport_size := get_viewport_rect().size
+	var keyboard_height_in_viewport := scaled_keyboard_height(
+		keyboard_height,
+		window_size,
+		viewport_size
+	)
+	var tracked := focus_owner
+	if not avoid_target.is_empty():
+		var target_control := get_node_or_null(avoid_target) as Control
+		if target_control != null:
+			tracked = target_control
+	var current_offset := position.y
+	var tracked_rect := tracked.get_global_rect()
+	return required_shift(
+		tracked_rect.end.y - current_offset,
+		tracked_rect.position.y - current_offset,
+		keyboard_height_in_viewport,
+		viewport_size.y,
+		keyboard_padding,
+		top_padding
+	)
+
+
+func _apply_shift(shift: float, delta: float) -> void:
+	var target_y := -shift
+	# 같은 위치를 계속 다시 쓰면 입력 중 layout/IME 위치 갱신이 불필요하게 반복된다.
+	if is_equal_approx(target_y, position.y):
+		return
+	# OS 키보드 등장 높이가 몇 frame 늦게 잡히므로 짧은 따라잡기로 스냅을 감춘다.
+	if absf(target_y - position.y) < 1.0:
+		position = Vector2(0.0, target_y)
+		return
+	position = Vector2(0.0, lerpf(position.y, target_y, minf(1.0, delta * 14.0)))
+
+
+# 키보드 높이는 창 픽셀 단위라 viewport 좌표로 환산해야 한다.
+static func scaled_keyboard_height(
+	keyboard_height: int,
+	window_size: Vector2i,
+	viewport_size: Vector2
+) -> float:
+	if keyboard_height <= 0 or window_size.y <= 0 or viewport_size.y <= 0.0:
+		return 0.0
+	return float(keyboard_height) * viewport_size.y / float(window_size.y)
+
+
+# 입력창 아래끝이 키보드 위로 올라올 만큼만 올린다.
+# 단, 위끝이 화면 밖으로 밀려나지 않는 선(minimum_top)에서 멈춘다.
+static func required_shift(
+	focused_bottom: float,
+	focused_top: float,
+	keyboard_height: float,
+	viewport_height: float,
+	bottom_padding: float = 24.0,
+	minimum_top: float = 16.0
+) -> float:
+	if keyboard_height <= 0.0 or viewport_height <= 0.0:
+		return 0.0
+	var visible_bottom := viewport_height - keyboard_height - bottom_padding
+	var desired_shift := maxf(focused_bottom - visible_bottom, 0.0)
+	var maximum_shift := maxf(focused_top - minimum_top, 0.0)
+	return minf(desired_shift, maximum_shift)
