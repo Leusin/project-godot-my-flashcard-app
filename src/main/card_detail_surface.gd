@@ -49,19 +49,10 @@ func flip(midpoint: Callable, finished: Callable = Callable()) -> void:
 
 
 static func fitted_card_rect(available_size: Vector2) -> Rect2:
-	if available_size.x <= 0.0 or available_size.y <= 0.0:
-		return Rect2()
-
-	var card_size := Vector2(
-		available_size.x,
-		available_size.x / CARD_ASPECT_RATIO
+	return AspectFit.centered_rect(
+		Rect2(Vector2.ZERO, available_size),
+		CARD_ASPECT_RATIO
 	)
-	if card_size.y > available_size.y:
-		card_size = Vector2(
-			available_size.y * CARD_ASPECT_RATIO,
-			available_size.y
-		)
-	return Rect2((available_size - card_size) * 0.5, card_size)
 
 
 func _on_flip_midpoint(midpoint: Callable, finished: Callable) -> void:

@@ -14,6 +14,7 @@ static func run(report: Callable) -> void:
 	_check_drag_bounds(report)
 	_check_list_insertion(report)
 	_check_array_order(report)
+	_check_aspect_fit(report)
 	_check_safe_area(report)
 	_check_keyboard_avoider(report)
 
@@ -207,6 +208,30 @@ static func _check_array_order(report: Callable) -> void:
 	report.call(
 		restored == [2, 3, 1] and typed == [1, 2, 3],
 		"ArrayOrder: 타입이 있는 배열도 assign()으로 그대로 되받는다"
+	)
+
+
+static func _check_aspect_fit(report: Callable) -> void:
+	var card_ratio := 2.0 / 3.0
+	report.call(
+		AspectFit.centered_rect(Rect2(10, 20, 600, 900), card_ratio)
+		.is_equal_approx(Rect2(10, 20, 600, 900)),
+		"AspectFit: 이미 같은 종횡비면 주어진 사각형을 그대로 쓴다"
+	)
+	report.call(
+		AspectFit.centered_rect(Rect2(10, 20, 900, 900), card_ratio)
+		.is_equal_approx(Rect2(160, 20, 600, 900)),
+		"AspectFit: 세로 공간에 맞추고 남는 가로 공간의 가운데에 놓는다"
+	)
+	report.call(
+		AspectFit.centered_rect(Rect2(10, 20, 600, 600), 2.0)
+		.is_equal_approx(Rect2(10, 170, 600, 300)),
+		"AspectFit: 가로 공간에 맞추고 남는 세로 공간의 가운데에 놓는다"
+	)
+	report.call(
+		AspectFit.centered_rect(Rect2(10, 20, 0, 600), card_ratio) == Rect2()
+		and AspectFit.centered_rect(Rect2(10, 20, 600, 600), 0.0) == Rect2(),
+		"AspectFit: 빈 영역이나 잘못된 종횡비는 빈 사각형으로 거부한다"
 	)
 
 

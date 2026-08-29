@@ -163,13 +163,7 @@ static func fitted_card_rect(
 	available_size: Vector2,
 	aspect_ratio: float = CARD_ASPECT_RATIO
 ) -> Rect2:
-	if available_size.x <= 0.0 or available_size.y <= 0.0 or aspect_ratio <= 0.0:
-		return Rect2()
-
-	var card_size := Vector2(available_size.x, available_size.x / aspect_ratio)
-	if card_size.y > available_size.y:
-		card_size = Vector2(available_size.y * aspect_ratio, available_size.y)
-	return Rect2((available_size - card_size) * 0.5, card_size)
+	return AspectFit.centered_rect(Rect2(Vector2.ZERO, available_size), aspect_ratio)
 
 
 func commit(direction: int) -> void:

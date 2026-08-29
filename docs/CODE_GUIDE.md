@@ -20,7 +20,7 @@
 
 앱과 무관한 바닥 기능은 [`addons/mobile_foundation/`](../addons/mobile_foundation/README.md)에 따로 있다.
 끌기 범위(`DragBounds`), 삽입 위치(`ListInsertion`), 배열 자리 옮기기(`ArrayOrder`),
-안전 영역(`SafeArea`), 가상 키보드 피하기(`KeyboardInsetAvoider`)가 거기 산다.
+종횡비 맞춤(`AspectFit`), 안전 영역(`SafeArea`), 가상 키보드 피하기(`KeyboardInsetAvoider`)가 거기 산다.
 다른 프로젝트로 폴더째 복사할 수 있도록 `res://src/`를 모른다.
 
 ## 의존 방향

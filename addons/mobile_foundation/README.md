@@ -29,6 +29,8 @@ addons/mobile_foundation/
 │  └─ list_insertion.gd   ListInsertion
 ├─ collections/
 │  └─ array_order.gd      ArrayOrder
+├─ layout/
+│  └─ aspect_fit.gd       AspectFit
 ├─ ui/
 │  ├─ safe_area.gd        SafeArea
 │  ├─ safe_area_margin.gd SafeAreaMargin (노드)
@@ -38,7 +40,7 @@ addons/mobile_foundation/
 └─ README.md
 ```
 
-`input/`과 `collections/`는 순수 계산이다. 화면도 노드도 모른다.
+`input/`, `collections/`, `layout/`은 순수 계산이다. 화면도 노드도 모른다.
 `ui/`만 Godot 노드와 `DisplayServer`를 안다.
 
 ---
@@ -118,6 +120,23 @@ static func moved(items: Array[Item], from_index: int, to_index: int) -> Array[I
 	var result: Array[Item] = []
 	result.assign(ArrayOrder.moved(items, from_index, to_index))
 	return result
+```
+
+## AspectFit
+
+주어진 사각형 안에서 종횡비를 지키며 가장 크게 들어가는 사각형을 가운데에 놓는다.
+카드, 게임 보드, 미리보기처럼 비율은 고정하고 남는 공간을 양쪽에 나눠야 할 때 쓴다.
+`aspect_ratio`는 `width / height`다.
+
+| 함수 | 하는 일 |
+| --- | --- |
+| `centered_rect(available, aspect_ratio) -> Rect2` | `available` 안에 종횡비를 지켜 들어가는 가장 큰 가운데 사각형 |
+
+```gdscript
+var board_rect := AspectFit.centered_rect(
+	Rect2(Vector2.ZERO, board_stage.size),
+	16.0 / 9.0
+)
 ```
 
 ## SafeArea
