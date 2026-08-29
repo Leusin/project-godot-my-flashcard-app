@@ -137,24 +137,14 @@ primary_button_text = "종료"
 
 [node name="CardDeleteConfirmationOverlay" parent="." unique_id=1403179071 instance=ExtResource("5_modal")]
 visible = false
-layout_mode = 0
-anchors_preset = 0
-anchor_right = 0.0
-anchor_bottom = 0.0
-grow_horizontal = 1
-grow_vertical = 1
+layout_mode = 1
 title_text = "이 카드를 삭제할까요?"
 description_text = "카드와 해당 학습 기록이 함께 삭제됩니다."
 primary_button_text = "삭제"
 
 [node name="DiscardCardChangesOverlay" parent="." unique_id=18728453 instance=ExtResource("5_modal")]
 visible = false
-layout_mode = 0
-anchors_preset = 0
-anchor_right = 0.0
-anchor_bottom = 0.0
-grow_horizontal = 1
-grow_vertical = 1
+layout_mode = 1
 title_text = "변경사항을 버릴까요?"
 description_text = "저장하지 않은 질문과 답은 복구할 수 없습니다."
 secondary_button_text = "계속 편집"
@@ -162,12 +152,7 @@ primary_button_text = "버리기"
 
 [node name="RestoreBackupConfirmationOverlay" parent="." unique_id=1567319902 instance=ExtResource("5_modal")]
 visible = false
-layout_mode = 0
-anchors_preset = 0
-anchor_right = 0.0
-anchor_bottom = 0.0
-grow_horizontal = 1
-grow_vertical = 1
+layout_mode = 1
 title_text = "전체 데이터를 복원할까요?"
 description_text = "현재 덱과 학습 기록을 백업 파일의 데이터로 교체합니다."
 primary_button_text = "복원"

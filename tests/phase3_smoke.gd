@@ -21,6 +21,7 @@ func run_tests() -> void:
 	_test_progress_fixtures()
 	_test_card_ordering()
 	_test_deck_library_order()
+	_test_drop_insertion()
 	_test_drag_bounds()
 
 
@@ -519,6 +520,29 @@ func _test_deck_library_order() -> void:
 	check(
 		AppSettings.from_json("{}").deck_order.is_empty(),
 		"설정: 덱 차례 기본값은 빈 목록"
+	)
+
+
+func _test_drop_insertion() -> void:
+	check(
+		DropInsertion.target_index(4, 0, 2, false) == 1
+		and DropInsertion.target_index(4, 0, 2, true) == 2,
+		"삽입 위치: 아래 항목의 앞·뒤 경계를 최종 index로 변환"
+	)
+	check(
+		DropInsertion.target_index(4, 3, 1, false) == 1
+		and DropInsertion.target_index(4, 3, 1, true) == 2,
+		"삽입 위치: 위로 끌어도 앞·뒤 경계를 최종 index로 변환"
+	)
+	check(
+		DropInsertion.target_index(4, 1, 0, true) == 1
+		and DropInsertion.target_index(4, 1, 2, false) == 1,
+		"삽입 위치: 현재 자리의 양쪽 경계는 순서를 유지"
+	)
+	check(
+		DropInsertion.target_index(1, 0, 0, false) == -1
+		and DropInsertion.target_index(3, 0, 0, true) == -1,
+		"삽입 위치: 목적 경계가 없거나 움직이는 항목 자체면 거부"
 	)
 
 

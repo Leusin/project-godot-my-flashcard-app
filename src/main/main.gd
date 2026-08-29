@@ -232,6 +232,7 @@ var _card_detail_result_index := -1
 var _card_menu_from_study := false
 var _card_menu_from_list := false
 var _reordering_cards := false
+var _reordering_card_index := -1
 var _reorder_original_cards: Array[FlashCard] = []
 var _study_edit_source_index := -1
 var _study_edit_return_show_answer := false
@@ -740,6 +741,8 @@ static func _copy_cards(cards: Array[FlashCard]) -> Array[FlashCard]:
 
 
 func _refresh_card_rows() -> void:
+	_reordering_cards = false
+	_reordering_card_index = -1
 	for child in card_rows.get_children():
 		child.free()
 	for index in _editing_cards.size():
@@ -753,17 +756,20 @@ func _refresh_card_rows() -> void:
 		row.reorder_ended.connect(_on_card_row_reorder_ended)
 
 
-func _on_card_row_reorder_started(_index: int) -> void:
+func _on_card_row_reorder_started(index: int) -> void:
 	_reordering_cards = true
+	_reordering_card_index = index
 	_reorder_original_cards = _copy_cards(_editing_cards)
 
 
-# 놓은 자리에 있는 행과 자리를 바꾼다. 끄는 동안에는 아무것도 움직이지 않았다.
+# 놓기 전에는 원래 배열을 유지하고, 손을 뗀 경계로 한 번만 옮긴다.
 func _on_card_row_reorder_ended(index: int, pointer_y: float) -> void:
-	if not _reordering_cards:
+	if not _reordering_cards or index != _reordering_card_index:
 		return
 	_reordering_cards = false
-	_move_card_row(index, _card_row_index_at(pointer_y, index))
+	var target := _card_drop_target_at(index, pointer_y)
+	_reordering_card_index = -1
+	_move_card_row(index, target)
 	if not _card_order_changed(_reorder_original_cards, _editing_cards):
 		return
 
@@ -790,14 +796,32 @@ func _move_card_row(index: int, target: int) -> void:
 		(card_rows.get_child(row_index) as CardCollectionRow).set_index(row_index)
 
 
-func _card_row_index_at(pointer_y: float, moving_index: int) -> int:
+func _card_drop_target_at(moving_index: int, pointer_y: float) -> int:
+	var closest_row: CardCollectionRow
+	var closest_after := false
+	var closest_distance := INF
 	for row_index in card_rows.get_child_count():
 		if row_index == moving_index:
 			continue
-		var rect := (card_rows.get_child(row_index) as Control).get_global_rect()
-		if pointer_y >= rect.position.y and pointer_y <= rect.end.y:
-			return row_index
-	return -1
+		var row := card_rows.get_child(row_index) as CardCollectionRow
+		var rect := row.get_global_rect()
+		for after in [false, true]:
+			var edge_y := rect.end.y if after else rect.position.y
+			var distance := absf(pointer_y - edge_y)
+			if distance < closest_distance:
+				closest_distance = distance
+				closest_row = row
+				closest_after = after
+
+	if closest_row == null:
+		return -1
+	var target := DropInsertion.target_index(
+		card_rows.get_child_count(),
+		moving_index,
+		closest_row.get_index(),
+		closest_after
+	)
+	return -1 if target == moving_index else target
 
 
 static func _card_order_changed(
@@ -1113,6 +1137,8 @@ func _open_card_editor(index: int) -> void:
 
 
 func _request_close_card_editor() -> void:
+	# 모바일 키보드가 하단 확인창의 버튼을 가리지 않게 먼저 입력을 끝낸다.
+	_dismiss_virtual_keyboard()
 	if _card_editor_has_changes():
 		discard_card_changes_overlay.show()
 		return
@@ -1178,6 +1204,7 @@ func _on_discard_card_changes_confirmed() -> void:
 
 
 func _close_card_editor_without_save() -> void:
+	_dismiss_virtual_keyboard()
 	var return_to_study := _card_editor_origin == CardEditorOrigin.STUDY
 	var return_to_library := _card_editor_origin == CardEditorOrigin.NEW_DECK
 	var return_to_detail := _card_editor_origin == CardEditorOrigin.CARD_DETAIL
@@ -1774,7 +1801,8 @@ func _on_restore_backup_confirmed() -> void:
 
 func _dismiss_virtual_keyboard() -> void:
 	get_viewport().gui_release_focus()
-	DisplayServer.virtual_keyboard_hide()
+	if DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD):
+		DisplayServer.virtual_keyboard_hide()
 
 
 func _on_create_new_deck_pressed() -> void:

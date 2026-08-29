@@ -125,7 +125,7 @@ func run_tests() -> void:
 	var create_backup_button := _view(settings_view, "CreateBackupButton") as Button
 	var restore_backup_button := _view(settings_view, "RestoreBackupButton") as Button
 	check(
-		_view(settings_view, "AppVersionLabel").text == "버전 0.10.1"
+		_view(settings_view, "AppVersionLabel").text == "버전 0.10.2"
 		and create_backup_button.pressed.is_connected(
 			Callable(app, "_on_create_backup_pressed")
 		)
@@ -193,6 +193,24 @@ func run_tests() -> void:
 		_view(deck_buttons[0], "DeckCountLabel").text == "2장",
 		"Main: 카드 뭉치 타일에 카드 수 표시"
 	)
+	var insertion_decks: Array[DeckInfo] = [
+		DeckInfo.new("a.md", "A", 1),
+		DeckInfo.new("b.md", "B", 1),
+		DeckInfo.new("c.md", "C", 1),
+	]
+	library.render(insertion_decks)
+	var insertion_tiles := library.deck_list.get_children()
+	var insertion_anchor := insertion_tiles[1] as DeckTileView
+	var anchor_rect := insertion_anchor.get_global_rect()
+	var insertion_pointer := Vector2(anchor_rect.end.x, anchor_rect.get_center().y)
+	library.call("_on_tile_reorder_started", "a.md")
+	library.call("_on_tile_reorder_ended", "a.md", insertion_pointer)
+	check(
+		library.current_order() == ["b.md", "a.md", "c.md"],
+		"Main Deck List: 손을 뗀 타일 경계로 덱 순서를 이동"
+	)
+	app.show_library()
+	deck_buttons = _view(app, "DeckList").get_children()
 	var library_add_button := _view(app, "LibraryAddButton") as Button
 	library_add_button.pressed.emit()
 	var add_deck_menu := _view(app, "AddDeckMenu") as Control
@@ -527,11 +545,11 @@ func run_tests() -> void:
 		"Main Android: debug와 release에서 시스템 상태·내비게이션 bar 유지"
 	)
 	check(
-		ProjectSettings.get_setting("application/config/version") == "0.10.1"
-		and export_presets_text.count("version/name=\"0.10.1\"") == 2
-		and export_presets_text.count("version/code=5") == 2
-		and export_presets_text.contains("my-simple-flash-card-0.10.1.aab"),
-		"Main Release: 0.10.1 versionName과 versionCode 5 일치"
+		ProjectSettings.get_setting("application/config/version") == "0.10.2"
+		and export_presets_text.count("version/name=\"0.10.2\"") == 2
+		and export_presets_text.count("version/code=6") == 2
+		and export_presets_text.contains("my-simple-flash-card-0.10.2.aab"),
+		"Main Release: 0.10.2 versionName과 versionCode 6 일치"
 	)
 	check(
 		export_presets_text.count("export_filter=\"all_resources\"") == 2,
@@ -860,9 +878,10 @@ func run_tests() -> void:
 		"Main Card List: 카드 관리와 순서 변경 action 제공"
 	)
 	var reorder_deck_before := DeckParser.parse(DeckStorage.read_deck(EDIT_DECK))
+	var second_card_row := app.card_rows.get_child(1) as CardCollectionRow
+	var second_row_bottom := second_card_row.get_global_rect().end.y
 	app.call("_on_card_row_reorder_started", 0)
-	app.call("_move_card_row", 0, 1)
-	app.call("_on_card_row_reorder_ended", 1, 0.0)
+	app.call("_on_card_row_reorder_ended", 0, second_row_bottom)
 	var reorder_deck_after := DeckParser.parse(DeckStorage.read_deck(EDIT_DECK))
 	check(
 		reorder_deck_before.size() == reorder_deck_after.size()
@@ -878,9 +897,10 @@ func run_tests() -> void:
 		and DeckStorage.load_study_resume(EDIT_DECK) == null,
 		"Main Card List: 순서 변경 후 행 index와 이어하기 기록 정리"
 	)
-	app.call("_on_card_row_reorder_started", 0)
-	app.call("_move_card_row", 0, 1)
-	app.call("_on_card_row_reorder_ended", 1, 0.0)
+	var restore_anchor := app.card_rows.get_child(0) as CardCollectionRow
+	var restore_top := restore_anchor.get_global_rect().position.y
+	app.call("_on_card_row_reorder_started", first_card_row.card_index)
+	app.call("_on_card_row_reorder_ended", first_card_row.card_index, restore_top)
 	row_menu_button.pressed.emit()
 	check(
 		_view(app, "CardContextMenu").visible
@@ -1079,14 +1099,24 @@ func run_tests() -> void:
 	_view(app, "CardDetailMenuButton").pressed.emit()
 	_view(app, "EditCardActionButton").pressed.emit()
 	_view(app, "WrongMinusButton").pressed.emit()
+	_view(app, "CardAnswerInput").grab_focus()
 	_view(app, "CancelCardEditButton").pressed.emit()
 	check(
-		_view(app, "DiscardCardChangesOverlay").visible,
-		"Main Card Edit: 저장하지 않은 학습 정보 변경사항 취소 확인"
+		_view(app, "DiscardCardChangesOverlay").visible
+		and get_viewport().gui_get_focus_owner() == null
+		and _view(app, "DiscardCardChangesOverlay").size == app.size,
+		"Main Card Edit: 취소 시 지원하지 않는 키보드 API 없이 포커스를 놓고 변경사항 확인"
 	)
 	_dialog(app, "DiscardCardChangesOverlay", "SecondaryButton").pressed.emit()
 	check(_view(app, "CardEditorView").visible, "Main Card Edit: 계속 편집 선택")
-	_view(app, "CancelCardEditButton").pressed.emit()
+	_view(app, "CardAnswerInput").grab_focus()
+	check(app.handle_back_request(), "Main Card Edit: 시스템 뒤로가기 요청 소비")
+	check(
+		_view(app, "DiscardCardChangesOverlay").visible
+		and get_viewport().gui_get_focus_owner() == null
+		and _view(app, "DiscardCardChangesOverlay").size == app.size,
+		"Main Card Edit: 시스템 뒤로가기도 키보드를 닫고 변경사항 확인"
+	)
 	_dialog(app, "DiscardCardChangesOverlay", "PrimaryButton").pressed.emit()
 	check(
 		_view(app, "CardDetailView").visible

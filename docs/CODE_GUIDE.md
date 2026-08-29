@@ -10,7 +10,7 @@
 | 2 | `src/core/deck_parser.gd` · `deck_writer.gd` | Markdown ↔ 카드 배열 |
 | 3 | `src/core/study_session.gd` · `deck_ordering.gd` | 현재 카드, 이전/다음, 학습 순서 |
 | 4 | `src/core/progress.gd` · `study_resume.gd` · `app_settings.gd` | 덱별 학습 기록과 이어서 학습 데이터 |
-| 5 | `src/core/deck_naming.gd` · `deck_info.gd` · `card_row.gd` | 이름 규칙과 목록 표시용 데이터 |
+| 5 | `src/core/deck_naming.gd` · `deck_info.gd` · `card_row.gd` · `card_ordering.gd` · `deck_library_order.gd` · `drop_insertion.gd` | 이름 규칙, 목록 데이터, 드래그 순서와 삽입 위치 계산 |
 | 6 | `src/storage/deck_storage.gd` | 덱·진행도·설정·이어하기 파일 IO |
 | 7 | `src/main/main.tscn` · `main.gd` | 화면 전환, 덱 관리, 학습 판정, 편집 저장 |
 | 8 | `src/main/study_gesture_surface.gd` | 탭·드래그 판정과 카드 이동/플립 애니메이션 |
