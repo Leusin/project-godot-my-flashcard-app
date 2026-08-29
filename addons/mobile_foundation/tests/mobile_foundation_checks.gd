@@ -21,26 +21,35 @@ static func run(report: Callable) -> void:
 static func _check_drag_bounds(report: Callable) -> void:
 	var bounds := Rect2(0, 0, 300, 300)
 	var size := Vector2(100, 100)
+	var center_pivot := size * 0.5
 
 	report.call(
-		DragBounds.clamped_position(Vector2(50, 50), size, Vector2.ONE, bounds)
+		DragBounds.clamped_position(
+			Vector2(50, 50), size, Vector2.ONE, center_pivot, bounds
+		)
 		== Vector2(50, 50),
 		"DragBounds: 안쪽 자리는 그대로 둔다"
 	)
 	report.call(
-		DragBounds.clamped_position(Vector2(-40, -40), size, Vector2.ONE, bounds)
+		DragBounds.clamped_position(
+			Vector2(-40, -40), size, Vector2.ONE, center_pivot, bounds
+		)
 		== Vector2.ZERO,
 		"DragBounds: 왼쪽 위로 넘치면 경계에 붙인다"
 	)
 	report.call(
-		DragBounds.clamped_position(Vector2(999, 999), size, Vector2.ONE, bounds)
+		DragBounds.clamped_position(
+			Vector2(999, 999), size, Vector2.ONE, center_pivot, bounds
+		)
 		== Vector2(200, 200),
 		"DragBounds: 오른쪽 아래로 넘치면 경계에 붙인다"
 	)
 	report.call(
-		DragBounds.clamped_position(Vector2(0, 0), size, Vector2.ONE, bounds)
+		DragBounds.clamped_position(Vector2(0, 0), size, Vector2.ONE, center_pivot, bounds)
 		== Vector2.ZERO
-		and DragBounds.clamped_position(Vector2(200, 200), size, Vector2.ONE, bounds)
+		and DragBounds.clamped_position(
+			Vector2(200, 200), size, Vector2.ONE, center_pivot, bounds
+		)
 		== Vector2(200, 200),
 		"DragBounds: 경계에 딱 맞는 자리는 움직이지 않는다"
 	)
@@ -48,24 +57,43 @@ static func _check_drag_bounds(report: Callable) -> void:
 	# 1.1배로 커지면 각 변이 5씩 밖으로 나오므로 그만큼 안쪽으로 묶여야 한다.
 	var scaled := Vector2.ONE * 1.1
 	report.call(
-		DragBounds.clamped_position(Vector2(-40, -40), size, scaled, bounds)
-		== Vector2(5, 5),
+		DragBounds.clamped_position(
+			Vector2(-40, -40), size, scaled, center_pivot, bounds
+		).is_equal_approx(Vector2(5, 5)),
 		"DragBounds: 커진 항목은 삐져나온 폭만큼 더 안쪽에서 멈춘다"
 	)
 	report.call(
-		DragBounds.clamped_position(Vector2(999, 999), size, scaled, bounds)
-		== Vector2(195, 195),
+		DragBounds.clamped_position(
+			Vector2(999, 999), size, scaled, center_pivot, bounds
+		).is_equal_approx(Vector2(195, 195)),
 		"DragBounds: 커진 항목의 오른쪽 아래도 테두리가 잘리지 않는다"
 	)
 	report.call(
 		DragBounds.clamped_position(
-			Vector2(999, 999), Vector2(400, 400), Vector2.ONE, bounds
+			Vector2(-999, -999), size, scaled, Vector2.ZERO, bounds
+		).is_equal_approx(Vector2.ZERO)
+		and DragBounds.clamped_position(
+			Vector2(999, 999), size, scaled, Vector2.ZERO, bounds
+		).is_equal_approx(Vector2(190, 190)),
+		"DragBounds: 좌상단 pivot으로 커진 항목은 반대쪽 여유만 줄인다"
+	)
+	report.call(
+		DragBounds.clamped_position(
+			Vector2(999, 999),
+			Vector2(400, 400),
+			Vector2.ONE,
+			Vector2(200, 200),
+			bounds
 		) == Vector2.ZERO,
 		"DragBounds: 항목이 영역보다 크면 시작 지점에 둔다"
 	)
 	report.call(
 		DragBounds.clamped_position(
-			Vector2(80, 80), size, Vector2.ONE, Rect2(0, 0, 0, 0)
+			Vector2(80, 80),
+			size,
+			Vector2.ONE,
+			center_pivot,
+			Rect2(0, 0, 0, 0)
 		) == Vector2.ZERO,
 		"DragBounds: 영역이 비어 있어도 시작 지점으로 묶는다"
 	)
@@ -73,9 +101,13 @@ static func _check_drag_bounds(report: Callable) -> void:
 	# 영역이 원점에 있지 않아도 그 안쪽으로 묶여야 한다.
 	var offset_bounds := Rect2(50, 20, 200, 200)
 	report.call(
-		DragBounds.clamped_position(Vector2(-999, -999), size, Vector2.ONE, offset_bounds)
+		DragBounds.clamped_position(
+			Vector2(-999, -999), size, Vector2.ONE, center_pivot, offset_bounds
+		)
 		== Vector2(50, 20)
-		and DragBounds.clamped_position(Vector2(999, 999), size, Vector2.ONE, offset_bounds)
+		and DragBounds.clamped_position(
+			Vector2(999, 999), size, Vector2.ONE, center_pivot, offset_bounds
+		)
 		== Vector2(150, 120),
 		"DragBounds: 원점에서 떨어진 영역도 그 경계를 쓴다"
 	)

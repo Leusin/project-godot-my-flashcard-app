@@ -9,6 +9,8 @@ extends Control
 # 지정하면 포커스된 입력창 대신 이 노드 전체를 키보드 위로 올린다 (하단 시트용).
 @export var avoid_target: NodePath
 
+var _applied_shift := 0.0
+
 
 func _ready() -> void:
 	# 데스크톱의 IME와 모바일 가상 키보드는 별개 기능이다.
@@ -18,8 +20,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	if not is_visible_in_tree():
-		if not position.is_equal_approx(Vector2.ZERO):
-			position = Vector2.ZERO
+		_restore_position()
 		return
 	_apply_shift(_desired_shift(), delta)
 
@@ -49,11 +50,10 @@ func _desired_shift() -> float:
 		var target_control := get_node_or_null(avoid_target) as Control
 		if target_control != null:
 			tracked = target_control
-	var current_offset := position.y
 	var tracked_rect := tracked.get_global_rect()
 	return required_shift(
-		tracked_rect.end.y - current_offset,
-		tracked_rect.position.y - current_offset,
+		tracked_rect.end.y + _applied_shift,
+		tracked_rect.position.y + _applied_shift,
 		keyboard_height_in_viewport,
 		viewport_size.y,
 		keyboard_padding,
@@ -62,15 +62,25 @@ func _desired_shift() -> float:
 
 
 func _apply_shift(shift: float, delta: float) -> void:
-	var target_y := -shift
+	var resting_y := position.y + _applied_shift
+	var target_y := resting_y - shift
 	# 같은 위치를 계속 다시 쓰면 입력 중 layout/IME 위치 갱신이 불필요하게 반복된다.
 	if is_equal_approx(target_y, position.y):
 		return
 	# OS 키보드 등장 높이가 몇 frame 늦게 잡히므로 짧은 따라잡기로 스냅을 감춘다.
 	if absf(target_y - position.y) < 1.0:
-		position = Vector2(0.0, target_y)
+		position.y = target_y
+		_applied_shift = shift
 		return
-	position = Vector2(0.0, lerpf(position.y, target_y, minf(1.0, delta * 14.0)))
+	position.y = lerpf(position.y, target_y, minf(1.0, delta * 14.0))
+	_applied_shift = resting_y - position.y
+
+
+func _restore_position() -> void:
+	if is_zero_approx(_applied_shift):
+		return
+	position.y += _applied_shift
+	_applied_shift = 0.0
 
 
 # 키보드 높이는 창 픽셀 단위라 viewport 좌표로 환산해야 한다.

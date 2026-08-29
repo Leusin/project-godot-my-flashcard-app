@@ -26,22 +26,23 @@ static func clamped(desired: Vector2, item: Control, clip: Control) -> Vector2:
 
 	var bounds := clip.get_global_rect()
 	bounds.position -= parent.get_global_rect().position
-	return clamped_position(desired, item.size, item.scale, bounds)
+	return clamped_position(desired, item.size, item.scale, item.pivot_offset, bounds)
 
 
-# 집은 항목은 가운데를 축으로 커지므로, 커진 만큼 layout 사각형 밖으로 삐져나온다.
-# 그 삐져나온 폭까지 감안해야 테두리가 잘리지 않는다.
+# scale은 pivot_offset을 축으로 적용되므로, 그 축에서 삐져나온 폭까지 감안해야
+# 테두리가 잘리지 않는다.
 # 항목이 영역보다 크면 묶을 자리가 없으므로 시작 지점에 둔다.
 static func clamped_position(
 	desired: Vector2,
 	item_size: Vector2,
 	item_scale: Vector2,
+	pivot_offset: Vector2,
 	bounds: Rect2
 ) -> Vector2:
 	var grown := item_size * item_scale
-	var overflow := (grown - item_size) * 0.5
-	var lowest := bounds.position + overflow
-	var highest := bounds.end - grown + overflow
+	var pivot_shift := pivot_offset * (item_scale - Vector2.ONE)
+	var lowest := bounds.position + pivot_shift
+	var highest := bounds.end - grown + pivot_shift
 	return Vector2(
 		clampf(desired.x, lowest.x, maxf(lowest.x, highest.x)),
 		clampf(desired.y, lowest.y, maxf(lowest.y, highest.y))

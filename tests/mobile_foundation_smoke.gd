@@ -68,4 +68,24 @@ func _check_keyboard_avoider_node() -> void:
 		"KeyboardInsetAvoider: 가상 키보드가 없는 플랫폼에서는 _process를 끈다"
 	)
 
+	var resting_position := Vector2(37.0, 91.0)
+	avoider.position = resting_position
+	avoider._apply_shift(24.0, 1.0)
+	check(
+		avoider.position == Vector2(37.0, 67.0),
+		"KeyboardInsetAvoider: 원래 X와 기준 Y를 보존한 채 필요한 만큼만 올린다"
+	)
+	avoider._apply_shift(0.0, 1.0)
+	check(
+		avoider.position == resting_position,
+		"KeyboardInsetAvoider: 키보드가 닫히면 0이 아닌 원래 위치로 돌아온다"
+	)
+	avoider._apply_shift(18.0, 1.0)
+	avoider.hide()
+	avoider._process(0.0)
+	check(
+		avoider.position == resting_position,
+		"KeyboardInsetAvoider: 숨겨질 때도 원래 위치를 복원한다"
+	)
+
 	avoider.queue_free()

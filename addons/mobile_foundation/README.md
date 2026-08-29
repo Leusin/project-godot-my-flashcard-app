@@ -52,10 +52,10 @@ addons/mobile_foundation/
 | --- | --- |
 | `clip_ancestor(node, clip_class := "ScrollContainer") -> Control` | 항목을 잘라 내는 조상 노드를 찾는다. 없으면 `null` |
 | `clamped(desired, item, clip) -> Vector2` | `item`의 부모 좌표계에서 `clip` 안으로 묶는다. `clip`이나 부모가 없으면 `desired` 그대로 |
-| `clamped_position(desired, item_size, item_scale, bounds) -> Vector2` | 노드 없이 계산만. 테스트하기 좋은 순수 함수 |
+| `clamped_position(desired, item_size, item_scale, pivot_offset, bounds) -> Vector2` | 노드 없이 계산만. 테스트하기 좋은 순수 함수 |
 
-집은 항목을 키우면 가운데를 축으로 커져서 layout 사각형 밖으로 삐져나온다.
-`item_scale`을 받는 이유가 그것이다. 삐져나온 폭까지 감안해야 테두리가 잘리지 않는다.
+집은 항목을 키우면 `pivot_offset`을 축으로 layout 사각형 밖까지 커질 수 있다.
+`item_scale`과 pivot을 함께 받는 이유가 그것이다. 삐져나온 폭까지 감안해야 테두리가 잘리지 않는다.
 항목이 영역보다 크면 묶을 자리가 없으므로 시작 지점에 둔다.
 
 ```gdscript
@@ -178,6 +178,8 @@ func _apply_safe_area() -> void:
 
 가상 키보드를 지원하지 않는 플랫폼에서는 `_process`를 아예 끈다.
 데스크톱에서 높이를 조회하면 매 frame 경고가 나고 IME 입력을 방해하기 때문이다.
+노드가 원점이 아닌 곳에 있어도 기존 X와 기준 Y를 보존하고, 키보드가 닫히거나 노드가
+숨겨지면 그 자리로 돌아온다.
 
 계산만 따로 부를 수도 있다.
 
