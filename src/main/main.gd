@@ -78,6 +78,27 @@ const STUDY_INPUT_LOCK_SECONDS := 0.22
 @onready var discard_card_changes_overlay: ModalDialog = $DiscardCardChangesOverlay
 @onready var study_flow: StudyFlowView = $Margin/Page/StudyFlow
 @onready var top_notification: TopNotification = $TopNotification
+@onready var _back_handlers: Dictionary = {
+	BackNavigation.Action.CANCEL_RESTORE: _on_restore_backup_canceled,
+	BackNavigation.Action.CANCEL_CARD_DELETE: _on_card_delete_canceled,
+	BackNavigation.Action.CANCEL_DISCARD_CHANGES: _on_discard_card_changes_canceled,
+	BackNavigation.Action.CANCEL_CREATE_DECK: _on_create_deck_canceled,
+	BackNavigation.Action.CANCEL_RENAME_DECK: _on_rename_canceled,
+	BackNavigation.Action.CANCEL_DELETE_DECK: _on_delete_canceled,
+	BackNavigation.Action.DISMISS_ADD_DECK_MENU: add_deck_menu.dismiss,
+	BackNavigation.Action.DISMISS_LIBRARY_MENU: library_context_menu.dismiss,
+	BackNavigation.Action.DISMISS_CARD_MENU: card_context_menu.dismiss,
+	BackNavigation.Action.DISMISS_DECK_MENU: deck_context_menu.dismiss,
+	BackNavigation.Action.CANCEL_EXIT: _on_exit_canceled,
+	BackNavigation.Action.RETURN_LIBRARY_FROM_SETTINGS: show_library,
+	BackNavigation.Action.SHOW_EXIT_CONFIRMATION: exit_confirmation_overlay.show,
+	BackNavigation.Action.CLOSE_CARD_EDITOR: _request_close_card_editor,
+	BackNavigation.Action.CLOSE_CARD_DETAIL: _close_card_detail,
+	BackNavigation.Action.CLOSE_CARD_LIST: _return_to_ready_from_card_list,
+	BackNavigation.Action.CANCEL_STUDY_SETUP: _on_cancel_study_setup,
+	BackNavigation.Action.RETURN_LIBRARY_FROM_READY: show_library,
+	BackNavigation.Action.RETURN_TO_STUDY_READY: _return_to_study_ready,
+}
 
 var _pending_deck_action_file := ""
 var _study_plan := StudyPlan.new()
@@ -1028,78 +1049,36 @@ func _on_deck_menu_requested(deck_file: String, anchor: Control) -> void:
 
 
 func handle_back_request() -> bool:
-	if restore_backup_confirmation_overlay.visible:
-		_on_restore_backup_canceled()
+	var action := BackNavigation.resolve({
+		BackNavigation.Action.CANCEL_RESTORE:
+			restore_backup_confirmation_overlay.visible,
+		BackNavigation.Action.CANCEL_CARD_DELETE:
+			card_delete_confirmation_overlay.visible,
+		BackNavigation.Action.CANCEL_DISCARD_CHANGES:
+			discard_card_changes_overlay.visible,
+		BackNavigation.Action.CANCEL_CREATE_DECK: create_deck_overlay.visible,
+		BackNavigation.Action.CANCEL_RENAME_DECK: rename_deck_overlay.visible,
+		BackNavigation.Action.CANCEL_DELETE_DECK:
+			delete_confirmation_overlay.visible,
+		BackNavigation.Action.DISMISS_ADD_DECK_MENU: add_deck_menu.visible,
+		BackNavigation.Action.DISMISS_LIBRARY_MENU: library_context_menu.visible,
+		BackNavigation.Action.DISMISS_CARD_MENU: card_context_menu.visible,
+		BackNavigation.Action.DISMISS_DECK_MENU: deck_context_menu.visible,
+		BackNavigation.Action.CANCEL_EXIT: exit_confirmation_overlay.visible,
+		BackNavigation.Action.RETURN_LIBRARY_FROM_SETTINGS: settings_view.visible,
+		BackNavigation.Action.SHOW_EXIT_CONFIRMATION: library_view.visible,
+		BackNavigation.Action.CLOSE_CARD_EDITOR: card_editor_view.visible,
+		BackNavigation.Action.CLOSE_CARD_DETAIL: card_detail_view.visible,
+		BackNavigation.Action.CLOSE_CARD_LIST: card_list_view.visible,
+		BackNavigation.Action.CANCEL_STUDY_SETUP:
+			study_ready_view.visible and study_ready_view.is_setup_visible(),
+		BackNavigation.Action.RETURN_LIBRARY_FROM_READY: study_ready_view.visible,
+	})
+	var handler: Callable = _back_handlers.get(action, Callable())
+	if not handler.is_valid():
+		push_error("Missing back navigation handler: %s" % action)
 		return true
-
-	if card_delete_confirmation_overlay.visible:
-		_on_card_delete_canceled()
-		return true
-
-	if discard_card_changes_overlay.visible:
-		_on_discard_card_changes_canceled()
-		return true
-
-	if create_deck_overlay.visible:
-		_on_create_deck_canceled()
-		return true
-
-	if rename_deck_overlay.visible:
-		_on_rename_canceled()
-		return true
-
-	if delete_confirmation_overlay.visible:
-		_on_delete_canceled()
-		return true
-
-	if add_deck_menu.visible:
-		add_deck_menu.dismiss()
-		return true
-
-	if library_context_menu.visible:
-		library_context_menu.dismiss()
-		return true
-
-	if card_context_menu.visible:
-		card_context_menu.dismiss()
-		return true
-
-	if deck_context_menu.visible:
-		deck_context_menu.dismiss()
-		return true
-
-	if exit_confirmation_overlay.visible:
-		_on_exit_canceled()
-		return true
-
-	if settings_view.visible:
-		show_library()
-		return true
-
-	if library_view.visible:
-		exit_confirmation_overlay.show()
-		return true
-
-	if card_editor_view.visible:
-		_request_close_card_editor()
-		return true
-
-	if card_detail_view.visible:
-		_close_card_detail()
-		return true
-
-	if card_list_view.visible:
-		_return_to_ready_from_card_list()
-		return true
-
-	if study_ready_view.visible:
-		if study_ready_view.is_setup_visible():
-			_on_cancel_study_setup()
-			return true
-		show_library()
-		return true
-
-	_return_to_study_ready()
+	handler.call()
 	return true
 
 

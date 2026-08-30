@@ -22,6 +22,7 @@ func run_tests() -> void:
 	_test_card_ordering()
 	_test_deck_library_order()
 	_test_study_plan()
+	_test_back_navigation()
 
 
 func _test_queue_progression() -> void:
@@ -609,4 +610,55 @@ func _test_study_plan() -> void:
 		and plan.cards.is_empty()
 		and plan.active_indices.is_empty(),
 		"학습 계획: 준비·활성 상태 초기화"
+	)
+
+
+func _test_back_navigation() -> void:
+	var priority: Array[int] = []
+	priority.assign(BackNavigation.PRIORITY)
+	var unique_actions: Dictionary[int, bool] = {}
+	for action in priority:
+		unique_actions[action] = true
+	check(
+		unique_actions.size() == priority.size()
+		and not unique_actions.has(BackNavigation.Action.RETURN_TO_STUDY_READY),
+		"뒤로가기: 우선순위 action은 중복 없이 fallback과 분리"
+	)
+
+	var individual_routes_resolve := true
+	for action in priority:
+		var active: Dictionary = {}
+		active[action] = true
+		if BackNavigation.resolve(active) != action:
+			individual_routes_resolve = false
+			break
+	check(
+		individual_routes_resolve,
+		"뒤로가기: 각 활성 route를 대응 action으로 결정"
+	)
+
+	var adjacent_priority_is_stable := true
+	for index in range(priority.size() - 1):
+		var active: Dictionary = {}
+		active[priority[index]] = true
+		active[priority[index + 1]] = true
+		if BackNavigation.resolve(active) != priority[index]:
+			adjacent_priority_is_stable = false
+			break
+	check(
+		adjacent_priority_is_stable,
+		"뒤로가기: modal·popup·page 우선순서 유지"
+	)
+
+	var all_active: Dictionary = {}
+	for action in priority:
+		all_active[action] = true
+	check(
+		BackNavigation.resolve(all_active) == priority[0],
+		"뒤로가기: 여러 UI가 겹치면 최상위 modal 하나만 선택"
+	)
+	check(
+		BackNavigation.resolve({})
+		== BackNavigation.Action.RETURN_TO_STUDY_READY,
+		"뒤로가기: 알려진 UI가 없으면 학습 준비 화면으로 복귀"
 	)
