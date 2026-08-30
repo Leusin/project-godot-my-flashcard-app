@@ -31,7 +31,7 @@ var _scroll_container: ScrollContainer
 @onready var outcome_badge: PanelContainer = $Margin/Row/Content/Top/OutcomeBadge
 @onready var outcome_label: Label = $Margin/Row/Content/Top/OutcomeBadge/Margin/OutcomeLabel
 @onready var menu_button: Button = $Margin/Row/RowMenuButton
-# 손잡이를 잡고 위아래로 끌면 카드 자리가 바뀐다. 어디로 옮길지는 App이 정한다.
+# 손잡이를 잡고 위아래로 끌면 카드 자리가 바뀐다. 어디로 옮길지는 목록 View가 정한다.
 @onready var reorder_handle: Button = $Margin/Row/RowReorderHandle
 
 

@@ -895,7 +895,7 @@ func run_tests() -> void:
 	_view(app, "ManageCardsButton").pressed.emit()
 	check(
 		_view(app, "CardListView").visible
-		and app.card_rows.get_child_count() == 2,
+		and app.card_list_view.rows.get_child_count() == 2,
 		"Main Card Edit: Study Ready에서 카드 목록 진입"
 	)
 	check(
@@ -903,7 +903,7 @@ func run_tests() -> void:
 		and CardCollectionRow.answer_preview(" \n\t\n") == "답 없음",
 		"Main Card List: 답 미리보기에서 줄바꿈과 빈 줄을 공백으로 정리"
 	)
-	var first_card_row = app.card_rows.get_child(0)
+	var first_card_row = app.card_list_view.rows.get_child(0)
 	check(
 		first_card_row.mouse_filter == Control.MOUSE_FILTER_PASS
 		and (_view(app, "CardListScroll") as ScrollContainer).vertical_scroll_mode
@@ -921,10 +921,10 @@ func run_tests() -> void:
 		"Main Card List: 카드 관리와 순서 변경 action 제공"
 	)
 	var reorder_deck_before := DeckParser.parse(DeckStorage.read_deck(EDIT_DECK))
-	var second_card_row := app.card_rows.get_child(1) as CardCollectionRow
+	var second_card_row := app.card_list_view.rows.get_child(1) as CardCollectionRow
 	var second_row_bottom := second_card_row.get_global_rect().end.y
-	app.call("_on_card_row_reorder_started", 0)
-	app.call("_on_card_row_reorder_ended", 0, second_row_bottom)
+	app.card_list_view.call("_on_row_reorder_started", 0)
+	app.card_list_view.call("_on_row_reorder_ended", 0, second_row_bottom)
 	var reorder_deck_after := DeckParser.parse(DeckStorage.read_deck(EDIT_DECK))
 	check(
 		reorder_deck_before.size() == reorder_deck_after.size()
@@ -933,17 +933,17 @@ func run_tests() -> void:
 		"Main Card List: 손잡이로 옮긴 카드 순서를 Markdown에 저장"
 	)
 	check(
-		app.card_rows.get_child(0).card_index == 0
-		and app.card_rows.get_child(1).card_index == 1
-		and (app.card_rows.get_child(0) as CardCollectionRow).question_label.text
+		app.card_list_view.rows.get_child(0).card_index == 0
+		and app.card_list_view.rows.get_child(1).card_index == 1
+		and (app.card_list_view.rows.get_child(0) as CardCollectionRow).question_label.text
 		== reorder_deck_after[0].question
 		and DeckStorage.load_study_resume(EDIT_DECK) == null,
 		"Main Card List: 순서 변경 후 행 index와 이어하기 기록 정리"
 	)
-	var restore_anchor := app.card_rows.get_child(0) as CardCollectionRow
+	var restore_anchor := app.card_list_view.rows.get_child(0) as CardCollectionRow
 	var restore_top := restore_anchor.get_global_rect().position.y
-	app.call("_on_card_row_reorder_started", first_card_row.card_index)
-	app.call("_on_card_row_reorder_ended", first_card_row.card_index, restore_top)
+	app.card_list_view.call("_on_row_reorder_started", first_card_row.card_index)
+	app.card_list_view.call("_on_row_reorder_ended", first_card_row.card_index, restore_top)
 	row_menu_button.pressed.emit()
 	check(
 		_view(app, "CardContextMenu").visible
@@ -1072,11 +1072,11 @@ func run_tests() -> void:
 	question_input.text = "Old"
 	check(
 		question_input.submitted.is_connected(
-			Callable(app, "_on_question_submitted")
+			Callable(app.card_editor_view, "_on_question_submitted")
 		),
 		"Main Card Edit: 질문 Enter 신호를 답 focus 이동에 연결"
 	)
-	app.call("_on_question_submitted")
+	app.card_editor_view.call("_on_question_submitted")
 	check(
 		(_view(app, "CardAnswerInput") as TextEdit).has_focus(),
 		"Main Card Edit: 질문 제출 시 답 입력으로 focus 이동"
@@ -1138,7 +1138,7 @@ func run_tests() -> void:
 		DeckParser.parse(DeckStorage.read_deck(EDIT_DECK)).size() == 3,
 		"Main Card Edit: 새 카드 추가"
 	)
-	app.card_rows.get_child(0).activate()
+	app.card_list_view.rows.get_child(0).activate()
 	_view(app, "CardDetailMenuButton").pressed.emit()
 	_view(app, "EditCardActionButton").pressed.emit()
 	_view(app, "WrongMinusButton").pressed.emit()
@@ -1167,7 +1167,7 @@ func run_tests() -> void:
 		"Main Card Edit: 학습 정보 변경사항 버리고 카드 보기 복귀"
 	)
 	_view(app, "BackFromCardDetailButton").pressed.emit()
-	app.card_rows.get_child(2).activate()
+	app.card_list_view.rows.get_child(2).activate()
 	_view(app, "CardDetailMenuButton").pressed.emit()
 	_view(app, "DeleteCardActionButton").pressed.emit()
 	check(
@@ -1178,7 +1178,7 @@ func run_tests() -> void:
 	_dialog(app, "CardDeleteConfirmationOverlay", "PrimaryButton").pressed.emit()
 	check(
 		DeckParser.parse(DeckStorage.read_deck(EDIT_DECK)).size() == 2
-		and app.card_rows.get_child_count() == 2,
+		and app.card_list_view.rows.get_child_count() == 2,
 		"Main Card Edit: 카드 삭제 후 목록과 Markdown 갱신"
 	)
 	_view(app, "BackFromCardListButton").pressed.emit()
@@ -1306,7 +1306,7 @@ func run_tests() -> void:
 		and created_cards.size() == 1
 		and created_cards[0].question == "Created question"
 		and created_cards[0].answer == "Created answer"
-		and app.card_rows.get_child_count() == 1,
+		and app.card_list_view.rows.get_child_count() == 1,
 		"Main Create: 첫 카드 저장 순간 유효한 Markdown 덱 생성"
 	)
 	check(
@@ -1352,7 +1352,7 @@ func run_tests() -> void:
 	check(
 		_view(app, "CardListView").visible
 		and DeckStorage.read_deck(CLIPBOARD_DECK) == CLIPBOARD_TEXT
-		and app.card_rows.get_child_count() == 2,
+		and app.card_list_view.rows.get_child_count() == 2,
 		"Main Clipboard: 복사한 Markdown 원문 그대로 덱 저장"
 	)
 	check(

@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cigveii0iumha"]
 
 [ext_resource type="Theme" uid="uid://bu5jyw4ehw6ya" path="res://src/main/main_theme.tres" id="1_theme"]
-[ext_resource type="Script" uid="uid://bfvm5h7ycpr1v" path="res://src/main/keyboard_avoider.gd" id="2_keyboard"]
+[ext_resource type="Script" path="res://src/main/card_editor_view.gd" id="2_editor"]
 [ext_resource type="Script" uid="uid://hreeobv2nfvk" path="res://src/main/single_line_text_edit.gd" id="3_single_line"]
 [ext_resource type="Script" uid="uid://br1f0itp1bor5" path="res://src/main/card_ratio_frame.gd" id="4_card_frame"]
 [ext_resource type="Texture2D" uid="uid://cgmb1vy6yvoc0" path="res://assets/icons/chevron_left.svg" id="5_back"]
@@ -144,7 +144,7 @@ corner_radius_bottom_left = 8
 size_flags_vertical = 3
 theme = ExtResource("1_theme")
 theme_override_constants/separation = 32
-script = ExtResource("2_keyboard")
+script = ExtResource("2_editor")
 
 [node name="Header" parent="." unique_id=48451942 instance=ExtResource("6_header")]
 
