@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" path="res://assets/icons/chevron_left.svg" id="5_back"]
 [ext_resource type="PackedScene" path="res://src/main/app_header.tscn" id="6_header"]
 [ext_resource type="Script" path="res://src/main/max_width_box.gd" id="7_max_width"]
+[ext_resource type="Script" path="res://src/main/study_flow_view.gd" id="8_view"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxStudyCard"]
 bg_color = Color(1, 1, 1, 1)
@@ -57,6 +58,7 @@ corner_radius_bottom_left = 8
 size_flags_vertical = 3
 theme = ExtResource("1_theme")
 theme_override_constants/separation = 32
+script = ExtResource("8_view")
 
 [node name="Header" parent="." unique_id=846375467 instance=ExtResource("6_header")]
 layout_mode = 2

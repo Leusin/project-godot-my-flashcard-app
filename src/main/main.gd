@@ -24,13 +24,6 @@ enum CreateDeckMode {
 	CLIPBOARD,
 }
 
-enum StudyOutcome {
-	PENDING,
-	AGAIN,
-	GOOD,
-	SKIP,
-}
-
 const BASE_PAGE_MARGIN := 32.0
 const EMPTY_DECK_MESSAGE := "빈 덱입니다. '# 질문' 형식으로 카드를 추가하세요."
 const BROKEN_DECK_MESSAGE := "카드를 찾지 못했습니다. 각 질문을 '# 질문' 형식으로 작성하세요."
@@ -65,7 +58,6 @@ const CARD_ANSWER_HEADING_MESSAGE := "답의 줄 시작에는 '# '를 사용할 
 const CARD_SAVE_FAILED_MESSAGE := "카드를 저장하지 못했습니다. 저장 공간을 확인하세요."
 const PRIVACY_POLICY_URL := "https://leusin.github.io/privacy/my-simple-flash-card/"
 const STUDY_INPUT_LOCK_SECONDS := 0.22
-const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.tscn")
 
 @export var auto_start := true
 
@@ -147,28 +139,7 @@ const CARD_COLLECTION_ROW_SCENE := preload("res://src/main/card_collection_row.t
 @onready var card_editor_view: CardEditorView = $Margin/Page/CardEditorView
 @onready var card_delete_confirmation_overlay: ModalDialog = $CardDeleteConfirmationOverlay
 @onready var discard_card_changes_overlay: ModalDialog = $DiscardCardChangesOverlay
-@onready var study_flow: VBoxContainer = $Margin/Page/StudyFlow
-@onready var deck_label: Label = $Margin/Page/StudyFlow/Header/TitleSlot/DeckLabel
-@onready var remaining_label: Label = $Margin/Page/StudyFlow/Header/RightActions/RemainingLabel
-@onready var study_gesture_surface: StudyGestureSurface = $Margin/Page/StudyFlow/ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame
-@onready var card_properties: HBoxContainer = $Margin/Page/StudyFlow/ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/CardProperties
-@onready var wrong_tally: WrongTallyView = $Margin/Page/StudyFlow/ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/CardProperties/WrongTally
-@onready var card_status_badge: Label = $Margin/Page/StudyFlow/ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/CardProperties/StatusBadge
-@onready var question_scroll: ScrollContainer = $Margin/Page/StudyFlow/ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/QuestionScroll
-@onready var question_label: Label = $Margin/Page/StudyFlow/ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/QuestionScroll/QuestionLabel
-@onready var answer_label: Label = $Margin/Page/StudyFlow/ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/AnswerScroll/AnswerLabel
-@onready var answer_scroll: ScrollContainer = $Margin/Page/StudyFlow/ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/AnswerScroll
-@onready var study_actions: HBoxContainer = $Margin/Page/StudyFlow/ContentBounds/Content/StudyContainer/Actions
-@onready var again_button: Button = $Margin/Page/StudyFlow/ContentBounds/Content/StudyContainer/Actions/AgainButton
-@onready var good_button: Button = $Margin/Page/StudyFlow/ContentBounds/Content/StudyContainer/Actions/GoodButton
-@onready var study_container: VBoxContainer = $Margin/Page/StudyFlow/ContentBounds/Content/StudyContainer
-@onready var study_result_view: VBoxContainer = $Margin/Page/StudyFlow/ContentBounds/Content/StudyResultView
-@onready var result_good_count_label: Label = $Margin/Page/StudyFlow/ContentBounds/Content/StudyResultView/ResultSummary/Good/Margin/Content/ResultGoodCountLabel
-@onready var result_again_count_label: Label = $Margin/Page/StudyFlow/ContentBounds/Content/StudyResultView/ResultSummary/Again/Margin/Content/ResultAgainCountLabel
-@onready var result_skip_count_label: Label = $Margin/Page/StudyFlow/ContentBounds/Content/StudyResultView/ResultSummary/Skip/Margin/Content/ResultSkipCountLabel
-@onready var result_rows: VBoxContainer = $Margin/Page/StudyFlow/ContentBounds/Content/StudyResultView/ResultListScroll/Rows
-@onready var retry_again_button: Button = $Margin/Page/StudyFlow/ContentBounds/Content/StudyResultView/Actions/RetryAgainButton
-@onready var result_return_to_ready_button: Button = $Margin/Page/StudyFlow/ContentBounds/Content/StudyResultView/Actions/ReturnToReadyButton
+@onready var study_flow: StudyFlowView = $Margin/Page/StudyFlow
 @onready var top_notification: TopNotification = $TopNotification
 
 var _deck_file := ""
@@ -250,7 +221,7 @@ func _configure_settings() -> void:
 
 	var settings := DeckStorage.load_settings()
 	haptics_toggle.button_pressed = settings.haptics_enabled
-	study_gesture_surface.haptics_enabled = settings.haptics_enabled
+	study_flow.set_haptics_enabled(settings.haptics_enabled)
 	haptics_toggle.toggled.connect(_on_haptics_toggled)
 
 	# 진동이 없는 데스크톱에서는 학습 설정 항목 자체를 감춘다.
@@ -328,13 +299,11 @@ func _connect_card_management_signals() -> void:
 
 
 func _connect_study_signals() -> void:
-	$Margin/Page/StudyFlow/Header/LeftActions/BackToReadyButton.pressed.connect(_return_to_study_ready)
-	study_gesture_surface.swiped.connect(_on_study_swiped)
-	study_gesture_surface.tapped.connect(_on_card_tapped)
-	again_button.pressed.connect(_on_again_requested)
-	good_button.pressed.connect(_on_good_requested)
-	retry_again_button.pressed.connect(_on_retry_again_pressed)
-	result_return_to_ready_button.pressed.connect(_return_to_study_ready)
+	study_flow.back_pressed.connect(_return_to_study_ready)
+	study_flow.action_committed.connect(_on_study_swiped)
+	study_flow.result_card_selected.connect(_on_result_card_selected)
+	study_flow.retry_requested.connect(_on_retry_again_pressed)
+	study_flow.return_requested.connect(_return_to_study_ready)
 
 
 func _notification(what: int) -> void:
@@ -429,7 +398,7 @@ func _save_settings_or_warn(settings: AppSettings) -> void:
 
 
 func _on_haptics_toggled(enabled: bool) -> void:
-	study_gesture_surface.haptics_enabled = enabled
+	study_flow.set_haptics_enabled(enabled)
 	var settings := DeckStorage.load_settings()
 	settings.haptics_enabled = enabled
 	_save_settings_or_warn(settings)
@@ -468,8 +437,7 @@ func show_library() -> void:
 	restore_backup_confirmation_overlay.hide()
 	_pending_restore_path = ""
 	_show_page(library_view)
-	study_container.visible = false
-	study_result_view.visible = false
+	study_flow.reset_view()
 	_refresh_deck_list()
 
 
@@ -872,14 +840,14 @@ func _on_edit_study_card_pressed() -> void:
 	if deck_index < 0:
 		return
 
-	study_gesture_surface.cancel_drag()
+	study_flow.cancel_drag()
 	_reset_study_input_lock()
 	_save_active_study_resume()
 	_editing_deck_file = _deck_file
 	_editing_cards = _copy_cards(deck_cards)
 	_card_editor_origin = CardEditorOrigin.STUDY
 	_study_edit_source_index = _source_cards.find(current_card)
-	_study_edit_return_show_answer = answer_scroll.visible
+	_study_edit_return_show_answer = study_flow.is_answer_visible()
 	_open_card_editor(deck_index)
 
 
@@ -984,7 +952,7 @@ func _close_card_editor_without_save() -> void:
 		if _session != null and not _session.is_finished():
 			_show_current()
 			if restore_answer:
-				_set_answer_visible(true)
+				study_flow.set_answer_visible(true)
 	elif return_to_library:
 		show_library()
 	elif return_to_detail:
@@ -1981,8 +1949,8 @@ func _restart_session() -> void:
 	_session = StudySession.new(_session_cards)
 	_session_outcomes.clear()
 	_session_outcomes.resize(_session_cards.size())
-	_session_outcomes.fill(StudyOutcome.PENDING)
-	deck_label.text = DeckNaming.display_name(_deck_file)
+	_session_outcomes.fill(StudyOutcome.Value.PENDING)
+	study_flow.set_deck_name(DeckNaming.display_name(_deck_file))
 	_reset_study_input_lock()
 	_save_active_study_resume()
 	_show_current()
@@ -1995,20 +1963,14 @@ func _show_current() -> void:
 		_show_study_results()
 		return
 
-	remaining_label.get_parent().show()
 	var card := _session.current()
-	study_container.visible = true
-	study_result_view.visible = false
-	var wrong_count := _progress.get_wrong_count(card.question)
-	wrong_tally.set_count(wrong_count)
-	card_status_badge.text = card_status_text(_progress.get_status(card.question))
-	question_label.text = card.question
-	answer_label.text = card.answer
-	question_scroll.scroll_vertical = 0
-	answer_scroll.scroll_vertical = 0
-	_set_answer_visible(false)
-	study_gesture_surface.previous_enabled = _session.position() > 0
-	remaining_label.text = "%d장 남음" % _session.remaining()
+	study_flow.show_card(
+		card,
+		_progress.get_wrong_count(card.question),
+		card_status_text(_progress.get_status(card.question)),
+		_session.remaining(),
+		_session.position() > 0
+	)
 
 
 static func card_status_text(status: CardStatus.Value) -> String:
@@ -2024,47 +1986,7 @@ static func card_status_text(status: CardStatus.Value) -> String:
 func _show_study_results() -> void:
 	_reset_study_input_lock()
 	card_context_menu.hide()
-	remaining_label.get_parent().hide()
-	study_container.visible = false
-	study_result_view.visible = true
-	remaining_label.text = "0장 남음"
-
-	for child in result_rows.get_children():
-		child.free()
-
-	var good_count := 0
-	var again_count := 0
-	var skip_count := 0
-	for index in _session_cards.size():
-		var outcome := (
-			_session_outcomes[index]
-			if index < _session_outcomes.size()
-			else StudyOutcome.PENDING
-		)
-		match outcome:
-			StudyOutcome.GOOD:
-				good_count += 1
-			StudyOutcome.AGAIN:
-				again_count += 1
-			StudyOutcome.SKIP:
-				skip_count += 1
-
-		var row = CARD_COLLECTION_ROW_SCENE.instantiate()
-		result_rows.add_child(row)
-		row.setup(index, _session_cards[index], study_outcome_text(outcome))
-		row.set_row_actions_visible(false)
-		row.selected.connect(_on_result_card_selected)
-
-	result_good_count_label.text = str(good_count)
-	result_again_count_label.text = str(again_count)
-	result_skip_count_label.text = str(skip_count)
-	retry_again_button.disabled = again_count == 0
-	retry_again_button.text = (
-		"AGAIN 카드 없음"
-		if again_count == 0
-		else "AGAIN 카드 다시 학습"
-	)
-	(result_rows.get_parent() as ScrollContainer).scroll_vertical = 0
+	study_flow.show_results(_session_cards, _session_outcomes)
 
 
 func _on_result_card_selected(result_index: int) -> void:
@@ -2105,65 +2027,11 @@ func _on_result_card_selected(result_index: int) -> void:
 	)
 
 
-static func study_outcome_text(outcome: StudyOutcome) -> String:
-	match outcome:
-		StudyOutcome.GOOD:
-			return "GOOD"
-		StudyOutcome.AGAIN:
-			return "AGAIN"
-		StudyOutcome.SKIP:
-			return "SKIP"
-		_:
-			return "—"
-
-
-func _on_card_tapped() -> void:
-	if _session == null or _session.is_finished():
-		return
-
-	var show_answer := not answer_scroll.visible
-	study_gesture_surface.flip(
-		_set_answer_visible.bind(show_answer)
-	)
-
-
-func _set_answer_visible(show_answer: bool) -> void:
-	answer_scroll.visible = show_answer
-	card_properties.visible = show_answer
-	if show_answer:
-		question_scroll.scroll_vertical = 0
-		question_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-		question_scroll.custom_minimum_size.y = 150.0
-		question_scroll.size_flags_vertical = Control.SIZE_FILL
-		question_label.max_lines_visible = 2
-		question_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		question_label.add_theme_color_override(
-			"font_color",
-			Color(0.56, 0.56, 0.56, 1)
-		)
-	else:
-		question_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-		question_scroll.custom_minimum_size.y = 0.0
-		question_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		question_label.max_lines_visible = -1
-		question_label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
-		question_label.remove_theme_color_override("font_color")
-	study_actions.show()
-
-
-func _on_again_requested() -> void:
-	study_gesture_surface.commit(StudyGestureSurface.AGAIN)
-
-
-func _on_good_requested() -> void:
-	study_gesture_surface.commit(StudyGestureSurface.GOOD)
-
-
 func _on_again_pressed() -> void:
 	if _session == null or _session.is_finished() or not _try_lock_study_input():
 		return
 
-	_record_current_outcome(StudyOutcome.AGAIN)
+	_record_current_outcome(StudyOutcome.Value.AGAIN)
 	_progress.add_wrong(_session.current().question)
 	_progress.set_status(_session.current().question, CardStatus.Value.LEARNING)
 	DeckStorage.save_progress(_deck_file, _progress)
@@ -2176,7 +2044,7 @@ func _on_good_pressed() -> void:
 	if _session == null or _session.is_finished() or not _try_lock_study_input():
 		return
 
-	_record_current_outcome(StudyOutcome.GOOD)
+	_record_current_outcome(StudyOutcome.Value.GOOD)
 	_progress.set_status(_session.current().question, CardStatus.Value.MASTERED)
 	DeckStorage.save_progress(_deck_file, _progress)
 	_session.next()
@@ -2199,13 +2067,13 @@ func _on_skip_requested() -> void:
 	if _session == null or _session.is_finished() or not _try_lock_study_input():
 		return
 
-	_record_current_outcome(StudyOutcome.SKIP)
+	_record_current_outcome(StudyOutcome.Value.SKIP)
 	_session.next()
 	_save_active_study_resume()
 	_show_current()
 
 
-func _record_current_outcome(outcome: StudyOutcome) -> void:
+func _record_current_outcome(outcome: int) -> void:
 	if _session == null:
 		return
 
@@ -2234,9 +2102,7 @@ func _try_lock_study_input() -> bool:
 
 	_study_input_locked = true
 	_study_input_lock_generation += 1
-	again_button.disabled = true
-	good_button.disabled = true
-	study_gesture_surface.input_enabled = false
+	study_flow.set_input_enabled(false)
 	var generation := _study_input_lock_generation
 	get_tree().create_timer(STUDY_INPUT_LOCK_SECONDS).timeout.connect(
 		_on_study_input_lock_timeout.bind(generation)
@@ -2253,9 +2119,7 @@ func _on_study_input_lock_timeout(generation: int) -> void:
 func _reset_study_input_lock() -> void:
 	_study_input_lock_generation += 1
 	_study_input_locked = false
-	again_button.disabled = false
-	good_button.disabled = false
-	study_gesture_surface.input_enabled = true
+	study_flow.set_input_enabled(true)
 
 
 func _on_retry_again_pressed() -> void:
@@ -2269,7 +2133,7 @@ func _on_retry_again_pressed() -> void:
 		and _active_card_indices.size() == _session_cards.size()
 	)
 	for index in _session_outcomes.size():
-		if _session_outcomes[index] != StudyOutcome.AGAIN:
+		if _session_outcomes[index] != StudyOutcome.Value.AGAIN:
 			continue
 		retry_cards.append(_session_cards[index])
 		if can_reuse_deck_indices:

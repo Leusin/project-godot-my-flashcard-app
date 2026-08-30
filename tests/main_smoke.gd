@@ -687,7 +687,7 @@ func run_tests() -> void:
 		== CardStatus.Value.MASTERED,
 		"Main Ready: Good이 완료 상태를 저장"
 	)
-	var first_result_rows := app.result_rows as VBoxContainer
+	var first_result_rows := app.study_flow.result_view.rows as VBoxContainer
 	check(
 		_view(app, "ResultGoodCountLabel").text == "1"
 		and _view(app, "ResultAgainCountLabel").text == "1"
@@ -1216,7 +1216,7 @@ func run_tests() -> void:
 	)
 	app._reset_study_input_lock()
 	_view(app, "AgainButton").pressed.emit()
-	var indexed_result_rows := app.result_rows as VBoxContainer
+	var indexed_result_rows := app.study_flow.result_view.rows as VBoxContainer
 	check(
 		_view(app, "StudyResultView").visible
 		and _view(app, "ResultGoodCountLabel").text == "1"
@@ -1243,7 +1243,7 @@ func run_tests() -> void:
 		and _view(app, "ResultSkipCountLabel").text == "1"
 		and _view(app, "ResultAgainCountLabel").text == "0"
 		and _view(app, "RetryAgainButton").disabled
-		and _view(app.result_rows.get_child(0), "OutcomeLabel").text
+		and _view(app.study_flow.result_view.rows.get_child(0), "OutcomeLabel").text
 		== "SKIP",
 		"Main Result: SKIP 판정 표시 및 AGAIN이 없으면 재학습 비활성화"
 	)
