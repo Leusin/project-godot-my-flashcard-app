@@ -9,6 +9,9 @@ const WORKSPACE_DECK := "__gd_phase4_workspace.md"
 const WORKSPACE_TEXT := "# Alpha\nOne\n# Beta\nTwo\n"
 const STUDY_RUN_DECK := "__gd_phase4_study_run.md"
 const STUDY_RUN_TEXT := "# A\nOne\n# B\nTwo\n# C\nThree\n"
+const CARD_EDIT_DECK := "__gd_phase4_card_edit.md"
+const CARD_EDIT_TEXT := "# A\nOne\n# B\nTwo\n"
+const NEW_CARD_EDIT_DECK := "__gd_phase4_card_edit_new.md"
 const RENAMED_DECK := "__gd_phase4_renamed.md"
 const EXPORTED_PATH := "user://__gd_phase4_export.md"
 const INVALID_IMPORT_PATH := "user://__gd_phase4_invalid.txt"
@@ -42,6 +45,7 @@ func run_tests() -> void:
 	_test_study_resume_storage()
 	_test_card_workspace()
 	_test_study_run()
+	_test_card_edit_coordinator()
 	_test_full_backup_restore()
 	_test_import_and_export()
 	_test_rename_duplicate_delete()
@@ -458,6 +462,203 @@ func _test_study_run() -> void:
 	)
 
 
+func _test_card_edit_coordinator() -> void:
+	check(
+		CardEditCoordinator.context_for(
+			CardEditCoordinator.EditorOrigin.CARD_LIST,
+			CardEditCoordinator.DetailOrigin.CARD_LIST,
+			-1,
+			2
+		) == CardEditCoordinator.SaveContext.STANDARD
+		and CardEditCoordinator.context_for(
+			CardEditCoordinator.EditorOrigin.NEW_DECK,
+			CardEditCoordinator.DetailOrigin.CARD_LIST,
+			-1,
+			2
+		) == CardEditCoordinator.SaveContext.NEW_DECK
+		and CardEditCoordinator.context_for(
+			CardEditCoordinator.EditorOrigin.STUDY,
+			CardEditCoordinator.DetailOrigin.CARD_LIST,
+			-1,
+			2
+		) == CardEditCoordinator.SaveContext.STUDY,
+		"카드 편집 조정자: 편집 진입점별 저장 context 선택"
+	)
+	check(
+		CardEditCoordinator.context_for(
+			CardEditCoordinator.EditorOrigin.CARD_DETAIL,
+			CardEditCoordinator.DetailOrigin.STUDY_RESULT,
+			1,
+			2
+		) == CardEditCoordinator.SaveContext.STUDY_RESULT
+		and CardEditCoordinator.context_for(
+			CardEditCoordinator.EditorOrigin.CARD_DETAIL,
+			CardEditCoordinator.DetailOrigin.STUDY_RESULT,
+			2,
+			2
+		) == CardEditCoordinator.SaveContext.STANDARD,
+		"카드 편집 조정자: 유효한 학습 결과 카드만 결과 context 선택"
+	)
+
+	check(
+		DeckStorage.write_deck(CARD_EDIT_DECK, CARD_EDIT_TEXT),
+		"카드 편집 조정자: 전용 덱 준비"
+	)
+	var deck_cards := DeckParser.parse(CARD_EDIT_TEXT)
+	var plan := StudyPlan.new()
+	plan.prepare(CARD_EDIT_DECK, deck_cards, CARD_EDIT_TEXT.hash())
+	var selected := plan.begin(
+		[0, 1],
+		DeckOrdering.StudyOrder.SEQUENTIAL,
+		StudyPlan.Scope.ALL,
+		false
+	)
+	var run := StudyRun.new()
+	run.start(CARD_EDIT_DECK, selected, DeckOrdering.StudyOrder.SEQUENTIAL)
+	var workspace := CardWorkspace.new()
+	check(
+		workspace.open(CARD_EDIT_DECK) and workspace.select(0),
+		"카드 편집 조정자: 편집 snapshot 준비"
+	)
+
+	var empty_result := CardEditCoordinator.save(
+		workspace,
+		run,
+		plan,
+		CardEditCoordinator.SaveContext.STANDARD,
+		-1,
+		"   ",
+		"Answer",
+		0,
+		CardStatus.Value.NEW
+	)
+	check(
+		not empty_result.succeeded
+		and empty_result.message
+		== CardEditCoordinator.CARD_QUESTION_EMPTY_MESSAGE
+		and DeckStorage.read_deck(CARD_EDIT_DECK) == CARD_EDIT_TEXT,
+		"카드 편집 조정자: 빈 질문은 저장 전에 거부"
+	)
+	var heading_result := CardEditCoordinator.save(
+		workspace,
+		run,
+		plan,
+		CardEditCoordinator.SaveContext.STANDARD,
+		-1,
+		"A",
+		"Answer\n# Hidden question",
+		0,
+		CardStatus.Value.NEW
+	)
+	check(
+		not heading_result.succeeded
+		and heading_result.message
+		== CardEditCoordinator.CARD_ANSWER_HEADING_MESSAGE,
+		"카드 편집 조정자: 답 내부 질문 heading 거부"
+	)
+
+	var duplicate_workspace := CardWorkspace.new()
+	duplicate_workspace.load_snapshot(CARD_EDIT_DECK, [])
+	var duplicate_result := CardEditCoordinator.save(
+		duplicate_workspace,
+		run,
+		plan,
+		CardEditCoordinator.SaveContext.NEW_DECK,
+		-1,
+		"First",
+		"Answer",
+		0,
+		CardStatus.Value.NEW
+	)
+	check(
+		not duplicate_result.succeeded
+		and duplicate_result.message
+		== DeckActionService.DECK_NAME_DUPLICATE_MESSAGE,
+		"카드 편집 조정자: 새 덱의 중복 파일명 거부"
+	)
+
+	var study_result := CardEditCoordinator.save(
+		workspace,
+		run,
+		plan,
+		CardEditCoordinator.SaveContext.STUDY,
+		-1,
+		"  A edited  ",
+		"One updated\r\nSecond line  ",
+		4,
+		CardStatus.Value.MASTERED
+	)
+	var study_resume := DeckStorage.load_study_resume(CARD_EDIT_DECK)
+	check(
+		study_result.succeeded
+		and study_result.progress_saved
+		and workspace.cards[0].question == "A edited"
+		and workspace.cards[0].answer == "One updated\nSecond line"
+		and run.current().question == "A edited"
+		and plan.cards[0].question == "A edited",
+		"카드 편집 조정자: 학습 중 저장 snapshot 동기화"
+	)
+	check(
+		DeckStorage.load_progress(
+			CARD_EDIT_DECK
+		).get_wrong_count("A edited") == 4
+		and DeckStorage.load_progress(
+			CARD_EDIT_DECK
+		).get_status("A edited") == CardStatus.Value.MASTERED
+		and study_resume != null
+		and study_resume.deck_hash == plan.deck_hash
+		and study_resume.remaining_indices == [0, 1],
+		"카드 편집 조정자: 학습 중 진행도와 이어하기 갱신"
+	)
+
+	workspace.select(1)
+	var result_edit := CardEditCoordinator.save(
+		workspace,
+		run,
+		plan,
+		CardEditCoordinator.SaveContext.STUDY_RESULT,
+		1,
+		"B edited",
+		"Two updated",
+		2,
+		CardStatus.Value.LEARNING
+	)
+	check(
+		result_edit.succeeded
+		and run.result_card(1).question == "B edited"
+		and run.source_cards[1].question == "B edited"
+		and plan.cards[1].question == "B edited",
+		"카드 편집 조정자: 학습 결과 카드 snapshot 동기화"
+	)
+	check(
+		DeckStorage.load_study_resume(CARD_EDIT_DECK) == null,
+		"카드 편집 조정자: 학습 결과 편집은 이전 이어하기 제거"
+	)
+
+	var new_workspace := CardWorkspace.new()
+	new_workspace.load_snapshot(NEW_CARD_EDIT_DECK, [])
+	var new_deck_result := CardEditCoordinator.save(
+		new_workspace,
+		StudyRun.new(),
+		StudyPlan.new(),
+		CardEditCoordinator.SaveContext.NEW_DECK,
+		-1,
+		"  New card  ",
+		"New answer",
+		0,
+		CardStatus.Value.NEW
+	)
+	var new_cards := DeckParser.parse(
+		DeckStorage.read_deck(NEW_CARD_EDIT_DECK)
+	)
+	check(
+		new_deck_result.succeeded
+		and new_cards.size() == 1
+		and new_cards[0].question == "New card",
+		"카드 편집 조정자: 새 덱의 첫 카드 저장"
+	)
+
+
 func _test_rename_duplicate_delete() -> void:
 	check(DeckStorage.rename_deck(TEST_DECK, RENAMED_DECK), "저장소: 덱 이름 변경 성공")
 	check(not DeckStorage.deck_exists(TEST_DECK), "저장소: 이름 변경 후 옛 덱 제거")
@@ -514,6 +715,8 @@ func _cleanup() -> void:
 		"__gd_phase4_a (2).md",
 		WORKSPACE_DECK,
 		STUDY_RUN_DECK,
+		CARD_EDIT_DECK,
+		NEW_CARD_EDIT_DECK,
 		RENAMED_DECK,
 		"__gd_phase4_renamed (2).md",
 	]:

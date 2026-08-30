@@ -2,7 +2,7 @@ class_name CardWorkspace
 extends RefCounted
 
 # 카드 편집용 덱 스냅샷과 저장 작업을 함께 관리한다.
-# 화면 전환과 학습 세션 반영은 MainApp이 맡는다.
+# 화면 전환은 MainApp, 학습 세션 반영은 CardEditCoordinator가 맡는다.
 
 enum MoveResult {
 	UNCHANGED,

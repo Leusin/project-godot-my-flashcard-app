@@ -2,18 +2,8 @@ class_name MainApp
 extends Control
 
 const StudyScope = StudyPlan.Scope
-
-enum CardEditorOrigin {
-	CARD_LIST,
-	NEW_DECK,
-	STUDY,
-	CARD_DETAIL,
-}
-
-enum CardDetailOrigin {
-	CARD_LIST,
-	STUDY_RESULT,
-}
+const CardEditorOrigin = CardEditCoordinator.EditorOrigin
+const CardDetailOrigin = CardEditCoordinator.DetailOrigin
 
 enum CreateDeckMode {
 	EMPTY,
@@ -49,9 +39,9 @@ const AI_PROMPT_TEMPLATE := """사진에 보이는 영어 단어를 아래 형�
 # run
 달리다"""
 const AI_PROMPT_COPIED_MESSAGE := "AI 프롬프트를 복사했습니다. AI 앱에 단어장 사진과 함께 붙여넣으세요."
-const CARD_QUESTION_EMPTY_MESSAGE := "질문을 입력하세요."
-const CARD_ANSWER_HEADING_MESSAGE := "답의 줄 시작에는 '# '를 사용할 수 없습니다."
-const CARD_SAVE_FAILED_MESSAGE := "카드를 저장하지 못했습니다. 저장 공간을 확인하세요."
+const CARD_QUESTION_EMPTY_MESSAGE := CardEditCoordinator.CARD_QUESTION_EMPTY_MESSAGE
+const CARD_ANSWER_HEADING_MESSAGE := CardEditCoordinator.CARD_ANSWER_HEADING_MESSAGE
+const CARD_SAVE_FAILED_MESSAGE := CardEditCoordinator.CARD_SAVE_FAILED_MESSAGE
 const PRIVACY_POLICY_URL := "https://leusin.github.io/privacy/my-simple-flash-card/"
 const STUDY_INPUT_LOCK_SECONDS := 0.22
 
@@ -104,8 +94,8 @@ var _pending_deck_action_file := ""
 var _study_plan := StudyPlan.new()
 var _study_run := StudyRun.new()
 var _card_workspace := CardWorkspace.new()
-var _card_editor_origin: CardEditorOrigin = CardEditorOrigin.CARD_LIST
-var _card_detail_origin: CardDetailOrigin = CardDetailOrigin.CARD_LIST
+var _card_editor_origin: int = CardEditorOrigin.CARD_LIST
+var _card_detail_origin: int = CardDetailOrigin.CARD_LIST
 var _card_detail_index := -1
 var _card_detail_result_index := -1
 var _card_menu_from_study := false
@@ -546,7 +536,7 @@ func _show_card_detail(
 	card: FlashCard,
 	progress: Progress,
 	deck_index: int,
-	origin: CardDetailOrigin,
+	origin: int,
 	result_index: int = -1
 ) -> void:
 	_card_detail_origin = origin
@@ -806,75 +796,35 @@ func _close_card_editor_without_save() -> void:
 
 
 func _on_save_card_pressed() -> void:
-	var creating_deck := _card_editor_origin == CardEditorOrigin.NEW_DECK
-	var question := card_editor_view.question_text().strip_edges()
-	var answer := card_editor_view.answer_text().replace("\r\n", "\n").strip_edges()
-	if question.is_empty():
-		_show_card_editor_error(CARD_QUESTION_EMPTY_MESSAGE)
-		return
-	if answer_has_question_heading(answer):
-		_show_card_editor_error(CARD_ANSWER_HEADING_MESSAGE)
-		return
-	if creating_deck and DeckActionService.is_deck_file_taken(
-		_card_workspace.deck_file
-	):
-		_show_card_editor_error(DECK_NAME_DUPLICATE_MESSAGE)
-		return
-
-	var save_result := _card_workspace.save_card(
-		question,
-		answer,
+	var context := CardEditCoordinator.context_for(
+		_card_editor_origin,
+		_card_detail_origin,
+		_card_detail_result_index,
+		_study_run.cards.size()
+	)
+	var save_result := CardEditCoordinator.save(
+		_card_workspace,
+		_study_run,
+		_study_plan,
+		context,
+		_card_detail_result_index,
+		card_editor_view.question_text(),
+		card_editor_view.answer_text(),
 		card_editor_view.wrong_count(),
-		card_editor_view.selected_status(),
-		_card_editor_origin != CardEditorOrigin.STUDY
+		card_editor_view.selected_status()
 	)
 	if not save_result.succeeded:
-		_show_card_editor_error(CARD_SAVE_FAILED_MESSAGE)
+		_show_card_editor_error(save_result.message)
 		return
-
-	var updated := _card_workspace.cards
-	if _card_editor_origin == CardEditorOrigin.STUDY:
-		_study_run.replace_current(save_result.card, save_result.progress)
-		_study_plan.replace_cards(
-			_card_workspace.deck_file,
-			updated,
-			save_result.markdown.hash()
-		)
-		_save_active_study_resume()
+	if context == CardEditCoordinator.SaveContext.STUDY:
 		if not save_result.progress_saved:
 			push_warning("Card progress save failed during study edit")
 			_close_card_editor_without_save()
 			return
-	elif (
-		_card_editor_origin == CardEditorOrigin.CARD_DETAIL
-		and _card_detail_origin == CardDetailOrigin.STUDY_RESULT
-		and _card_detail_result_index >= 0
-		and _card_detail_result_index < _study_run.cards.size()
-	):
-		var active_index := _study_plan.active_index_at(_card_detail_result_index)
-		_study_run.replace_result(
-			_card_detail_result_index,
-			active_index,
-			save_result.card,
-			save_result.progress
-		)
-		_study_plan.replace_cards(
-			_card_workspace.deck_file,
-			updated,
-			save_result.markdown.hash()
-		)
-
-	if creating_deck:
+	if context == CardEditCoordinator.SaveContext.NEW_DECK:
 		_card_editor_origin = CardEditorOrigin.CARD_LIST
 	_close_card_editor_without_save()
 	_render_card_list()
-
-
-static func answer_has_question_heading(answer: String) -> bool:
-	for line in answer.replace("\r\n", "\n").split("\n"):
-		if line.begins_with("# "):
-			return true
-	return false
 
 
 # 카드 프레임은 2:3 비율로 고정이라 안에서 문구가 늘면 입력창이 눌린다.
