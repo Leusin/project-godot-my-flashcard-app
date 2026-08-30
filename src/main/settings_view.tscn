@@ -1,10 +1,11 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
 [ext_resource type="Texture2D" path="res://assets/icons/toggle_on.svg" id="2_toggle_on"]
 [ext_resource type="Texture2D" path="res://assets/icons/toggle_off.svg" id="3_toggle_off"]
 [ext_resource type="Texture2D" path="res://assets/icons/chevron_left.svg" id="4_back"]
 [ext_resource type="PackedScene" path="res://src/main/app_header.tscn" id="5_header"]
+[ext_resource type="Script" path="res://src/main/settings_view.gd" id="6_view"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxSection"]
 bg_color = Color(1, 1, 1, 1)
@@ -36,6 +37,7 @@ layout_mode = 2
 size_flags_vertical = 3
 theme = ExtResource("1_theme")
 theme_override_constants/separation = 32
+script = ExtResource("6_view")
 
 [node name="Header" parent="." instance=ExtResource("5_header")]
 layout_mode = 2

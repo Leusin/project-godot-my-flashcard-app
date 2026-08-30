@@ -109,13 +109,16 @@ func run_tests() -> void:
 		"Main Settings: 덱 목록 ⋮가 확장 가능한 context list 표시"
 	)
 	_view(app, "OpenSettingsButton").pressed.emit()
-	var settings_view := _view(app, "SettingsView") as VBoxContainer
+	var settings_view := _view(app, "SettingsView") as SettingsView
 	var privacy_policy_link := _view(settings_view, "PrivacyPolicyLink") as LinkButton
 	check(
 		settings_view.visible
 		and not _view(app, "LibraryContainer").visible
 		and privacy_policy_link.text == "개인정보처리방침"
 		and privacy_policy_link.pressed.is_connected(
+			Callable(settings_view, "_on_privacy_policy_pressed")
+		)
+		and settings_view.privacy_policy_pressed.is_connected(
 			Callable(app, "_on_privacy_policy_pressed")
 		)
 		and MainApp.PRIVACY_POLICY_URL
@@ -127,10 +130,10 @@ func run_tests() -> void:
 	check(
 		_view(settings_view, "AppVersionLabel").text == "버전 0.10.3"
 		and create_backup_button.pressed.is_connected(
-			Callable(app, "_on_create_backup_pressed")
+			Callable(settings_view, "_on_create_backup_pressed")
 		)
 		and restore_backup_button.pressed.is_connected(
-			Callable(app, "_on_restore_backup_pressed")
+			Callable(settings_view, "_on_restore_backup_pressed")
 		),
 		"Main Settings: 버전과 전체 백업·복원 작업 표시"
 	)
@@ -138,6 +141,9 @@ func run_tests() -> void:
 	check(
 		haptics_toggle.button_pressed
 		and haptics_toggle.toggled.is_connected(
+			Callable(settings_view, "_on_haptics_toggled")
+		)
+		and settings_view.haptics_toggled.is_connected(
 			Callable(app, "_on_haptics_toggled")
 		),
 		"Main Settings: 저장된 햅틱 설정과 toggle signal 연결"
@@ -268,6 +274,9 @@ func run_tests() -> void:
 	)
 	check(
 		(_view(app, "CopyAiPromptButton") as Button).pressed.is_connected(
+			Callable(settings_view, "_on_copy_ai_prompt_pressed")
+		)
+		and settings_view.copy_ai_prompt_pressed.is_connected(
 			Callable(app, "_on_copy_ai_prompt_pressed")
 		)
 		and _view(app, "AiPromptPreviewLabel").text == MainApp.AI_PROMPT_TEMPLATE

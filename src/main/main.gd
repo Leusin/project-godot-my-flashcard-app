@@ -25,25 +25,25 @@ enum CreateDeckMode {
 }
 
 const BASE_PAGE_MARGIN := 32.0
-const EMPTY_DECK_MESSAGE := "빈 덱입니다. '# 질문' 형식으로 카드를 추가하세요."
-const BROKEN_DECK_MESSAGE := "카드를 찾지 못했습니다. 각 질문을 '# 질문' 형식으로 작성하세요."
-const EXPORT_DECK_NOT_FOUND_MESSAGE := "내보낼 덱 파일을 찾을 수 없습니다."
-const EXPORT_TARGET_OPEN_FAILED_MESSAGE := "선택한 위치에 파일을 만들 수 없습니다. 저장 권한이나 위치를 확인하세요."
-const EXPORT_WRITE_FAILED_MESSAGE := "파일을 저장하지 못했습니다. 저장 공간을 확인하고 다시 시도하세요."
-const EXPORT_UNKNOWN_FAILED_MESSAGE := "덱을 내보내지 못했습니다. 다른 위치를 선택해 다시 시도하세요."
-const DELETE_DECK_NOT_FOUND_MESSAGE := "삭제할 덱 파일을 찾을 수 없습니다."
-const DELETE_DECK_FAILED_MESSAGE := "덱을 삭제하지 못했습니다. 파일이 사용 중인지 확인하고 다시 시도하세요."
+const EMPTY_DECK_MESSAGE := DeckActionService.EMPTY_DECK_MESSAGE
+const BROKEN_DECK_MESSAGE := DeckActionService.BROKEN_DECK_MESSAGE
+const EXPORT_DECK_NOT_FOUND_MESSAGE := DeckActionService.EXPORT_DECK_NOT_FOUND_MESSAGE
+const EXPORT_TARGET_OPEN_FAILED_MESSAGE := DeckActionService.EXPORT_TARGET_OPEN_FAILED_MESSAGE
+const EXPORT_WRITE_FAILED_MESSAGE := DeckActionService.EXPORT_WRITE_FAILED_MESSAGE
+const EXPORT_UNKNOWN_FAILED_MESSAGE := DeckActionService.EXPORT_UNKNOWN_FAILED_MESSAGE
+const DELETE_DECK_NOT_FOUND_MESSAGE := DeckActionService.DELETE_DECK_NOT_FOUND_MESSAGE
+const DELETE_DECK_FAILED_MESSAGE := DeckActionService.DELETE_DECK_FAILED_MESSAGE
 # 이름 만들기와 이름 바꾸기는 같은 규칙을 쓴다.
-const DECK_NAME_EMPTY_MESSAGE := "덱 이름을 입력하세요."
-const DECK_NAME_INVALID_MESSAGE := "덱 이름에 < > : \" / \\ | ? * 문자나 끝 마침표를 사용할 수 없습니다."
-const DECK_NAME_DUPLICATE_MESSAGE := "같은 이름의 덱이 이미 있습니다."
-const RENAME_DECK_NOT_FOUND_MESSAGE := "이름을 변경할 덱 파일을 찾을 수 없습니다."
-const RENAME_FAILED_MESSAGE := "덱 이름을 변경하지 못했습니다. 다시 시도하세요."
-const DUPLICATE_DECK_NOT_FOUND_MESSAGE := "복제할 덱 파일을 찾을 수 없습니다."
-const DUPLICATE_DECK_FAILED_MESSAGE := "덱을 복제하지 못했습니다. 저장 공간을 확인하고 다시 시도하세요."
-const CREATE_DECK_SAVE_FAILED_MESSAGE := "덱을 저장하지 못했습니다. 저장 공간을 확인하세요."
-const CLIPBOARD_EMPTY_MESSAGE := "클립보드에 Markdown 텍스트가 없습니다."
-const CLIPBOARD_BROKEN_MESSAGE := "클립보드에서 카드를 찾지 못했습니다. 각 질문을 '# 질문' 형식으로 작성하세요."
+const DECK_NAME_EMPTY_MESSAGE := DeckActionService.DECK_NAME_EMPTY_MESSAGE
+const DECK_NAME_INVALID_MESSAGE := DeckActionService.DECK_NAME_INVALID_MESSAGE
+const DECK_NAME_DUPLICATE_MESSAGE := DeckActionService.DECK_NAME_DUPLICATE_MESSAGE
+const RENAME_DECK_NOT_FOUND_MESSAGE := DeckActionService.RENAME_DECK_NOT_FOUND_MESSAGE
+const RENAME_FAILED_MESSAGE := DeckActionService.RENAME_FAILED_MESSAGE
+const DUPLICATE_DECK_NOT_FOUND_MESSAGE := DeckActionService.DUPLICATE_DECK_NOT_FOUND_MESSAGE
+const DUPLICATE_DECK_FAILED_MESSAGE := DeckActionService.DUPLICATE_DECK_FAILED_MESSAGE
+const CREATE_DECK_SAVE_FAILED_MESSAGE := DeckActionService.CREATE_DECK_SAVE_FAILED_MESSAGE
+const CLIPBOARD_EMPTY_MESSAGE := DeckActionService.CLIPBOARD_EMPTY_MESSAGE
+const CLIPBOARD_BROKEN_MESSAGE := DeckActionService.CLIPBOARD_BROKEN_MESSAGE
 const AI_PROMPT_TEMPLATE := """사진에 보이는 영어 단어를 아래 형식의 Markdown으로 만들어줘.
 다른 설명 없이 코드 블록 하나로만 답해줘.
 
@@ -64,18 +64,7 @@ const STUDY_INPUT_LOCK_SECONDS := 0.22
 @onready var page_margin: MarginContainer = $Margin
 @onready var page_container: TabContainer = $Margin/Page
 @onready var library_view: LibraryView = $Margin/Page/LibraryContainer
-@onready var settings_view: VBoxContainer = $Margin/Page/SettingsView
-@onready var haptics_toggle := (
-	settings_view.find_child("HapticsToggle", true, false) as CheckButton
-)
-@onready var privacy_policy_link := (
-	settings_view.find_child("PrivacyPolicyLink", true, false) as LinkButton
-)
-@onready var app_version_label := (
-	settings_view.find_child("AppVersionLabel", true, false) as Label
-)
-@onready var backup_dialog: FileDialog = $Margin/Page/SettingsView/BackupDialog
-@onready var restore_dialog: FileDialog = $Margin/Page/SettingsView/RestoreDialog
+@onready var settings_view: SettingsView = $Margin/Page/SettingsView
 @onready var add_deck_menu: Control = $AddDeckMenu
 @onready var add_deck_menu_panel: PanelContainer = $AddDeckMenu/AddDeckMenuPanel
 @onready var library_context_menu: Control = $LibraryContextMenu
@@ -93,18 +82,6 @@ const STUDY_INPUT_LOCK_SECONDS := 0.22
 )
 @onready var create_from_clipboard_button := (
 	add_deck_menu.find_child("CreateFromClipboardButton", true, false) as Button
-)
-@onready var copy_ai_prompt_button := (
-	settings_view.find_child("CopyAiPromptButton", true, false) as Button
-)
-@onready var ai_prompt_preview_label := (
-	settings_view.find_child("AiPromptPreviewLabel", true, false) as Label
-)
-@onready var create_backup_button := (
-	settings_view.find_child("CreateBackupButton", true, false) as Button
-)
-@onready var restore_backup_button := (
-	settings_view.find_child("RestoreBackupButton", true, false) as Button
 )
 @onready var deck_context_menu: Control = $DeckContextMenu
 @onready var deck_context_menu_panel: PanelContainer = $DeckContextMenu/DeckContextMenuPanel
@@ -197,8 +174,6 @@ func _connect_library_signals() -> void:
 	create_new_deck_button.pressed.connect(_on_create_new_deck_pressed)
 	import_markdown_button.pressed.connect(_on_import_from_add_menu_pressed)
 	create_from_clipboard_button.pressed.connect(_on_create_from_clipboard_pressed)
-	copy_ai_prompt_button.pressed.connect(_on_copy_ai_prompt_pressed)
-	ai_prompt_preview_label.text = AI_PROMPT_TEMPLATE
 	library_view.add_pressed.connect(_on_library_add_pressed)
 	library_view.settings_pressed.connect(_on_library_settings_pressed)
 	open_settings_button.pressed.connect(_on_open_settings_pressed)
@@ -214,39 +189,19 @@ func _connect_library_signals() -> void:
 
 
 func _configure_settings() -> void:
-	_configure_backup_dialog(backup_dialog, FileDialog.FILE_MODE_SAVE_FILE)
-	backup_dialog.file_selected.connect(_on_backup_path_selected)
-	_configure_backup_dialog(restore_dialog, FileDialog.FILE_MODE_OPEN_FILE)
-	restore_dialog.file_selected.connect(_on_restore_path_selected)
-
 	var settings := DeckStorage.load_settings()
-	haptics_toggle.button_pressed = settings.haptics_enabled
+	settings_view.configure(
+		AI_PROMPT_TEMPLATE,
+		settings.haptics_enabled,
+		is_mobile()
+	)
 	study_flow.set_haptics_enabled(settings.haptics_enabled)
-	haptics_toggle.toggled.connect(_on_haptics_toggled)
-
-	# 진동이 없는 데스크톱에서는 학습 설정 항목 자체를 감춘다.
-	var interaction_settings_visible := is_mobile()
-	(settings_view.find_child("LearningSection", true, false) as Control).visible = (
-		interaction_settings_visible
-	)
-	(settings_view.find_child("InteractionTitle", true, false) as Control).visible = (
-		interaction_settings_visible
-	)
-	(settings_view.find_child("InteractionPanel", true, false) as Control).visible = (
-		interaction_settings_visible
-	)
-	$Margin/Page/SettingsView/Header/LeftActions/BackFromSettingsButton.pressed.connect(show_library)
-	create_backup_button.pressed.connect(_on_create_backup_pressed)
-	restore_backup_button.pressed.connect(_on_restore_backup_pressed)
-	privacy_policy_link.pressed.connect(_on_privacy_policy_pressed)
-
-
-func _configure_backup_dialog(dialog: FileDialog, file_mode: int) -> void:
-	dialog.access = FileDialog.ACCESS_FILESYSTEM
-	dialog.file_mode = file_mode
-	dialog.use_native_dialog = true
-	dialog.clear_filters()
-	dialog.add_filter("*.zip", "Backup", "application/zip")
+	settings_view.back_pressed.connect(show_library)
+	settings_view.haptics_toggled.connect(_on_haptics_toggled)
+	settings_view.privacy_policy_pressed.connect(_on_privacy_policy_pressed)
+	settings_view.copy_ai_prompt_pressed.connect(_on_copy_ai_prompt_pressed)
+	settings_view.backup_path_selected.connect(_on_backup_path_selected)
+	settings_view.restore_path_selected.connect(_on_restore_path_selected)
 
 
 func _connect_deck_dialog_signals() -> void:
@@ -444,9 +399,8 @@ func show_library() -> void:
 func show_settings() -> void:
 	show_library()
 	_show_page(settings_view)
-	app_version_label.text = "버전 %s" % ProjectSettings.get_setting(
-		"application/config/version",
-		""
+	settings_view.set_version(
+		ProjectSettings.get_setting("application/config/version", "")
 	)
 
 
@@ -983,7 +937,7 @@ func _on_save_card_pressed() -> void:
 	if answer_has_question_heading(answer):
 		_show_card_editor_error(CARD_ANSWER_HEADING_MESSAGE)
 		return
-	if creating_deck and _deck_file_name_is_taken(_editing_deck_file):
+	if creating_deck and DeckActionService.is_deck_file_taken(_editing_deck_file):
 		_show_card_editor_error(DECK_NAME_DUPLICATE_MESSAGE)
 		return
 
@@ -1488,15 +1442,6 @@ func _on_privacy_policy_pressed() -> void:
 		_show_settings_notice("개인정보처리방침 페이지를 열 수 없습니다.")
 
 
-func _on_create_backup_pressed() -> void:
-	var backup_time := Time.get_time_string_from_system().replace(":", "")
-	backup_dialog.current_file = "my-flashcard-backup-%s-%s.zip" % [
-		Time.get_date_string_from_system(),
-		backup_time,
-	]
-	backup_dialog.popup_file_dialog()
-
-
 func _on_backup_path_selected(target_path: String) -> void:
 	_dismiss_virtual_keyboard()
 	# Native Android dialogs can return a Storage Access Framework path.
@@ -1506,10 +1451,6 @@ func _on_backup_path_selected(target_path: String) -> void:
 		_show_settings_notice("전체 백업을 저장했습니다.")
 		return
 	_show_settings_notice(AppBackup.result_message(result))
-
-
-func _on_restore_backup_pressed() -> void:
-	restore_dialog.popup_file_dialog()
 
 
 func _on_restore_path_selected(source_path: String) -> void:
@@ -1604,22 +1545,14 @@ func begin_clipboard_deck_creation(markdown_text: String) -> bool:
 
 
 func create_deck_from_markdown(display_name: String, markdown_text: String) -> bool:
-	var content_error := clipboard_content_error(markdown_text)
-	if not content_error.is_empty():
-		_show_create_deck_error(content_error)
-		return false
-
-	var deck_file := _new_deck_file(display_name)
-	if deck_file.is_empty():
-		return false
-
-	if not DeckStorage.write_deck(deck_file, markdown_text):
-		_show_create_deck_error(CREATE_DECK_SAVE_FAILED_MESSAGE)
+	var result := DeckActionService.create_from_markdown(display_name, markdown_text)
+	if not result.succeeded:
+		_show_create_deck_error(result.message)
 		return false
 
 	create_deck_overlay.hide()
 	_reset_create_deck_state()
-	_open_card_list(deck_file)
+	_open_card_list(result.deck_file)
 	return true
 
 
@@ -1639,19 +1572,11 @@ func _begin_new_deck(display_name: String) -> bool:
 
 
 func _new_deck_file(display_name: String) -> String:
-	var trimmed_name := display_name.strip_edges()
-	if trimmed_name.is_empty():
-		_show_create_deck_error(DECK_NAME_EMPTY_MESSAGE)
+	var result := DeckActionService.validate_new_deck_file(display_name)
+	if not result.succeeded:
+		_show_create_deck_error(result.message)
 		return ""
-	if not DeckNaming.is_valid_display_name(trimmed_name):
-		_show_create_deck_error(DECK_NAME_INVALID_MESSAGE)
-		return ""
-
-	var deck_file := DeckNaming.deck_file_name(trimmed_name)
-	if _deck_file_name_is_taken(deck_file):
-		_show_create_deck_error(DECK_NAME_DUPLICATE_MESSAGE)
-		return ""
-	return deck_file
+	return result.deck_file
 
 
 func _reset_create_deck_state() -> void:
@@ -1662,13 +1587,6 @@ func _reset_create_deck_state() -> void:
 func _show_create_deck_error(message: String) -> void:
 	create_deck_overlay.error_label.text = message
 	create_deck_overlay.error_label.show()
-
-
-func _deck_file_name_is_taken(deck_file: String) -> bool:
-	for existing_file in DeckStorage.list_deck_files():
-		if existing_file.to_lower() == deck_file.to_lower():
-			return true
-	return false
 
 
 func _on_import_from_add_menu_pressed() -> void:
@@ -1711,18 +1629,13 @@ func _on_duplicate_pressed() -> void:
 
 
 func duplicate_deck_from_library(deck_file: String) -> bool:
-	if not DeckStorage.deck_exists(deck_file):
-		_show_library_notice(DUPLICATE_DECK_NOT_FOUND_MESSAGE)
-		return false
-
-	var duplicated: Variant = DeckStorage.duplicate_deck(deck_file)
-	if duplicated is not String:
-		push_warning("Deck duplicate failed (source=%s)" % deck_file)
-		_show_library_notice(DUPLICATE_DECK_FAILED_MESSAGE)
+	var result := DeckActionService.duplicate_deck(deck_file)
+	if not result.succeeded:
+		_show_library_notice(result.message)
 		return false
 
 	_refresh_deck_list()
-	_show_action_notice("'%s' 복제 완료" % DeckNaming.display_name(duplicated))
+	_show_action_notice(result.message)
 	return true
 
 
@@ -1756,47 +1669,25 @@ func _on_rename_submitted(_new_name: String) -> void:
 
 
 func rename_deck_from_library(deck_file: String, new_display_name: String) -> bool:
-	if not DeckStorage.deck_exists(deck_file):
-		_show_rename_error(RENAME_DECK_NOT_FOUND_MESSAGE)
+	var result := DeckActionService.rename(deck_file, new_display_name)
+	if not result.succeeded:
+		_show_rename_error(result.message)
 		return false
-
-	var trimmed_name := new_display_name.strip_edges()
-	if trimmed_name.is_empty():
-		_show_rename_error(DECK_NAME_EMPTY_MESSAGE)
-		return false
-	if not DeckNaming.is_valid_display_name(trimmed_name):
-		_show_rename_error(DECK_NAME_INVALID_MESSAGE)
-		return false
-
-	var new_file := DeckNaming.deck_file_name(trimmed_name)
-	if new_file.to_lower() == deck_file.to_lower():
+	if not result.changed:
 		rename_deck_overlay.hide()
 		_menu_deck_file = ""
-		_show_action_notice("이름이 변경되지 않았습니다.")
+		_show_action_notice(result.message)
 		return true
 
-	for existing_file in DeckStorage.list_deck_files():
-		if existing_file.to_lower() == new_file.to_lower():
-			_show_rename_error(DECK_NAME_DUPLICATE_MESSAGE)
-			return false
-
-	var old_display_name := DeckNaming.display_name(deck_file)
-	if not DeckStorage.rename_deck(deck_file, new_file):
-		push_warning("Deck rename failed (source=%s, target=%s)" % [deck_file, new_file])
-		_show_rename_error(RENAME_FAILED_MESSAGE)
-		return false
-
-	_replace_last_study_deck(deck_file, new_file)
+	_replace_last_study_deck(deck_file, result.deck_file)
 	rename_deck_overlay.hide()
 	_menu_deck_file = ""
 	_refresh_deck_list()
 	# 준비 화면에서는 제목이 새 이름으로 바뀌는 것 자체가 결과를 보여 준다.
 	if study_ready_view.visible and _ready_deck_file == deck_file:
-		show_study_ready(new_file)
+		show_study_ready(result.deck_file)
 	else:
-		_show_library_notice(
-			"'%s' → '%s' 이름 변경 완료" % [old_display_name, trimmed_name]
-		)
+		_show_library_notice(result.message)
 	return true
 
 
@@ -1831,95 +1722,52 @@ func _on_delete_confirmed() -> void:
 
 
 func delete_deck_from_library(deck_file: String) -> bool:
-	if not DeckStorage.deck_exists(deck_file):
-		_show_library_notice(DELETE_DECK_NOT_FOUND_MESSAGE)
-		return false
-
-	var display_name := DeckNaming.display_name(deck_file)
-	if not DeckStorage.delete_deck(deck_file):
-		push_warning("Deck delete failed (source=%s)" % deck_file)
-		_show_library_notice(DELETE_DECK_FAILED_MESSAGE)
+	var result := DeckActionService.delete(deck_file)
+	if not result.succeeded:
+		_show_library_notice(result.message)
 		return false
 
 	_replace_last_study_deck(deck_file, "")
 	_refresh_deck_list()
-	_show_library_notice("'%s' 삭제 완료" % display_name)
+	_show_library_notice(result.message)
 	return true
 
 
 func export_deck_to_path(deck_file: String, target_path: String) -> bool:
-	var markdown_path := ensure_markdown_extension(target_path)
-	var result := DeckStorage.export_deck_result(deck_file, markdown_path)
-	if result == DeckStorage.ExportResult.OK:
-		_show_action_notice(
-			"'%s' 내보내기 완료" % markdown_path.uri_decode().get_file()
-		)
+	var result := DeckActionService.export(deck_file, target_path)
+	if result.succeeded:
+		_show_action_notice(result.message)
 		return true
 
-	var message := export_error_message(result)
-	push_warning(
-		"Deck export failed (result=%s, source=%s, target=%s)"
-		% [result, deck_file, markdown_path]
-	)
-	_show_library_notice(message)
+	_show_library_notice(result.message)
 	return false
 
 
 static func ensure_markdown_extension(target_path: String) -> String:
-	if target_path.to_lower().ends_with(DeckNaming.EXTENSION):
-		return target_path
-	return "%s%s" % [target_path, DeckNaming.EXTENSION]
+	return DeckActionService.ensure_markdown_extension(target_path)
 
 
 static func export_error_message(result: DeckStorage.ExportResult) -> String:
-	match result:
-		DeckStorage.ExportResult.DECK_NOT_FOUND:
-			return EXPORT_DECK_NOT_FOUND_MESSAGE
-		DeckStorage.ExportResult.TARGET_OPEN_FAILED:
-			return EXPORT_TARGET_OPEN_FAILED_MESSAGE
-		DeckStorage.ExportResult.WRITE_FAILED:
-			return EXPORT_WRITE_FAILED_MESSAGE
-		_:
-			return EXPORT_UNKNOWN_FAILED_MESSAGE
+	return DeckActionService.export_error_message(result)
 
 
 func import_deck_from_path(source_path: String) -> bool:
-	var source := FileAccess.open(source_path, FileAccess.READ)
-	if source == null:
-		_show_library_notice("덱을 가져오지 못했습니다.")
-		return false
-
-	var error_message := deck_content_error(source.get_as_text())
-	if not error_message.is_empty():
-		_show_library_notice(error_message)
-		return false
-
-	var imported: Variant = DeckStorage.import_deck(source_path)
-	if imported is not String:
-		_show_library_notice("덱을 가져오지 못했습니다.")
+	var result := DeckActionService.import_from_path(source_path)
+	if not result.succeeded:
+		_show_library_notice(result.message)
 		return false
 
 	_refresh_deck_list()
-	_show_library_notice("'%s' 가져오기 완료" % DeckNaming.display_name(imported))
+	_show_library_notice(result.message)
 	return true
 
 
 static func deck_content_error(deck_text: String) -> String:
-	if deck_text.strip_edges().is_empty():
-		return EMPTY_DECK_MESSAGE
-
-	if DeckParser.parse(deck_text).is_empty():
-		return BROKEN_DECK_MESSAGE
-
-	return ""
+	return DeckActionService.deck_content_error(deck_text)
 
 
 static func clipboard_content_error(markdown_text: String) -> String:
-	if markdown_text.strip_edges().is_empty():
-		return CLIPBOARD_EMPTY_MESSAGE
-	if DeckParser.parse(markdown_text).is_empty():
-		return CLIPBOARD_BROKEN_MESSAGE
-	return ""
+	return DeckActionService.clipboard_content_error(markdown_text)
 
 
 # 예전 상태 문구처럼 덱 목록으로 돌아온 뒤 화면 위쪽에 잠깐 띄운다.
