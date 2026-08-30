@@ -21,17 +21,22 @@ const PICK_TWEEN_SECONDS := 0.12
 var _deck_file := ""
 var _pressed := false
 var _reordering := false
+var _scrolling := false
+var _dragged := false
 var _suppress_press := false
 var _press_generation := 0
 var _press_pointer := Vector2.ZERO
+var _scroll_start := 0
 var _rest_position := Vector2.ZERO
 var _clip: Control
+var _scroll_container: ScrollContainer
 
 
 func _ready() -> void:
 	deck_button.pressed.connect(_on_deck_pressed)
 	deck_button.gui_input.connect(_on_deck_button_input)
 	_clip = DragBounds.clip_ancestor(self)
+	_scroll_container = _clip as ScrollContainer
 
 
 func setup(file_name: String, display_name: String, card_count: int) -> void:
@@ -45,6 +50,9 @@ func deck_file() -> String:
 
 
 func _on_deck_pressed() -> void:
+	# 스크롤하다 손을 뗀 것은 덱을 여는 신호가 아니다.
+	if _dragged:
+		return
 	# 집어 옮긴 뒤 손을 뗀 것은 덱을 여는 신호가 아니다.
 	if _suppress_press:
 		_suppress_press = false
@@ -65,7 +73,10 @@ func _handle_button(event: InputEventMouseButton) -> void:
 
 	if event.pressed:
 		_pressed = true
+		_scrolling = false
+		_dragged = false
 		_press_pointer = event.global_position
+		_scroll_start = _scroll_container.scroll_vertical if _scroll_container != null else 0
 		_press_generation += 1
 		var generation := _press_generation
 		get_tree().create_timer(LONG_PRESS_SECONDS).timeout.connect(
@@ -74,6 +85,10 @@ func _handle_button(event: InputEventMouseButton) -> void:
 		return
 
 	_pressed = false
+	if _scrolling:
+		_scrolling = false
+		_clear_dragged.call_deferred()
+		return
 	if not _reordering:
 		return
 	_finish_reorder(event.global_position)
@@ -88,9 +103,6 @@ func _finish_reorder(pointer: Vector2) -> void:
 
 
 func _handle_motion(event: InputEventMouseMotion) -> void:
-	if not _pressed:
-		return
-
 	if _reordering:
 		# 손을 뗀 사실이 유실되면 타일이 떠 있는 채로 남는다. 버튼 상태로 확인해 마무리한다.
 		if (event.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
@@ -101,9 +113,37 @@ func _handle_motion(event: InputEventMouseMotion) -> void:
 		)
 		return
 
+	if _scrolling:
+		if (event.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
+			_scrolling = false
+			_clear_dragged.call_deferred()
+			return
+		_scroll_from_pointer(event.global_position)
+		return
+
+	if not _pressed:
+		return
+
 	# 집기 전에 움직였다면 스크롤이나 취소로 본다.
 	if event.global_position.distance_to(_press_pointer) > MOVE_CANCEL_DISTANCE:
 		_pressed = false
+		_scrolling = true
+		_dragged = true
+		_scroll_from_pointer(event.global_position)
+
+
+func _scroll_from_pointer(pointer: Vector2) -> void:
+	# 모바일 touch drag는 ScrollContainer가 직접 처리한다. 데스크톱 mouse drag만 보완한다.
+	if _scroll_container == null or DisplayServer.is_touchscreen_available():
+		return
+	_scroll_container.scroll_vertical = (
+		_scroll_start - roundi(pointer.y - _press_pointer.y)
+	)
+
+
+func _clear_dragged() -> void:
+	if not _pressed and not _scrolling and not _reordering:
+		_dragged = false
 
 
 func _on_long_press(generation: int) -> void:

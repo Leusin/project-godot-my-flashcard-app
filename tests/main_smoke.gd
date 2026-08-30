@@ -193,6 +193,43 @@ func run_tests() -> void:
 		_view(deck_buttons[0], "DeckCountLabel").text == "2장",
 		"Main: 카드 뭉치 타일에 카드 수 표시"
 	)
+	var first_deck_tile := deck_buttons[0] as DeckTileView
+	var deck_list_scroll := _view(app, "DeckListScroll") as ScrollContainer
+	check(
+		first_deck_tile.mouse_filter == Control.MOUSE_FILTER_PASS
+		and first_deck_tile.deck_button.mouse_filter == Control.MOUSE_FILTER_PASS
+		and deck_list_scroll.scroll_deadzone
+		== roundi(DeckTileView.MOVE_CANCEL_DISTANCE),
+		"Main Deck List: 타일 위 drag를 scroll에 전달"
+	)
+	var deck_scroll_bar := deck_list_scroll.get_v_scroll_bar()
+	deck_scroll_bar.max_value = 1000
+	deck_scroll_bar.page = 100
+	deck_list_scroll.scroll_vertical = 200
+	var deck_drag_start := first_deck_tile.deck_button.get_global_rect().get_center()
+	var deck_drag_press := InputEventMouseButton.new()
+	deck_drag_press.button_index = MOUSE_BUTTON_LEFT
+	deck_drag_press.pressed = true
+	deck_drag_press.global_position = deck_drag_start
+	first_deck_tile.deck_button.gui_input.emit(deck_drag_press)
+	var deck_drag_motion := InputEventMouseMotion.new()
+	deck_drag_motion.button_mask = MOUSE_BUTTON_MASK_LEFT
+	deck_drag_motion.global_position = deck_drag_start - Vector2(0, 80)
+	first_deck_tile.deck_button.gui_input.emit(deck_drag_motion)
+	var deck_selection_count := [0]
+	first_deck_tile.selected.connect(
+		func(_deck_file: String) -> void: deck_selection_count[0] += 1
+	)
+	first_deck_tile.deck_button.pressed.emit()
+	var deck_drag_release := InputEventMouseButton.new()
+	deck_drag_release.button_index = MOUSE_BUTTON_LEFT
+	deck_drag_release.global_position = deck_drag_motion.global_position
+	first_deck_tile.deck_button.gui_input.emit(deck_drag_release)
+	check(
+		deck_list_scroll.scroll_vertical == 280
+		and deck_selection_count[0] == 0,
+		"Main Deck List: mouse drag로 scroll하고 덱은 열지 않음"
+	)
 	var insertion_decks: Array[DeckInfo] = [
 		DeckInfo.new("a.md", "A", 1),
 		DeckInfo.new("b.md", "B", 1),

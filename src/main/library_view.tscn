@@ -53,6 +53,7 @@ tooltip_text = "앱 메뉴"
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
+scroll_deadzone = 16
 
 [node name="DeckList" type="HFlowContainer" parent="DeckListScroll" unique_id=1212341988]
 layout_mode = 2

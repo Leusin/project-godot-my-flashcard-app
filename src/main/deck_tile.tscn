@@ -19,6 +19,7 @@ corner_radius_bottom_left = 8
 custom_minimum_size = Vector2(300, 220)
 layout_mode = 3
 anchors_preset = 0
+mouse_filter = 1
 theme = ExtResource("2_theme")
 script = ExtResource("1_script")
 
@@ -58,6 +59,7 @@ offset_top = 14.0
 offset_right = -14.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 1
 
 [node name="Info" type="VBoxContainer" parent="DeckButton" unique_id=1890999900]
 layout_mode = 1
