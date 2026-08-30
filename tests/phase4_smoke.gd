@@ -7,6 +7,8 @@ const TEST_DECK := "__gd_phase4_a.md"
 const TEST_TEXT := "# A\n1\n# B\n2\n"
 const WORKSPACE_DECK := "__gd_phase4_workspace.md"
 const WORKSPACE_TEXT := "# Alpha\nOne\n# Beta\nTwo\n"
+const STUDY_RUN_DECK := "__gd_phase4_study_run.md"
+const STUDY_RUN_TEXT := "# A\nOne\n# B\nTwo\n# C\nThree\n"
 const RENAMED_DECK := "__gd_phase4_renamed.md"
 const EXPORTED_PATH := "user://__gd_phase4_export.md"
 const INVALID_IMPORT_PATH := "user://__gd_phase4_invalid.txt"
@@ -39,6 +41,7 @@ func run_tests() -> void:
 	_test_progress_storage()
 	_test_study_resume_storage()
 	_test_card_workspace()
+	_test_study_run()
 	_test_full_backup_restore()
 	_test_import_and_export()
 	_test_rename_duplicate_delete()
@@ -328,6 +331,133 @@ func _test_card_workspace() -> void:
 	)
 
 
+func _test_study_run() -> void:
+	check(
+		DeckStorage.write_deck(STUDY_RUN_DECK, STUDY_RUN_TEXT),
+		"학습 런타임: 전용 덱 준비"
+	)
+	var initial_progress := Progress.new()
+	initial_progress.set_wrong_count("A", 1)
+	DeckStorage.save_progress(STUDY_RUN_DECK, initial_progress)
+	var plan := StudyPlan.new()
+	var deck_cards := DeckParser.parse(STUDY_RUN_TEXT)
+	plan.prepare(STUDY_RUN_DECK, deck_cards, STUDY_RUN_TEXT.hash())
+	var selected := plan.begin(
+		[0, 1, 2],
+		DeckOrdering.StudyOrder.SEQUENTIAL,
+		StudyPlan.Scope.ALL,
+		false
+	)
+	var run := StudyRun.new()
+	run.start(STUDY_RUN_DECK, selected, DeckOrdering.StudyOrder.SEQUENTIAL)
+	selected.clear()
+	check(
+		run.deck_file == STUDY_RUN_DECK
+		and run.has_current()
+		and run.current().question == "A"
+		and run.remaining() == 3
+		and run.source_cards.size() == 3
+		and run.outcomes == [
+			StudyOutcome.Value.PENDING,
+			StudyOutcome.Value.PENDING,
+			StudyOutcome.Value.PENDING,
+		],
+		"학습 런타임: 카드·진행도·결과 상태 시작"
+	)
+	check(
+		run.sync_resume(plan)
+		and DeckStorage.load_study_resume(
+			STUDY_RUN_DECK
+		).remaining_indices == [0, 1, 2],
+		"학습 런타임: 시작 위치 이어하기 저장"
+	)
+
+	check(
+		run.commit(StudyOutcome.Value.AGAIN)
+		and run.position() == 1
+		and run.outcomes[0] == StudyOutcome.Value.AGAIN
+		and run.progress.get_wrong_count("A") == 2
+		and run.progress.get_status("A") == CardStatus.Value.LEARNING,
+		"학습 런타임: AGAIN 판정과 다음 카드 이동"
+	)
+	check(
+		DeckStorage.load_progress(STUDY_RUN_DECK).get_wrong_count("A") == 2
+		and run.sync_resume(plan)
+		and DeckStorage.load_study_resume(
+			STUDY_RUN_DECK
+		).remaining_indices == [1, 2],
+		"학습 런타임: 판정 진행도와 남은 위치 저장"
+	)
+	check(
+		run.previous()
+		and run.position() == 0
+		and run.current().question == "A",
+		"학습 런타임: 진행 중 이전 카드 이동"
+	)
+	run.commit(StudyOutcome.Value.AGAIN)
+	check(
+		run.progress.get_wrong_count("A") == 3
+		and run.commit(StudyOutcome.Value.GOOD)
+		and run.position() == 2
+		and run.progress.get_status("B") == CardStatus.Value.MASTERED
+		and DeckStorage.load_progress(
+			STUDY_RUN_DECK
+		).get_status("B") == CardStatus.Value.MASTERED,
+		"학습 런타임: 재판정과 GOOD 진행도 저장"
+	)
+
+	var updated_progress := run.progress
+	var updated_card := FlashCard.new("C edited", "Three updated")
+	check(
+		run.replace_current(updated_card, updated_progress)
+		and run.current() == updated_card
+		and run.cards[2] == updated_card
+		and run.source_cards[2] == updated_card,
+		"학습 런타임: 현재 카드 snapshot 교체"
+	)
+	check(
+		run.commit(StudyOutcome.Value.SKIP)
+		and run.is_finished()
+		and run.outcomes == [
+			StudyOutcome.Value.AGAIN,
+			StudyOutcome.Value.GOOD,
+			StudyOutcome.Value.SKIP,
+		]
+		and not run.previous(),
+		"학습 런타임: SKIP 판정과 세션 완료"
+	)
+	check(
+		run.sync_resume(plan)
+		and DeckStorage.load_study_resume(STUDY_RUN_DECK) == null,
+		"학습 런타임: 완료 시 이어하기 제거"
+	)
+
+	var retry := run.retry_again(plan)
+	check(
+		retry.uses_deck_indices
+		and retry.deck_indices == [0]
+		and retry.cards.size() == 1
+		and retry.cards[0].question == "A",
+		"학습 런타임: AGAIN 카드와 원본 index 선택"
+	)
+	var result_card := FlashCard.new("B edited", "Two updated")
+	check(
+		run.replace_result(1, 1, result_card, run.progress)
+		and run.result_card(1) == result_card
+		and run.source_cards[1] == result_card
+		and run.result_card(99) == null,
+		"학습 런타임: 결과 카드 snapshot 교체"
+	)
+	run.clear()
+	check(
+		run.deck_file.is_empty()
+		and run.session == null
+		and run.cards.is_empty()
+		and run.outcomes.is_empty(),
+		"학습 런타임: 활성 상태 초기화"
+	)
+
+
 func _test_rename_duplicate_delete() -> void:
 	check(DeckStorage.rename_deck(TEST_DECK, RENAMED_DECK), "저장소: 덱 이름 변경 성공")
 	check(not DeckStorage.deck_exists(TEST_DECK), "저장소: 이름 변경 후 옛 덱 제거")
@@ -383,6 +513,7 @@ func _cleanup() -> void:
 		TEST_DECK,
 		"__gd_phase4_a (2).md",
 		WORKSPACE_DECK,
+		STUDY_RUN_DECK,
 		RENAMED_DECK,
 		"__gd_phase4_renamed (2).md",
 	]:
