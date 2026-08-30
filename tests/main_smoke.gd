@@ -748,6 +748,14 @@ func run_tests() -> void:
 		and _view(app, "CardDetailMenuButton").visible,
 		"Main Result: 결과 카드 상세 화면 열기"
 	)
+	_view(app, "CardDetailMenuButton").pressed.emit()
+	check(
+		_view(app, "CardContextMenu").visible
+		and _view(app, "EditCardActionButton").visible
+		and not _view(app, "DeleteCardActionButton").visible,
+		"Main Result: 결과 snapshot을 흔드는 카드 삭제 숨김"
+	)
+	app.card_context_menu.dismiss()
 	_view(app, "CardTapButton").pressed.emit()
 	check(
 		_view(app, "DetailAnswerScroll").visible

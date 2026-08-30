@@ -594,11 +594,16 @@ func _on_card_context_requested(
 	)
 	if not DeckStorage.deck_exists(deck_file):
 		return
-	# 학습 중에는 세션이 흔들리고, 마지막 한 장은 빈 덱이 되므로 삭제를 아예 내보이지 않는다.
-	card_context_menu.open_for(
-		anchor,
-		not from_study and _card_workspace.cards.size() > 1
+	# 활성 학습과 결과 snapshot은 고정된 카드 index를 쓰므로 삭제로 흔들지 않는다.
+	var can_delete := (
+		not from_study
+		and (
+			from_list
+			or _card_detail_origin != CardDetailOrigin.STUDY_RESULT
+		)
+		and _card_workspace.cards.size() > 1
 	)
+	card_context_menu.open_for(anchor, can_delete)
 
 
 func _card_for_context_menu() -> FlashCard:
