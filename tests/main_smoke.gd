@@ -898,6 +898,11 @@ func run_tests() -> void:
 		and app.card_rows.get_child_count() == 2,
 		"Main Card Edit: Study Ready에서 카드 목록 진입"
 	)
+	check(
+		CardCollectionRow.answer_preview("첫 줄\n\n둘째 줄") == "첫 줄 둘째 줄"
+		and CardCollectionRow.answer_preview(" \n\t\n") == "답 없음",
+		"Main Card List: 답 미리보기에서 줄바꿈과 빈 줄을 공백으로 정리"
+	)
 	var first_card_row = app.card_rows.get_child(0)
 	check(
 		first_card_row.mouse_filter == Control.MOUSE_FILTER_PASS

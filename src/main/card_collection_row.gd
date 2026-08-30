@@ -104,11 +104,7 @@ func activate() -> void:
 func setup(index: int, card: FlashCard, outcome: String = "") -> void:
 	card_index = index
 	question_label.text = card.question
-	answer_label.text = (
-		"답 없음"
-		if card.answer.is_empty()
-		else card.answer.replace("\n", ", ")
-	)
+	answer_label.text = answer_preview(card.answer)
 	outcome_badge.visible = not outcome.is_empty()
 	if outcome.is_empty():
 		return
@@ -120,6 +116,15 @@ func setup(index: int, card: FlashCard, outcome: String = "") -> void:
 			_apply_badge(again_badge_style, Color.BLACK)
 		_:
 			_apply_badge(skip_badge_style, Color(0.25, 0.25, 0.25, 1))
+
+
+static func answer_preview(answer: String) -> String:
+	var lines: PackedStringArray = []
+	for line in answer.split("\n"):
+		var trimmed := line.strip_edges()
+		if not trimmed.is_empty():
+			lines.append(trimmed)
+	return "답 없음" if lines.is_empty() else " ".join(lines)
 
 
 func _handle_mouse_button(event: InputEventMouseButton) -> void:
