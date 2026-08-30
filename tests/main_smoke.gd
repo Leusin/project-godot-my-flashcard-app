@@ -125,7 +125,7 @@ func run_tests() -> void:
 	var create_backup_button := _view(settings_view, "CreateBackupButton") as Button
 	var restore_backup_button := _view(settings_view, "RestoreBackupButton") as Button
 	check(
-		_view(settings_view, "AppVersionLabel").text == "버전 0.10.2"
+		_view(settings_view, "AppVersionLabel").text == "버전 0.10.3"
 		and create_backup_button.pressed.is_connected(
 			Callable(app, "_on_create_backup_pressed")
 		)
@@ -582,11 +582,11 @@ func run_tests() -> void:
 		"Main Android: debug와 release에서 시스템 상태·내비게이션 bar 유지"
 	)
 	check(
-		ProjectSettings.get_setting("application/config/version") == "0.10.2"
-		and export_presets_text.count("version/name=\"0.10.2\"") == 2
-		and export_presets_text.count("version/code=6") == 2
-		and export_presets_text.contains("my-simple-flash-card-0.10.2.aab"),
-		"Main Release: 0.10.2 versionName과 versionCode 6 일치"
+		ProjectSettings.get_setting("application/config/version") == "0.10.3"
+		and export_presets_text.count("version/name=\"0.10.3\"") == 2
+		and export_presets_text.count("version/code=7") == 2
+		and export_presets_text.contains("my-simple-flash-card-0.10.3.aab"),
+		"Main Release: 0.10.3 versionName과 versionCode 7 일치"
 	)
 	check(
 		export_presets_text.count("export_filter=\"all_resources\"") == 2,
