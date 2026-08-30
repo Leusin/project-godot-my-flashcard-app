@@ -65,46 +65,10 @@ const STUDY_INPUT_LOCK_SECONDS := 0.22
 @onready var page_container: TabContainer = $Margin/Page
 @onready var library_view: LibraryView = $Margin/Page/LibraryContainer
 @onready var settings_view: SettingsView = $Margin/Page/SettingsView
-@onready var add_deck_menu: Control = $AddDeckMenu
-@onready var add_deck_menu_panel: PanelContainer = $AddDeckMenu/AddDeckMenuPanel
-@onready var library_context_menu: Control = $LibraryContextMenu
-@onready var library_context_menu_panel: PanelContainer = (
-	$LibraryContextMenu/LibraryContextMenuPanel
-)
-@onready var open_settings_button := (
-	library_context_menu.find_child("OpenSettingsButton", true, false) as Button
-)
-@onready var create_new_deck_button := (
-	add_deck_menu.find_child("CreateNewDeckButton", true, false) as Button
-)
-@onready var import_markdown_button := (
-	add_deck_menu.find_child("ImportMarkdownButton", true, false) as Button
-)
-@onready var create_from_clipboard_button := (
-	add_deck_menu.find_child("CreateFromClipboardButton", true, false) as Button
-)
-@onready var deck_context_menu: Control = $DeckContextMenu
-@onready var deck_context_menu_panel: PanelContainer = $DeckContextMenu/DeckContextMenuPanel
-@onready var rename_deck_button := (
-	deck_context_menu.find_child("RenameDeckButton", true, false) as Button
-)
-@onready var duplicate_deck_button := (
-	deck_context_menu.find_child("DuplicateDeckButton", true, false) as Button
-)
-@onready var export_deck_button := (
-	deck_context_menu.find_child("ExportDeckButton", true, false) as Button
-)
-@onready var delete_deck_button := (
-	deck_context_menu.find_child("DeleteDeckButton", true, false) as Button
-)
-@onready var card_context_menu: Control = $CardContextMenu
-@onready var card_context_menu_panel: PanelContainer = $CardContextMenu/CardContextMenuPanel
-@onready var edit_card_action_button := (
-	card_context_menu.find_child("EditCardActionButton", true, false) as Button
-)
-@onready var delete_card_action_button := (
-	card_context_menu.find_child("DeleteCardActionButton", true, false) as Button
-)
+@onready var add_deck_menu: AddDeckMenuView = $AddDeckMenu
+@onready var library_context_menu: LibraryContextMenuView = $LibraryContextMenu
+@onready var deck_context_menu: DeckContextMenuView = $DeckContextMenu
+@onready var card_context_menu: CardContextMenuView = $CardContextMenu
 @onready var rename_deck_overlay: ModalDialog = $RenameDeckOverlay
 @onready var delete_confirmation_overlay: ModalDialog = $DeleteConfirmationOverlay
 @onready var exit_confirmation_overlay: ModalDialog = $ExitConfirmationOverlay
@@ -126,7 +90,7 @@ var _progress := Progress.new()
 var _source_cards: Array[FlashCard] = []
 var _session_cards: Array[FlashCard] = []
 var _session_outcomes: Array[int] = []
-var _menu_deck_file := ""
+var _pending_deck_action_file := ""
 var _ready_deck_file := ""
 var _ready_cards: Array[FlashCard] = []
 var _ready_deck_hash: int
@@ -171,21 +135,16 @@ func _connect_library_signals() -> void:
 	library_view.import_file_selected.connect(import_deck_from_path)
 	library_view.export_file_selected.connect(_on_export_file_selected)
 	library_view.export_canceled.connect(_on_export_canceled)
-	create_new_deck_button.pressed.connect(_on_create_new_deck_pressed)
-	import_markdown_button.pressed.connect(_on_import_from_add_menu_pressed)
-	create_from_clipboard_button.pressed.connect(_on_create_from_clipboard_pressed)
+	add_deck_menu.create_requested.connect(_on_create_new_deck_pressed)
+	add_deck_menu.import_requested.connect(_on_import_from_add_menu_pressed)
+	add_deck_menu.clipboard_requested.connect(_on_create_from_clipboard_pressed)
 	library_view.add_pressed.connect(_on_library_add_pressed)
 	library_view.settings_pressed.connect(_on_library_settings_pressed)
-	open_settings_button.pressed.connect(_on_open_settings_pressed)
-	$AddDeckMenu/DismissAddDeckMenuButton.pressed.connect(_on_add_deck_menu_dismissed)
-	$LibraryContextMenu/DismissLibraryContextMenuButton.pressed.connect(
-		_on_library_context_menu_dismissed
-	)
-	rename_deck_button.pressed.connect(_on_rename_pressed)
-	duplicate_deck_button.pressed.connect(_on_duplicate_pressed)
-	export_deck_button.pressed.connect(_on_export_pressed)
-	delete_deck_button.pressed.connect(_on_delete_pressed)
-	$DeckContextMenu/DismissContextMenuButton.pressed.connect(_on_deck_context_dismissed)
+	library_context_menu.settings_requested.connect(_on_open_settings_pressed)
+	deck_context_menu.rename_requested.connect(_on_rename_pressed)
+	deck_context_menu.duplicate_requested.connect(_on_duplicate_pressed)
+	deck_context_menu.export_requested.connect(_on_export_pressed)
+	deck_context_menu.delete_requested.connect(_on_delete_pressed)
 
 
 func _configure_settings() -> void:
@@ -236,9 +195,8 @@ func _connect_card_management_signals() -> void:
 	card_list_view.card_selected.connect(_on_card_row_selected)
 	card_list_view.card_menu_requested.connect(_on_card_row_menu_requested)
 	card_list_view.card_move_requested.connect(_on_card_move_requested)
-	$CardContextMenu/DismissCardContextMenuButton.pressed.connect(_on_card_context_dismissed)
-	edit_card_action_button.pressed.connect(_on_card_context_edit_pressed)
-	delete_card_action_button.pressed.connect(_on_card_context_delete_pressed)
+	card_context_menu.edit_requested.connect(_on_card_context_edit_pressed)
+	card_context_menu.delete_requested.connect(_on_card_context_delete_pressed)
 	card_detail_view.back_pressed.connect(_close_card_detail)
 	card_detail_view.menu_requested.connect(_on_card_context_requested.bind(false))
 	card_editor_view.cancel_requested.connect(_request_close_card_editor)
@@ -378,12 +336,12 @@ func show_library() -> void:
 	_card_detail_result_index = -1
 	_study_edit_source_index = -1
 	_study_edit_return_show_answer = false
-	_menu_deck_file = ""
+	_pending_deck_action_file = ""
 	_reset_create_deck_state()
-	add_deck_menu.hide()
-	library_context_menu.hide()
-	deck_context_menu.hide()
-	card_context_menu.hide()
+	add_deck_menu.dismiss()
+	library_context_menu.dismiss()
+	deck_context_menu.dismiss()
+	card_context_menu.dismiss()
 	create_deck_overlay.hide()
 	rename_deck_overlay.hide()
 	delete_confirmation_overlay.hide()
@@ -418,9 +376,9 @@ func show_study_ready(deck_file: String) -> bool:
 	_ready_deck_file = deck_file
 	_ready_cards = DeckParser.parse(deck_text)
 	_ready_deck_hash = deck_text.hash()
-	_menu_deck_file = ""
-	deck_context_menu.hide()
-	card_context_menu.hide()
+	_pending_deck_action_file = ""
+	deck_context_menu.dismiss()
+	card_context_menu.dismiss()
 	_show_page(study_ready_view)
 	_update_study_ready_summary()
 	_update_continue_action()
@@ -467,7 +425,7 @@ func _start_cards(
 	_progress = DeckStorage.load_progress(deck_file)
 	_source_cards = cards.duplicate()
 	_active_card_indices.clear()
-	card_context_menu.hide()
+	card_context_menu.dismiss()
 	_show_page(study_flow)
 	_restart_session()
 
@@ -502,8 +460,8 @@ func _on_deck_order_changed(order: Array[String]) -> void:
 
 
 func _on_deck_selected(deck_file: String) -> void:
-	add_deck_menu.hide()
-	deck_context_menu.hide()
+	add_deck_menu.dismiss()
+	deck_context_menu.dismiss()
 	show_study_ready(deck_file)
 
 
@@ -688,36 +646,10 @@ func _on_card_context_requested(
 	if not DeckStorage.deck_exists(deck_file):
 		return
 	# 학습 중에는 세션이 흔들리고, 마지막 한 장은 빈 덱이 되므로 삭제를 아예 내보이지 않는다.
-	delete_card_action_button.visible = not from_study and _editing_cards.size() > 1
-	card_context_menu.show()
-	card_context_menu.move_to_front()
-	card_context_menu_panel.reset_size()
-	_position_card_context_menu(anchor)
-
-
-func _position_card_context_menu(anchor: Control) -> void:
-	var anchor_rect := _control_rect_in_overlay(card_context_menu, anchor)
-	var menu_size := card_context_menu_panel.get_combined_minimum_size()
-	card_context_menu_panel.size = menu_size
-	var viewport_size := card_context_menu.size
-	var margin := 12.0
-	var menu_position := Vector2(
-		anchor_rect.end.x - menu_size.x,
-		anchor_rect.end.y + 4.0
+	card_context_menu.open_for(
+		anchor,
+		not from_study and _editing_cards.size() > 1
 	)
-	menu_position.x = clampf(
-		menu_position.x,
-		margin,
-		viewport_size.x - menu_size.x - margin
-	)
-	if menu_position.y + menu_size.y > viewport_size.y - margin:
-		menu_position.y = anchor_rect.position.y - menu_size.y - 4.0
-	menu_position.y = clampf(
-		menu_position.y,
-		margin,
-		viewport_size.y - menu_size.y - margin
-	)
-	card_context_menu_panel.position = menu_position
 
 
 func _card_for_context_menu() -> FlashCard:
@@ -730,12 +662,7 @@ func _card_for_context_menu() -> FlashCard:
 	return _editing_cards[_card_detail_index]
 
 
-func _on_card_context_dismissed() -> void:
-	card_context_menu.hide()
-
-
 func _on_card_context_edit_pressed() -> void:
-	card_context_menu.hide()
 	if _card_menu_from_study:
 		_on_edit_study_card_pressed()
 	elif _card_menu_from_list:
@@ -748,7 +675,6 @@ func _on_card_context_edit_pressed() -> void:
 
 
 func _on_card_context_delete_pressed() -> void:
-	card_context_menu.hide()
 	if _card_menu_from_study:
 		return
 	if _card_detail_index < 0 or _card_detail_index >= _editing_cards.size():
@@ -765,7 +691,7 @@ func _on_card_context_delete_pressed() -> void:
 
 
 func _close_card_detail() -> void:
-	card_context_menu.hide()
+	card_context_menu.dismiss()
 	if _card_detail_origin == CardDetailOrigin.STUDY_RESULT:
 		_show_page(study_flow)
 		_show_study_results()
@@ -846,7 +772,7 @@ func _current_study_deck_index(
 
 
 func _open_card_editor(index: int) -> void:
-	card_context_menu.hide()
+	card_context_menu.dismiss()
 	_editing_card_index = index
 	card_delete_confirmation_overlay.hide()
 	discard_card_changes_overlay.hide()
@@ -1228,7 +1154,7 @@ func _save_active_study_resume() -> void:
 
 
 func _return_to_study_ready() -> void:
-	card_context_menu.hide()
+	card_context_menu.dismiss()
 	_save_active_study_resume()
 	var deck_file := _deck_file
 	if deck_file.is_empty():
@@ -1237,70 +1163,20 @@ func _return_to_study_ready() -> void:
 
 
 func _on_library_add_pressed(anchor: Control) -> void:
-	_menu_deck_file = ""
-	library_context_menu.hide()
-	deck_context_menu.hide()
-	add_deck_menu.show()
-	add_deck_menu_panel.reset_size()
-	_position_add_deck_menu(anchor)
+	_pending_deck_action_file = ""
+	library_context_menu.dismiss()
+	deck_context_menu.dismiss()
+	add_deck_menu.open_at(anchor)
 
 
 func _on_library_settings_pressed(anchor: Control) -> void:
-	add_deck_menu.hide()
-	deck_context_menu.hide()
-	library_context_menu.show()
-	library_context_menu_panel.reset_size()
-	_position_library_context_menu(anchor)
+	add_deck_menu.dismiss()
+	deck_context_menu.dismiss()
+	library_context_menu.open_at(anchor)
 
 
 func _on_open_settings_pressed() -> void:
-	add_deck_menu.hide()
-	library_context_menu.hide()
 	show_settings()
-
-
-func _position_add_deck_menu(anchor: Control) -> void:
-	var anchor_rect := _control_rect_in_overlay(add_deck_menu, anchor)
-	var menu_size := add_deck_menu_panel.get_combined_minimum_size()
-	add_deck_menu_panel.size = menu_size
-	var viewport_size := add_deck_menu.size
-	var margin := 12.0
-	var gap := 4.0
-	var menu_position := Vector2(
-		anchor_rect.end.x - menu_size.x,
-		anchor_rect.end.y + gap
-	)
-	menu_position.x = clampf(menu_position.x, margin, viewport_size.x - menu_size.x - margin)
-	if menu_position.y + menu_size.y > viewport_size.y - margin:
-		menu_position.y = anchor_rect.position.y - menu_size.y - gap
-	menu_position.y = clampf(menu_position.y, margin, viewport_size.y - menu_size.y - margin)
-	add_deck_menu_panel.position = menu_position
-
-
-func _on_add_deck_menu_dismissed() -> void:
-	add_deck_menu.hide()
-
-
-func _position_library_context_menu(anchor: Control) -> void:
-	var anchor_rect := _control_rect_in_overlay(library_context_menu, anchor)
-	var menu_size := library_context_menu_panel.get_combined_minimum_size()
-	library_context_menu_panel.size = menu_size
-	var viewport_size := library_context_menu.size
-	var margin := 12.0
-	var gap := 4.0
-	var menu_position := Vector2(
-		anchor_rect.end.x - menu_size.x,
-		anchor_rect.end.y + gap
-	)
-	menu_position.x = clampf(menu_position.x, margin, viewport_size.x - menu_size.x - margin)
-	if menu_position.y + menu_size.y > viewport_size.y - margin:
-		menu_position.y = anchor_rect.position.y - menu_size.y - gap
-	menu_position.y = clampf(menu_position.y, margin, viewport_size.y - menu_size.y - margin)
-	library_context_menu_panel.position = menu_position
-
-
-func _on_library_context_menu_dismissed() -> void:
-	library_context_menu.hide()
 
 
 func _on_ready_deck_menu_pressed(anchor: Control) -> void:
@@ -1312,44 +1188,8 @@ func _on_ready_deck_menu_pressed(anchor: Control) -> void:
 
 
 func _on_deck_menu_requested(deck_file: String, anchor: Control) -> void:
-	add_deck_menu.hide()
-	_menu_deck_file = deck_file
-	deck_context_menu.show()
-	deck_context_menu_panel.reset_size()
-	_position_deck_context_menu(anchor)
-
-
-func _position_deck_context_menu(anchor: Control) -> void:
-	var anchor_rect := _control_rect_in_overlay(deck_context_menu, anchor)
-	var menu_size := deck_context_menu_panel.get_combined_minimum_size()
-	deck_context_menu_panel.size = menu_size
-	var viewport_size := deck_context_menu.size
-	var margin := 12.0
-	var gap := 4.0
-	var menu_position := Vector2(
-		anchor_rect.end.x - menu_size.x,
-		anchor_rect.end.y + gap
-	)
-	menu_position.x = clampf(menu_position.x, margin, viewport_size.x - menu_size.x - margin)
-	if menu_position.y + menu_size.y > viewport_size.y - margin:
-		menu_position.y = anchor_rect.position.y - menu_size.y - gap
-	menu_position.y = clampf(menu_position.y, margin, viewport_size.y - menu_size.y - margin)
-	deck_context_menu_panel.position = menu_position
-
-
-static func _control_rect_in_overlay(overlay: Control, control: Control) -> Rect2:
-	var control_to_overlay := (
-		overlay.get_global_transform().affine_inverse()
-		* control.get_global_transform()
-	)
-	var local_position := control_to_overlay * Vector2.ZERO
-	var end := control_to_overlay * control.size
-	return Rect2(local_position, end - local_position)
-
-
-func _on_deck_context_dismissed() -> void:
-	deck_context_menu.hide()
-	_menu_deck_file = ""
+	add_deck_menu.dismiss()
+	deck_context_menu.open_for(deck_file, anchor)
 
 
 func handle_back_request() -> bool:
@@ -1378,19 +1218,19 @@ func handle_back_request() -> bool:
 		return true
 
 	if add_deck_menu.visible:
-		_on_add_deck_menu_dismissed()
+		add_deck_menu.dismiss()
 		return true
 
 	if library_context_menu.visible:
-		_on_library_context_menu_dismissed()
+		library_context_menu.dismiss()
 		return true
 
 	if card_context_menu.visible:
-		_on_card_context_dismissed()
+		card_context_menu.dismiss()
 		return true
 
 	if deck_context_menu.visible:
-		_on_deck_context_dismissed()
+		deck_context_menu.dismiss()
 		return true
 
 	if exit_confirmation_overlay.visible:
@@ -1483,7 +1323,7 @@ func _dismiss_virtual_keyboard() -> void:
 
 
 func _on_create_new_deck_pressed() -> void:
-	add_deck_menu.hide()
+	add_deck_menu.dismiss()
 	_create_deck_mode = CreateDeckMode.EMPTY
 	_pending_markdown = ""
 	create_deck_overlay.title_label.text = "새 덱 만들기"
@@ -1523,7 +1363,7 @@ func _on_copy_ai_prompt_pressed() -> void:
 
 
 func begin_clipboard_deck_creation(markdown_text: String) -> bool:
-	add_deck_menu.hide()
+	add_deck_menu.dismiss()
 	var clipboard_error := clipboard_content_error(markdown_text)
 	if not clipboard_error.is_empty():
 		_show_library_notice(clipboard_error)
@@ -1590,41 +1430,36 @@ func _show_create_deck_error(message: String) -> void:
 
 
 func _on_import_from_add_menu_pressed() -> void:
-	add_deck_menu.hide()
 	_on_import_pressed()
 
 
 func _on_import_pressed() -> void:
-	add_deck_menu.hide()
+	add_deck_menu.dismiss()
 	library_view.popup_import()
 
 
-func _on_export_pressed() -> void:
-	if _menu_deck_file.is_empty():
-		deck_context_menu.hide()
+func _on_export_pressed(deck_file: String) -> void:
+	if deck_file.is_empty():
 		_show_library_notice(EXPORT_DECK_NOT_FOUND_MESSAGE)
 		return
 
-	deck_context_menu.hide()
+	_pending_deck_action_file = deck_file
 	library_view.popup_export("%s%s" % [
-		DeckNaming.display_name(_menu_deck_file),
+		DeckNaming.display_name(deck_file),
 		DeckNaming.EXTENSION,
 	])
 
 
 func _on_export_file_selected(target_path: String) -> void:
-	export_deck_to_path(_menu_deck_file, target_path)
-	_menu_deck_file = ""
+	export_deck_to_path(_pending_deck_action_file, target_path)
+	_pending_deck_action_file = ""
 
 
 func _on_export_canceled() -> void:
-	_menu_deck_file = ""
+	_pending_deck_action_file = ""
 
 
-func _on_duplicate_pressed() -> void:
-	var deck_file := _menu_deck_file
-	deck_context_menu.hide()
-	_menu_deck_file = ""
+func _on_duplicate_pressed(deck_file: String) -> void:
 	duplicate_deck_from_library(deck_file)
 
 
@@ -1639,15 +1474,14 @@ func duplicate_deck_from_library(deck_file: String) -> bool:
 	return true
 
 
-func _on_rename_pressed() -> void:
-	deck_context_menu.hide()
-	if not DeckStorage.deck_exists(_menu_deck_file):
-		_menu_deck_file = ""
+func _on_rename_pressed(deck_file: String) -> void:
+	if not DeckStorage.deck_exists(deck_file):
 		_show_library_notice(RENAME_DECK_NOT_FOUND_MESSAGE)
 		return
 
+	_pending_deck_action_file = deck_file
 	rename_deck_overlay.set_input_text(
-		DeckNaming.display_name(_menu_deck_file)
+		DeckNaming.display_name(deck_file)
 	)
 	rename_deck_overlay.error_label.hide()
 	rename_deck_overlay.show()
@@ -1657,11 +1491,14 @@ func _on_rename_pressed() -> void:
 
 func _on_rename_canceled() -> void:
 	rename_deck_overlay.hide()
-	_menu_deck_file = ""
+	_pending_deck_action_file = ""
 
 
 func _on_rename_confirmed() -> void:
-	rename_deck_from_library(_menu_deck_file, rename_deck_overlay.dialog_input.text)
+	rename_deck_from_library(
+		_pending_deck_action_file,
+		rename_deck_overlay.dialog_input.text
+	)
 
 
 func _on_rename_submitted(_new_name: String) -> void:
@@ -1675,13 +1512,13 @@ func rename_deck_from_library(deck_file: String, new_display_name: String) -> bo
 		return false
 	if not result.changed:
 		rename_deck_overlay.hide()
-		_menu_deck_file = ""
+		_pending_deck_action_file = ""
 		_show_action_notice(result.message)
 		return true
 
 	_replace_last_study_deck(deck_file, result.deck_file)
 	rename_deck_overlay.hide()
-	_menu_deck_file = ""
+	_pending_deck_action_file = ""
 	_refresh_deck_list()
 	# 준비 화면에서는 제목이 새 이름으로 바뀌는 것 자체가 결과를 보여 준다.
 	if study_ready_view.visible and _ready_deck_file == deck_file:
@@ -1696,28 +1533,27 @@ func _show_rename_error(message: String) -> void:
 	rename_deck_overlay.error_label.show()
 
 
-func _on_delete_pressed() -> void:
-	deck_context_menu.hide()
-	if not DeckStorage.deck_exists(_menu_deck_file):
-		_menu_deck_file = ""
+func _on_delete_pressed(deck_file: String) -> void:
+	if not DeckStorage.deck_exists(deck_file):
 		_show_library_notice(DELETE_DECK_NOT_FOUND_MESSAGE)
 		return
 
+	_pending_deck_action_file = deck_file
 	delete_confirmation_overlay.title_label.text = "'%s' 덱을 삭제할까요?" % DeckNaming.display_name(
-		_menu_deck_file
+		deck_file
 	)
 	delete_confirmation_overlay.show()
 
 
 func _on_delete_canceled() -> void:
 	delete_confirmation_overlay.hide()
-	_menu_deck_file = ""
+	_pending_deck_action_file = ""
 
 
 func _on_delete_confirmed() -> void:
-	var deck_file := _menu_deck_file
+	var deck_file := _pending_deck_action_file
 	delete_confirmation_overlay.hide()
-	_menu_deck_file = ""
+	_pending_deck_action_file = ""
 	delete_deck_from_library(deck_file)
 
 
@@ -1833,7 +1669,7 @@ static func card_status_text(status: CardStatus.Value) -> String:
 
 func _show_study_results() -> void:
 	_reset_study_input_lock()
-	card_context_menu.hide()
+	card_context_menu.dismiss()
 	study_flow.show_results(_session_cards, _session_outcomes)
 
 

@@ -256,7 +256,7 @@ func run_tests() -> void:
 	deck_buttons = _view(app, "DeckList").get_children()
 	var library_add_button := _view(app, "LibraryAddButton") as Button
 	library_add_button.pressed.emit()
-	var add_deck_menu := _view(app, "AddDeckMenu") as Control
+	var add_deck_menu := _view(app, "AddDeckMenu") as AddDeckMenuView
 	check(
 		add_deck_menu.visible
 		and _view(app, "CreateNewDeckButton").text == "새 덱 만들기"
@@ -268,6 +268,9 @@ func run_tests() -> void:
 	)
 	check(
 		(_view(app, "CreateFromClipboardButton") as Button).pressed.is_connected(
+			Callable(add_deck_menu, "_on_clipboard_button_pressed")
+		)
+		and add_deck_menu.clipboard_requested.is_connected(
 			Callable(app, "_on_create_from_clipboard_pressed")
 		),
 		"Main Clipboard: 클립보드 생성 버튼 signal 연결"
@@ -309,6 +312,7 @@ func run_tests() -> void:
 		"Main Export: 실제 내보내기 요청 때 기본 파일명 준비"
 	)
 	_view(app, "ExportDialog").hide()
+	_view(app, "ReadyDeckMenuButton").pressed.emit()
 	_view(app, "RenameDeckButton").pressed.emit()
 	var rename_overlay := _view(app, "RenameDeckOverlay") as Control
 	check(

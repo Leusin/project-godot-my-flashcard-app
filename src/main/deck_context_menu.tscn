@@ -1,6 +1,7 @@
-[gd_scene format=3 uid="uid://bdds61ydptmja"]
+[gd_scene load_steps=8 format=3 uid="uid://bdds61ydptmja"]
 
 [ext_resource type="Theme" uid="uid://bu5jyw4ehw6ya" path="res://src/main/main_theme.tres" id="1_theme"]
+[ext_resource type="Script" path="res://src/main/deck_context_menu.gd" id="2_script"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxBackdrop"]
 
@@ -49,6 +50,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_theme")
+script = ExtResource("2_script")
+menu_panel_path = NodePath("DeckContextMenuPanel")
+dismiss_button_path = NodePath("DismissContextMenuButton")
 
 [node name="DismissContextMenuButton" type="Button" parent="." unique_id=1212293683]
 layout_mode = 1

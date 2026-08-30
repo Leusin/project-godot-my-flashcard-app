@@ -1,6 +1,7 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
+[ext_resource type="Script" path="res://src/main/library_context_menu.gd" id="2_script"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxBackdrop"]
 
@@ -49,6 +50,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_theme")
+script = ExtResource("2_script")
+menu_panel_path = NodePath("LibraryContextMenuPanel")
+dismiss_button_path = NodePath("DismissLibraryContextMenuButton")
 
 [node name="DismissLibraryContextMenuButton" type="Button" parent="."]
 layout_mode = 1
