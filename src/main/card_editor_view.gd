@@ -2,7 +2,7 @@ class_name CardEditorView
 extends KeyboardAvoider
 
 # 카드 편집 화면의 입력 상태와 학습 필드 UI를 소유한다.
-# Markdown 저장과 학습 세션 갱신은 main.gd가 맡는다.
+# Markdown 저장은 CardWorkspace, 학습 세션 갱신은 MainApp이 맡는다.
 
 signal cancel_requested
 signal save_requested
@@ -86,10 +86,6 @@ func question_text() -> String:
 
 func answer_text() -> String:
 	return answer_input.text
-
-
-func original_question() -> String:
-	return _original_question
 
 
 func wrong_count() -> int:

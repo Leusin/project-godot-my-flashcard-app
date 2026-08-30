@@ -5,6 +5,8 @@ extends TestCase
 const TEST_DECKS_DIR := "user://__gd_phase4_decks"
 const TEST_DECK := "__gd_phase4_a.md"
 const TEST_TEXT := "# A\n1\n# B\n2\n"
+const WORKSPACE_DECK := "__gd_phase4_workspace.md"
+const WORKSPACE_TEXT := "# Alpha\nOne\n# Beta\nTwo\n"
 const RENAMED_DECK := "__gd_phase4_renamed.md"
 const EXPORTED_PATH := "user://__gd_phase4_export.md"
 const INVALID_IMPORT_PATH := "user://__gd_phase4_invalid.txt"
@@ -36,6 +38,7 @@ func run_tests() -> void:
 	_test_paths_and_crud()
 	_test_progress_storage()
 	_test_study_resume_storage()
+	_test_card_workspace()
 	_test_full_backup_restore()
 	_test_import_and_export()
 	_test_rename_duplicate_delete()
@@ -207,6 +210,124 @@ func _test_study_resume_storage() -> void:
 	)
 
 
+func _test_card_workspace() -> void:
+	check(
+		DeckStorage.write_deck(WORKSPACE_DECK, WORKSPACE_TEXT),
+		"카드 작업공간: 전용 덱 준비"
+	)
+	var initial_progress := Progress.new()
+	initial_progress.set_wrong_count("Alpha", 3)
+	initial_progress.set_status("Alpha", CardStatus.Value.LEARNING)
+	initial_progress.set_favorite("Alpha", true)
+	DeckStorage.save_progress(WORKSPACE_DECK, initial_progress)
+	var initial_resume := StudyResume.new()
+	initial_resume.deck_hash = WORKSPACE_TEXT.hash()
+	initial_resume.remaining_indices = [0, 1]
+	DeckStorage.save_study_resume(WORKSPACE_DECK, initial_resume)
+
+	var workspace := CardWorkspace.new()
+	check(
+		workspace.open(WORKSPACE_DECK)
+		and workspace.cards.size() == 2
+		and workspace.cards[0].question == "Alpha",
+		"카드 작업공간: 덱 스냅샷 열기"
+	)
+	check(
+		workspace.move_card(0, 1) == CardWorkspace.MoveResult.SAVED
+		and workspace.cards[0].question == "Beta"
+		and DeckParser.parse(
+			DeckStorage.read_deck(WORKSPACE_DECK)
+		)[1].question == "Alpha",
+		"카드 작업공간: 카드 순서 저장"
+	)
+	check(
+		DeckStorage.load_study_resume(WORKSPACE_DECK) == null,
+		"카드 작업공간: 순서 변경 시 이어하기 제거"
+	)
+
+	var edit_resume := StudyResume.new()
+	edit_resume.deck_hash = 2
+	edit_resume.remaining_indices = [1]
+	DeckStorage.save_study_resume(WORKSPACE_DECK, edit_resume)
+	workspace.select(1)
+	var edit_result := workspace.save_card(
+		"Alpha 2",
+		"Updated",
+		4,
+		CardStatus.Value.MASTERED,
+		true
+	)
+	var edited_progress := DeckStorage.load_progress(WORKSPACE_DECK)
+	check(
+		edit_result.succeeded
+		and edit_result.progress_saved
+		and edit_result.card.question == "Alpha 2"
+		and edit_result.card_index == 1,
+		"카드 작업공간: 편집 결과 반환"
+	)
+	check(
+		edited_progress.get_wrong_count("Alpha") == 0
+		and edited_progress.get_wrong_count("Alpha 2") == 4
+		and edited_progress.get_status("Alpha 2") == CardStatus.Value.MASTERED
+		and edited_progress.is_favorite("Alpha 2"),
+		"카드 작업공간: 질문 변경 시 진행도 이동"
+	)
+	check(
+		DeckStorage.load_study_resume(WORKSPACE_DECK) == null,
+		"카드 작업공간: 일반 편집 시 이어하기 제거"
+	)
+
+	workspace.select(-1)
+	var add_result := workspace.save_card(
+		"Gamma",
+		"Three",
+		0,
+		CardStatus.Value.NEW,
+		true
+	)
+	check(
+		add_result.succeeded
+		and workspace.cards.size() == 3
+		and workspace.cards[2].question == "Gamma",
+		"카드 작업공간: 새 카드 추가"
+	)
+
+	var study_resume := StudyResume.new()
+	study_resume.deck_hash = 3
+	study_resume.remaining_indices = [0]
+	DeckStorage.save_study_resume(WORKSPACE_DECK, study_resume)
+	workspace.select(0)
+	var study_edit_result := workspace.save_card(
+		"Beta",
+		"Two updated",
+		0,
+		CardStatus.Value.NEW,
+		false
+	)
+	check(
+		study_edit_result.succeeded
+		and DeckStorage.load_study_resume(WORKSPACE_DECK) != null,
+		"카드 작업공간: 학습 중 편집은 이어하기 유지"
+	)
+
+	workspace.select(1)
+	var delete_result := workspace.delete_selected()
+	check(
+		delete_result.succeeded
+		and delete_result.progress_saved
+		and workspace.cards.size() == 2
+		and workspace.editing_index == -1,
+		"카드 작업공간: 선택 카드 삭제"
+	)
+	var deleted_progress := DeckStorage.load_progress(WORKSPACE_DECK)
+	check(
+		deleted_progress.get_wrong_count("Alpha 2") == 0
+		and not deleted_progress.is_favorite("Alpha 2")
+		and DeckStorage.load_study_resume(WORKSPACE_DECK) == null,
+		"카드 작업공간: 삭제한 카드의 진행도와 이어하기 정리"
+	)
+
+
 func _test_rename_duplicate_delete() -> void:
 	check(DeckStorage.rename_deck(TEST_DECK, RENAMED_DECK), "저장소: 덱 이름 변경 성공")
 	check(not DeckStorage.deck_exists(TEST_DECK), "저장소: 이름 변경 후 옛 덱 제거")
@@ -261,6 +382,7 @@ func _cleanup() -> void:
 	for deck_file in [
 		TEST_DECK,
 		"__gd_phase4_a (2).md",
+		WORKSPACE_DECK,
 		RENAMED_DECK,
 		"__gd_phase4_renamed (2).md",
 	]:

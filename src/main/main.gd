@@ -88,9 +88,7 @@ var _session_cards: Array[FlashCard] = []
 var _session_outcomes: Array[int] = []
 var _pending_deck_action_file := ""
 var _study_plan := StudyPlan.new()
-var _editing_deck_file := ""
-var _editing_cards: Array[FlashCard] = []
-var _editing_card_index := -1
+var _card_workspace := CardWorkspace.new()
 var _card_editor_origin: CardEditorOrigin = CardEditorOrigin.CARD_LIST
 var _card_detail_origin: CardDetailOrigin = CardDetailOrigin.CARD_LIST
 var _card_detail_index := -1
@@ -316,8 +314,7 @@ func show_library() -> void:
 	_session_outcomes.clear()
 	_deck_file = ""
 	_study_plan.clear()
-	_editing_deck_file = ""
-	_editing_cards.clear()
+	_card_workspace.clear()
 	_card_editor_origin = CardEditorOrigin.CARD_LIST
 	_card_detail_origin = CardDetailOrigin.CARD_LIST
 	_card_detail_index = -1
@@ -497,12 +494,10 @@ func _on_manage_cards_pressed() -> void:
 
 
 func _open_card_list(deck_file: String) -> bool:
-	if not DeckStorage.deck_exists(deck_file):
+	if not _card_workspace.open(deck_file):
 		_show_library_notice("편집할 덱 파일을 찾을 수 없습니다.")
 		return false
 
-	_editing_deck_file = deck_file
-	_editing_cards = _copy_cards(DeckParser.parse(DeckStorage.read_deck(deck_file)))
 	_card_editor_origin = CardEditorOrigin.CARD_LIST
 	_study_edit_source_index = -1
 	_study_edit_return_show_answer = false
@@ -510,53 +505,33 @@ func _open_card_list(deck_file: String) -> bool:
 	_show_page(card_list_view)
 	return true
 
-
-static func _copy_cards(cards: Array[FlashCard]) -> Array[FlashCard]:
-	var copies: Array[FlashCard] = []
-	for card in cards:
-		copies.append(FlashCard.new(card.question, card.answer))
-	return copies
-
-
 func _render_card_list() -> void:
 	card_list_view.render(
-		DeckNaming.display_name(_editing_deck_file),
-		_editing_cards
+		DeckNaming.display_name(_card_workspace.deck_file),
+		_card_workspace.cards
 	)
 
 
 func _on_card_move_requested(index: int, target: int) -> void:
-	if (
-		index < 0
-		or index >= _editing_cards.size()
-		or target < 0
-		or target >= _editing_cards.size()
-		or target == index
-	):
-		_render_card_list()
-		return
-
-	var updated := CardOrdering.moved(_editing_cards, index, target)
-	if not DeckStorage.write_deck(
-		_editing_deck_file,
-		DeckWriter.to_markdown(updated)
-	):
-		_render_card_list()
-		push_warning("Card order save failed: %s" % _editing_deck_file)
-		return
-
-	_editing_cards = updated
-	# 이어하기 기록은 카드 위치로 남아 있어 순서가 바뀌면 더 이상 맞지 않는다.
-	DeckStorage.delete_study_resume(_editing_deck_file)
+	match _card_workspace.move_card(index, target):
+		CardWorkspace.MoveResult.SAVED:
+			pass
+		CardWorkspace.MoveResult.UNCHANGED:
+			_render_card_list()
+		CardWorkspace.MoveResult.SAVE_FAILED:
+			_render_card_list()
+			push_warning(
+				"Card order save failed: %s" % _card_workspace.deck_file
+			)
 
 
 func _on_card_row_selected(index: int) -> void:
-	if index < 0 or index >= _editing_cards.size():
+	if not _card_workspace.is_valid_index(index):
 		return
-	var card := _editing_cards[index]
+	var card := _card_workspace.card_at(index)
 	_show_card_detail(
 		card,
-		DeckStorage.load_progress(_editing_deck_file),
+		_card_workspace.load_progress(),
 		index,
 		CardDetailOrigin.CARD_LIST
 	)
@@ -573,13 +548,14 @@ func _show_card_detail(
 	_card_detail_index = deck_index
 	_card_detail_result_index = result_index
 	var menu_visible := (
-		deck_index >= 0
-		and deck_index < _editing_cards.size()
-		and DeckStorage.deck_exists(_editing_deck_file)
+		_card_workspace.is_valid_index(deck_index)
+		and DeckStorage.deck_exists(_card_workspace.deck_file)
 	)
 	card_detail_view.present(
 		DeckNaming.display_name(
-			_editing_deck_file if not _editing_deck_file.is_empty() else _deck_file
+			_card_workspace.deck_file
+			if not _card_workspace.deck_file.is_empty()
+			else _deck_file
 		),
 		card,
 		progress.get_wrong_count(card.question),
@@ -595,14 +571,14 @@ func _show_card_detail(
 
 
 func _on_edit_card_from_detail_pressed() -> void:
-	if _card_detail_index < 0 or _card_detail_index >= _editing_cards.size():
+	if not _card_workspace.is_valid_index(_card_detail_index):
 		return
 	_card_editor_origin = CardEditorOrigin.CARD_DETAIL
 	_open_card_editor(_card_detail_index)
 
 
 func _on_card_row_menu_requested(index: int, anchor: Control) -> void:
-	if index < 0 or index >= _editing_cards.size():
+	if not _card_workspace.is_valid_index(index):
 		return
 	_card_detail_index = index
 	_on_card_context_requested(anchor, false, true)
@@ -618,13 +594,13 @@ func _on_card_context_requested(
 	var card := _card_for_context_menu()
 	if card == null:
 		return
-	var deck_file := _deck_file if from_study else _editing_deck_file
+	var deck_file := _deck_file if from_study else _card_workspace.deck_file
 	if not DeckStorage.deck_exists(deck_file):
 		return
 	# 학습 중에는 세션이 흔들리고, 마지막 한 장은 빈 덱이 되므로 삭제를 아예 내보이지 않는다.
 	card_context_menu.open_for(
 		anchor,
-		not from_study and _editing_cards.size() > 1
+		not from_study and _card_workspace.cards.size() > 1
 	)
 
 
@@ -633,16 +609,16 @@ func _card_for_context_menu() -> FlashCard:
 		if _session == null or _session.is_finished():
 			return null
 		return _session.current()
-	if _card_detail_index < 0 or _card_detail_index >= _editing_cards.size():
+	if not _card_workspace.is_valid_index(_card_detail_index):
 		return null
-	return _editing_cards[_card_detail_index]
+	return _card_workspace.card_at(_card_detail_index)
 
 
 func _on_card_context_edit_pressed() -> void:
 	if _card_menu_from_study:
 		_on_edit_study_card_pressed()
 	elif _card_menu_from_list:
-		if _card_detail_index < 0 or _card_detail_index >= _editing_cards.size():
+		if not _card_workspace.is_valid_index(_card_detail_index):
 			return
 		_card_editor_origin = CardEditorOrigin.CARD_LIST
 		_open_card_editor(_card_detail_index)
@@ -653,11 +629,11 @@ func _on_card_context_edit_pressed() -> void:
 func _on_card_context_delete_pressed() -> void:
 	if _card_menu_from_study:
 		return
-	if _card_detail_index < 0 or _card_detail_index >= _editing_cards.size():
+	if not _card_workspace.is_valid_index(_card_detail_index):
 		return
-	if _editing_cards.size() <= 1:
+	if _card_workspace.cards.size() <= 1:
 		return
-	_editing_card_index = _card_detail_index
+	_card_workspace.select(_card_detail_index)
 	_card_editor_origin = (
 		CardEditorOrigin.CARD_LIST
 		if _card_menu_from_list
@@ -699,8 +675,7 @@ func _on_edit_study_card_pressed() -> void:
 	study_flow.cancel_drag()
 	_reset_study_input_lock()
 	_save_active_study_resume()
-	_editing_deck_file = _deck_file
-	_editing_cards = _copy_cards(deck_cards)
+	_card_workspace.load_snapshot(_deck_file, deck_cards)
 	_card_editor_origin = CardEditorOrigin.STUDY
 	_study_edit_source_index = _source_cards.find(current_card)
 	_study_edit_return_show_answer = study_flow.is_answer_visible()
@@ -745,10 +720,11 @@ func _current_study_deck_index(
 
 func _open_card_editor(index: int) -> void:
 	card_context_menu.dismiss()
-	_editing_card_index = index
+	if not _card_workspace.select(index):
+		return
 	card_delete_confirmation_overlay.hide()
 	discard_card_changes_overlay.hide()
-	var progress := DeckStorage.load_progress(_editing_deck_file)
+	var progress := _card_workspace.load_progress()
 	var question := ""
 	var answer := ""
 	var wrong_count := 0
@@ -759,7 +735,7 @@ func _open_card_editor(index: int) -> void:
 		else "카드 추가"
 	)
 	if index >= 0:
-		var card := _editing_cards[index]
+		var card := _card_workspace.card_at(index)
 		question = card.question
 		answer = card.answer
 		wrong_count = progress.get_wrong_count(card.question)
@@ -808,9 +784,9 @@ func _close_card_editor_without_save() -> void:
 	elif return_to_library:
 		show_library()
 	elif return_to_detail:
-		if _card_detail_index >= 0 and _card_detail_index < _editing_cards.size():
-			var card := _editing_cards[_card_detail_index]
-			var progress := DeckStorage.load_progress(_editing_deck_file)
+		if _card_workspace.is_valid_index(_card_detail_index):
+			var card := _card_workspace.card_at(_card_detail_index)
+			var progress := _card_workspace.load_progress()
 			card_detail_view.render_card(
 				card,
 				progress.get_wrong_count(card.question),
@@ -819,7 +795,7 @@ func _close_card_editor_without_save() -> void:
 		_show_page(card_detail_view)
 	else:
 		_show_page(card_list_view)
-	_editing_card_index = -1
+	_card_workspace.select(-1)
 	_card_editor_origin = CardEditorOrigin.CARD_LIST
 	_study_edit_source_index = -1
 	_study_edit_return_show_answer = false
@@ -835,39 +811,27 @@ func _on_save_card_pressed() -> void:
 	if answer_has_question_heading(answer):
 		_show_card_editor_error(CARD_ANSWER_HEADING_MESSAGE)
 		return
-	if creating_deck and DeckActionService.is_deck_file_taken(_editing_deck_file):
+	if creating_deck and DeckActionService.is_deck_file_taken(
+		_card_workspace.deck_file
+	):
 		_show_card_editor_error(DECK_NAME_DUPLICATE_MESSAGE)
 		return
 
-	var updated := _copy_cards(_editing_cards)
-	if _editing_card_index < 0:
-		updated.append(FlashCard.new(question, answer))
-	else:
-		updated[_editing_card_index] = FlashCard.new(question, answer)
-
-	var updated_markdown := DeckWriter.to_markdown(updated)
-	if not DeckStorage.write_deck(_editing_deck_file, updated_markdown):
+	var save_result := _card_workspace.save_card(
+		question,
+		answer,
+		card_editor_view.wrong_count(),
+		card_editor_view.selected_status(),
+		_card_editor_origin != CardEditorOrigin.STUDY
+	)
+	if not save_result.succeeded:
 		_show_card_editor_error(CARD_SAVE_FAILED_MESSAGE)
 		return
 
-	var progress := DeckStorage.load_progress(_editing_deck_file)
-	var original_question := card_editor_view.original_question()
-	if _editing_card_index >= 0 and original_question != question:
-		var old_question_still_exists := false
-		for index in updated.size():
-			if index != _editing_card_index and (
-				updated[index].question == original_question
-			):
-				old_question_still_exists = true
-				break
-		if not old_question_still_exists:
-			progress.rename(original_question, question)
-	progress.set_wrong_count(question, card_editor_view.wrong_count())
-	progress.set_status(question, card_editor_view.selected_status())
-	var progress_saved := DeckStorage.save_progress(_editing_deck_file, progress)
+	var updated := _card_workspace.cards
 	if _card_editor_origin == CardEditorOrigin.STUDY:
-		var updated_card := updated[_editing_card_index]
-		_progress = progress
+		var updated_card := save_result.card
+		_progress = save_result.progress
 		_session.replace_current(updated_card)
 		if _session.position() < _session_cards.size():
 			_session_cards[_session.position()] = updated_card
@@ -877,13 +841,12 @@ func _on_save_card_pressed() -> void:
 		):
 			_source_cards[_study_edit_source_index] = updated_card
 		_study_plan.replace_cards(
-			_editing_deck_file,
+			_card_workspace.deck_file,
 			updated,
-			updated_markdown.hash()
+			save_result.markdown.hash()
 		)
 		_save_active_study_resume()
-		_editing_cards = updated
-		if not progress_saved:
+		if not save_result.progress_saved:
 			push_warning("Card progress save failed during study edit")
 			_close_card_editor_without_save()
 			return
@@ -893,7 +856,7 @@ func _on_save_card_pressed() -> void:
 		and _card_detail_result_index >= 0
 		and _card_detail_result_index < _session_cards.size()
 	):
-		var updated_result_card := updated[_editing_card_index]
+		var updated_result_card := save_result.card
 		_session_cards[_card_detail_result_index] = updated_result_card
 		var active_index := _study_plan.active_index_at(_card_detail_result_index)
 		if (
@@ -901,16 +864,13 @@ func _on_save_card_pressed() -> void:
 			and active_index < _source_cards.size()
 		):
 			_source_cards[active_index] = updated_result_card
-		_progress = progress
+		_progress = save_result.progress
 		_study_plan.replace_cards(
-			_editing_deck_file,
+			_card_workspace.deck_file,
 			updated,
-			updated_markdown.hash()
+			save_result.markdown.hash()
 		)
 
-	if _card_editor_origin != CardEditorOrigin.STUDY:
-		DeckStorage.delete_study_resume(_editing_deck_file)
-	_editing_cards = updated
 	if creating_deck:
 		_card_editor_origin = CardEditorOrigin.CARD_LIST
 	_close_card_editor_without_save()
@@ -935,36 +895,25 @@ func _on_card_delete_canceled() -> void:
 
 func _on_card_delete_confirmed() -> void:
 	card_delete_confirmation_overlay.hide()
-	if _editing_card_index < 0 or _editing_card_index >= _editing_cards.size():
+	if not _card_workspace.is_valid_index(_card_workspace.editing_index):
 		return
 	var deleting_from_detail := _card_editor_origin == CardEditorOrigin.CARD_DETAIL
 	var detail_origin := _card_detail_origin
 
-	var deleted_question := _editing_cards[_editing_card_index].question
-	var updated := _copy_cards(_editing_cards)
-	updated.remove_at(_editing_card_index)
-	if not DeckStorage.write_deck(_editing_deck_file, DeckWriter.to_markdown(updated)):
+	var delete_result := _card_workspace.delete_selected()
+	if not delete_result.succeeded:
 		if card_editor_view.visible:
 			_show_card_editor_error(CARD_SAVE_FAILED_MESSAGE)
 		else:
 			_show_page(card_list_view)
-			push_warning("Card delete save failed: %s" % _editing_deck_file)
+			push_warning(
+				"Card delete save failed: %s" % _card_workspace.deck_file
+			)
 		return
 
-	var progress := DeckStorage.load_progress(_editing_deck_file)
-	var question_still_exists := false
-	for card in updated:
-		if card.question == deleted_question:
-			question_still_exists = true
-			break
-	if not question_still_exists:
-		progress.remove(deleted_question)
-	if not DeckStorage.save_progress(_editing_deck_file, progress):
+	if not delete_result.progress_saved:
 		push_warning("Card progress save failed during delete")
-	DeckStorage.delete_study_resume(_editing_deck_file)
-	_editing_cards = updated
 	if deleting_from_detail:
-		_editing_card_index = -1
 		_card_editor_origin = CardEditorOrigin.CARD_LIST
 		_card_detail_index = -1
 		_card_detail_result_index = -1
@@ -980,7 +929,7 @@ func _on_card_delete_confirmed() -> void:
 
 
 func _return_to_ready_from_card_list() -> void:
-	var deck_file := _editing_deck_file
+	var deck_file := _card_workspace.deck_file
 	show_study_ready(deck_file)
 
 
@@ -1328,8 +1277,7 @@ func _begin_new_deck(display_name: String) -> bool:
 		return false
 
 	create_deck_overlay.hide()
-	_editing_deck_file = deck_file
-	_editing_cards.clear()
+	_card_workspace.load_snapshot(deck_file, [])
 	_card_editor_origin = CardEditorOrigin.NEW_DECK
 	_study_edit_source_index = -1
 	_study_edit_return_show_answer = false
@@ -1605,22 +1553,18 @@ func _on_result_card_selected(result_index: int) -> void:
 
 	var card := _session_cards[result_index]
 	var deck_index := -1
-	_editing_deck_file = ""
-	_editing_cards.clear()
+	_card_workspace.clear()
 	if DeckStorage.deck_exists(_deck_file):
-		_editing_deck_file = _deck_file
-		_editing_cards = _copy_cards(
-			DeckParser.parse(DeckStorage.read_deck(_deck_file))
-		)
+		_card_workspace.open(_deck_file)
 		var active_index := _study_plan.active_index_at(result_index)
 		if (
 			active_index >= 0
-			and active_index < _editing_cards.size()
+			and active_index < _card_workspace.cards.size()
 		):
 			deck_index = active_index
 		else:
-			for index in _editing_cards.size():
-				var deck_card := _editing_cards[index]
+			for index in _card_workspace.cards.size():
+				var deck_card := _card_workspace.cards[index]
 				if (
 					deck_card.question == card.question
 					and deck_card.answer == card.answer
