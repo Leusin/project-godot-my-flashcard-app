@@ -21,6 +21,7 @@ func run_tests() -> void:
 	_test_progress_fixtures()
 	_test_card_ordering()
 	_test_deck_library_order()
+	_test_study_plan()
 
 
 func _test_queue_progression() -> void:
@@ -518,4 +519,94 @@ func _test_deck_library_order() -> void:
 	check(
 		AppSettings.from_json("{}").deck_order.is_empty(),
 		"설정: 덱 차례 기본값은 빈 목록"
+	)
+
+
+func _test_study_plan() -> void:
+	var source: Array[FlashCard] = [
+		FlashCard.new("A", "1"),
+		FlashCard.new("B", "2"),
+		FlashCard.new("C", "3"),
+	]
+	var plan := StudyPlan.new()
+	plan.prepare("deck.md", source, 42)
+	source[0].question = "changed outside"
+	check(
+		plan.deck_file == "deck.md"
+		and plan.deck_hash == 42
+		and plan.cards[0].question == "A",
+		"학습 계획: 준비 덱과 카드를 독립적으로 보관"
+	)
+
+	var progress := Progress.new()
+	progress.set_status("B", CardStatus.Value.MASTERED)
+	progress.set_status("C", CardStatus.Value.LEARNING)
+	progress.add_wrong("C")
+	var summary := plan.summary(progress)
+	check(
+		summary.total_count == 3
+		and summary.new_count == 1
+		and summary.learning_count == 1
+		and summary.mastered_count == 1,
+		"학습 계획: 카드 상태별 준비 화면 요약"
+	)
+	check(
+		plan.indices_for_scope(progress, StudyPlan.Scope.INCOMPLETE) == [0, 2]
+		and plan.indices_for_scope(progress, StudyPlan.Scope.WRONG) == [2],
+		"학습 계획: 미완료와 오답 범위를 원본 index로 선택"
+	)
+
+	var resume := StudyResume.new()
+	resume.deck_hash = 42
+	resume.remaining_indices = [1, 2]
+	check(plan.is_valid_resume(resume), "학습 계획: 현재 덱의 이어하기 기록 허용")
+	resume.remaining_indices = [3]
+	check(not plan.is_valid_resume(resume), "학습 계획: 범위 밖 이어하기 index 거부")
+
+	var selected := plan.begin(
+		[2, 0],
+		DeckOrdering.StudyOrder.SEQUENTIAL,
+		StudyPlan.Scope.WRONG,
+		false
+	)
+	check(
+		selected.size() == 2
+		and selected[0].question == "C"
+		and selected[1].question == "A"
+		and plan.active_index_at(0) == 2,
+		"학습 계획: 선택 index 순서로 활성 카드 구성"
+	)
+	var saved_resume := plan.make_resume(1)
+	check(
+		saved_resume.deck_hash == 42
+		and saved_resume.remaining_indices == [0]
+		and saved_resume.scope == StudyPlan.Scope.WRONG,
+		"학습 계획: 현재 위치부터 이어하기 기록 생성"
+	)
+	check(
+		plan.begin(
+			[99],
+			DeckOrdering.StudyOrder.SEQUENTIAL,
+			StudyPlan.Scope.ALL,
+			false
+		).is_empty()
+		and plan.active_indices.is_empty(),
+		"학습 계획: 범위 밖 활성 index를 안전하게 거부"
+	)
+
+	var replacement: Array[FlashCard] = [FlashCard.new("New", "Answer")]
+	plan.replace_cards("renamed.md", replacement, 99)
+	replacement[0].question = "changed again"
+	check(
+		plan.deck_file == "renamed.md"
+		and plan.cards[0].question == "New"
+		and plan.deck_hash == 99,
+		"학습 계획: 편집된 덱 snapshot 교체"
+	)
+	plan.clear()
+	check(
+		plan.deck_file.is_empty()
+		and plan.cards.is_empty()
+		and plan.active_indices.is_empty(),
+		"학습 계획: 준비·활성 상태 초기화"
 	)

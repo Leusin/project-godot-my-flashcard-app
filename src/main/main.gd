@@ -1,11 +1,7 @@
 class_name MainApp
 extends Control
 
-enum StudyScope {
-	ALL,
-	INCOMPLETE,
-	WRONG,
-}
+const StudyScope = StudyPlan.Scope
 
 enum CardEditorOrigin {
 	CARD_LIST,
@@ -91,12 +87,7 @@ var _source_cards: Array[FlashCard] = []
 var _session_cards: Array[FlashCard] = []
 var _session_outcomes: Array[int] = []
 var _pending_deck_action_file := ""
-var _ready_deck_file := ""
-var _ready_cards: Array[FlashCard] = []
-var _ready_deck_hash: int
-var _active_card_indices: Array[int] = []
-var _active_order: DeckOrdering.StudyOrder = DeckOrdering.StudyOrder.SEQUENTIAL
-var _active_scope: StudyScope = StudyScope.ALL
+var _study_plan := StudyPlan.new()
 var _editing_deck_file := ""
 var _editing_cards: Array[FlashCard] = []
 var _editing_card_index := -1
@@ -324,10 +315,7 @@ func show_library() -> void:
 	_session_cards.clear()
 	_session_outcomes.clear()
 	_deck_file = ""
-	_ready_deck_file = ""
-	_ready_cards.clear()
-	_ready_deck_hash = 0
-	_active_card_indices.clear()
+	_study_plan.clear()
 	_editing_deck_file = ""
 	_editing_cards.clear()
 	_card_editor_origin = CardEditorOrigin.CARD_LIST
@@ -373,9 +361,7 @@ func show_study_ready(deck_file: String) -> bool:
 		_show_library_notice(error_message)
 		return false
 
-	_ready_deck_file = deck_file
-	_ready_cards = DeckParser.parse(deck_text)
-	_ready_deck_hash = deck_text.hash()
+	_study_plan.prepare(deck_file, DeckParser.parse(deck_text), deck_text.hash())
 	_pending_deck_action_file = ""
 	deck_context_menu.dismiss()
 	card_context_menu.dismiss()
@@ -424,7 +410,7 @@ func _start_cards(
 	_order = order
 	_progress = DeckStorage.load_progress(deck_file)
 	_source_cards = cards.duplicate()
-	_active_card_indices.clear()
+	_study_plan.active_indices.clear()
 	card_context_menu.dismiss()
 	_show_page(study_flow)
 	_restart_session()
@@ -475,25 +461,15 @@ func _setup_study_ready_options() -> void:
 
 
 func _update_study_ready_summary() -> void:
-	var progress := DeckStorage.load_progress(_ready_deck_file)
-	var new_count := 0
-	var learning_count := 0
-	var mastered_count := 0
-	for card in _ready_cards:
-		match progress.get_status(card.question):
-			CardStatus.Value.LEARNING:
-				learning_count += 1
-			CardStatus.Value.MASTERED:
-				mastered_count += 1
-			_:
-				new_count += 1
-
+	var summary := _study_plan.summary(
+		DeckStorage.load_progress(_study_plan.deck_file)
+	)
 	study_ready_view.render_summary(
-		DeckNaming.display_name(_ready_deck_file),
-		_ready_cards.size(),
-		new_count,
-		learning_count,
-		mastered_count
+		DeckNaming.display_name(_study_plan.deck_file),
+		summary.total_count,
+		summary.new_count,
+		summary.learning_count,
+		summary.mastered_count
 	)
 
 
@@ -502,8 +478,8 @@ func _show_ready_overview() -> void:
 
 
 func _on_open_study_setup() -> void:
-	var resume := DeckStorage.load_study_resume(_ready_deck_file)
-	var replacing_resume := _is_valid_resume(resume)
+	var resume := DeckStorage.load_study_resume(_study_plan.deck_file)
+	var replacing_resume := _study_plan.is_valid_resume(resume)
 	study_ready_view.show_setup(
 		"진행 중 세션은 교체되며 카드별 진행 기록은 유지됩니다."
 		if replacing_resume
@@ -517,7 +493,7 @@ func _on_cancel_study_setup() -> void:
 
 
 func _on_manage_cards_pressed() -> void:
-	_open_card_list(_ready_deck_file)
+	_open_card_list(_study_plan.deck_file)
 
 
 func _open_card_list(deck_file: String) -> bool:
@@ -735,22 +711,18 @@ func _current_study_deck_index(
 	deck_cards: Array[FlashCard],
 	current_card: FlashCard
 ) -> int:
-	if (
-		not _active_card_indices.is_empty()
-		and _session.position() < _active_card_indices.size()
-	):
-		var active_index := _active_card_indices[_session.position()]
-		if active_index >= 0 and active_index < deck_cards.size():
-			var indexed_card := deck_cards[active_index]
-			if (
-				indexed_card.question == current_card.question
-				and indexed_card.answer == current_card.answer
-			):
-				return active_index
+	var active_index := _study_plan.active_index_at(_session.position())
+	if active_index >= 0 and active_index < deck_cards.size():
+		var indexed_card := deck_cards[active_index]
+		if (
+			indexed_card.question == current_card.question
+			and indexed_card.answer == current_card.answer
+		):
+			return active_index
 
 	var source_index := _source_cards.find(current_card)
 	if (
-		_active_card_indices.is_empty()
+		_study_plan.active_indices.is_empty()
 		and source_index >= 0
 		and source_index < deck_cards.size()
 	):
@@ -904,9 +876,11 @@ func _on_save_card_pressed() -> void:
 			and _study_edit_source_index < _source_cards.size()
 		):
 			_source_cards[_study_edit_source_index] = updated_card
-		_ready_deck_file = _editing_deck_file
-		_ready_cards = _copy_cards(updated)
-		_ready_deck_hash = updated_markdown.hash()
+		_study_plan.replace_cards(
+			_editing_deck_file,
+			updated,
+			updated_markdown.hash()
+		)
 		_save_active_study_resume()
 		_editing_cards = updated
 		if not progress_saved:
@@ -921,18 +895,18 @@ func _on_save_card_pressed() -> void:
 	):
 		var updated_result_card := updated[_editing_card_index]
 		_session_cards[_card_detail_result_index] = updated_result_card
+		var active_index := _study_plan.active_index_at(_card_detail_result_index)
 		if (
-			_card_detail_result_index < _active_card_indices.size()
-			and _active_card_indices[_card_detail_result_index] >= 0
-			and _active_card_indices[_card_detail_result_index] < _source_cards.size()
+			active_index >= 0
+			and active_index < _source_cards.size()
 		):
-			_source_cards[_active_card_indices[_card_detail_result_index]] = (
-				updated_result_card
-			)
+			_source_cards[active_index] = updated_result_card
 		_progress = progress
-		_ready_deck_file = _editing_deck_file
-		_ready_cards = _copy_cards(updated)
-		_ready_deck_hash = updated_markdown.hash()
+		_study_plan.replace_cards(
+			_editing_deck_file,
+			updated,
+			updated_markdown.hash()
+		)
 
 	if _card_editor_origin != CardEditorOrigin.STUDY:
 		DeckStorage.delete_study_resume(_editing_deck_file)
@@ -1011,11 +985,11 @@ func _return_to_ready_from_card_list() -> void:
 
 
 func _update_continue_action() -> void:
-	var resume := DeckStorage.load_study_resume(_ready_deck_file)
-	if not _is_valid_resume(resume):
+	var resume := DeckStorage.load_study_resume(_study_plan.deck_file)
+	if not _study_plan.is_valid_resume(resume):
 		study_ready_view.hide_continue_action()
 		if resume != null:
-			DeckStorage.delete_study_resume(_ready_deck_file)
+			DeckStorage.delete_study_resume(_study_plan.deck_file)
 		return
 
 	study_ready_view.set_continue_action(
@@ -1025,62 +999,18 @@ func _update_continue_action() -> void:
 	study_ready_view.select_order(resume.order)
 
 
-func _is_valid_resume(resume: StudyResume) -> bool:
-	if resume == null or resume.deck_hash != _ready_deck_hash:
-		return false
-	if resume.remaining_indices.is_empty():
-		return false
-	for index in resume.remaining_indices:
-		if index < 0 or index >= _ready_cards.size():
-			return false
-	return true
-
-
-static func filter_cards_for_scope(
-	cards: Array[FlashCard],
-	progress: Progress,
-	scope: StudyScope
-) -> Array[FlashCard]:
-	var filtered: Array[FlashCard] = []
-	for card in cards:
-		if scope == StudyScope.INCOMPLETE and (
-			progress.get_status(card.question) == CardStatus.Value.MASTERED
-		):
-			continue
-		if scope == StudyScope.WRONG and progress.get_wrong_count(card.question) <= 0:
-			continue
-		filtered.append(card)
-	return filtered
-
-
-static func card_indices_for_scope(
-	cards: Array[FlashCard],
-	progress: Progress,
-	scope: StudyScope
-) -> Array[int]:
-	var indices: Array[int] = []
-	for index in cards.size():
-		var card := cards[index]
-		if scope == StudyScope.INCOMPLETE and (
-			progress.get_status(card.question) == CardStatus.Value.MASTERED
-		):
-			continue
-		if scope == StudyScope.WRONG and progress.get_wrong_count(card.question) <= 0:
-			continue
-		indices.append(index)
-	return indices
-
-
 func _on_start_study_pressed() -> void:
-	if _ready_deck_file.is_empty() or not DeckStorage.deck_exists(_ready_deck_file):
+	if (
+		_study_plan.deck_file.is_empty()
+		or not DeckStorage.deck_exists(_study_plan.deck_file)
+	):
 		show_library()
 		_show_library_notice("덱 파일을 읽지 못했습니다.")
 		return
 
-	var scope := study_ready_view.selected_scope() as StudyScope
-	var selected_indices := card_indices_for_scope(
-		_ready_cards,
-		DeckStorage.load_progress(_ready_deck_file),
+	var scope := study_ready_view.selected_scope()
+	var selected_indices := _study_plan.indices_for_scope(
+		DeckStorage.load_progress(_study_plan.deck_file),
 		scope
 	)
 	if selected_indices.is_empty():
@@ -1096,17 +1026,16 @@ func _on_start_study_pressed() -> void:
 
 
 func _on_continue_study_pressed() -> void:
-	var resume := DeckStorage.load_study_resume(_ready_deck_file)
-	if not _is_valid_resume(resume):
+	var resume := DeckStorage.load_study_resume(_study_plan.deck_file)
+	if not _study_plan.is_valid_resume(resume):
 		_update_continue_action()
 		_show_action_notice("이어서 학습할 기록이 없습니다.")
 		return
 
-	var resume_scope := resume.scope as StudyScope
 	_begin_indexed_study(
 		resume.remaining_indices,
 		resume.order,
-		resume_scope,
+		resume.scope,
 		false
 	)
 
@@ -1114,21 +1043,15 @@ func _on_continue_study_pressed() -> void:
 func _begin_indexed_study(
 	indices: Array[int],
 	order: DeckOrdering.StudyOrder,
-	scope: StudyScope,
+	scope: int,
 	apply_order: bool
 ) -> void:
-	_active_card_indices = indices.duplicate()
-	if apply_order and order == DeckOrdering.StudyOrder.SHUFFLE:
-		_active_card_indices.shuffle()
+	var cards := _study_plan.begin(indices, order, scope, apply_order)
+	if cards.is_empty():
+		return
 
-	var cards: Array[FlashCard] = []
-	for index in _active_card_indices:
-		cards.append(_ready_cards[index])
-
-	_deck_file = _ready_deck_file
+	_deck_file = _study_plan.deck_file
 	_remember_last_study_deck(_deck_file)
-	_active_order = order
-	_active_scope = scope
 	_order = DeckOrdering.StudyOrder.SEQUENTIAL
 	_progress = DeckStorage.load_progress(_deck_file)
 	_source_cards = cards
@@ -1137,20 +1060,20 @@ func _begin_indexed_study(
 
 
 func _save_active_study_resume() -> void:
-	if _active_card_indices.is_empty() or _session == null or _deck_file.is_empty():
+	if (
+		_study_plan.active_indices.is_empty()
+		or _session == null
+		or _deck_file.is_empty()
+	):
 		return
 
 	if _session.is_finished():
 		DeckStorage.delete_study_resume(_deck_file)
 		return
 
-	var resume := StudyResume.new()
-	resume.deck_hash = _ready_deck_hash
-	resume.order = _active_order
-	resume.scope = _active_scope
-	for index in range(_session.position(), _active_card_indices.size()):
-		resume.remaining_indices.append(_active_card_indices[index])
-	DeckStorage.save_study_resume(_deck_file, resume)
+	var resume := _study_plan.make_resume(_session.position())
+	if resume != null:
+		DeckStorage.save_study_resume(_deck_file, resume)
 
 
 func _return_to_study_ready() -> void:
@@ -1158,7 +1081,7 @@ func _return_to_study_ready() -> void:
 	_save_active_study_resume()
 	var deck_file := _deck_file
 	if deck_file.is_empty():
-		deck_file = _ready_deck_file
+		deck_file = _study_plan.deck_file
 	show_study_ready(deck_file)
 
 
@@ -1180,11 +1103,14 @@ func _on_open_settings_pressed() -> void:
 
 
 func _on_ready_deck_menu_pressed(anchor: Control) -> void:
-	if _ready_deck_file.is_empty() or not DeckStorage.deck_exists(_ready_deck_file):
+	if (
+		_study_plan.deck_file.is_empty()
+		or not DeckStorage.deck_exists(_study_plan.deck_file)
+	):
 		show_library()
 		_show_library_notice("덱 파일을 읽지 못했습니다.")
 		return
-	_on_deck_menu_requested(_ready_deck_file, anchor)
+	_on_deck_menu_requested(_study_plan.deck_file, anchor)
 
 
 func _on_deck_menu_requested(deck_file: String, anchor: Control) -> void:
@@ -1521,7 +1447,7 @@ func rename_deck_from_library(deck_file: String, new_display_name: String) -> bo
 	_pending_deck_action_file = ""
 	_refresh_deck_list()
 	# 준비 화면에서는 제목이 새 이름으로 바뀌는 것 자체가 결과를 보여 준다.
-	if study_ready_view.visible and _ready_deck_file == deck_file:
+	if study_ready_view.visible and _study_plan.deck_file == deck_file:
 		show_study_ready(result.deck_file)
 	else:
 		_show_library_notice(result.message)
@@ -1686,12 +1612,12 @@ func _on_result_card_selected(result_index: int) -> void:
 		_editing_cards = _copy_cards(
 			DeckParser.parse(DeckStorage.read_deck(_deck_file))
 		)
+		var active_index := _study_plan.active_index_at(result_index)
 		if (
-			result_index < _active_card_indices.size()
-			and _active_card_indices[result_index] >= 0
-			and _active_card_indices[result_index] < _editing_cards.size()
+			active_index >= 0
+			and active_index < _editing_cards.size()
 		):
-			deck_index = _active_card_indices[result_index]
+			deck_index = active_index
 		else:
 			for index in _editing_cards.size():
 				var deck_card := _editing_cards[index]
@@ -1812,16 +1738,15 @@ func _on_retry_again_pressed() -> void:
 
 	var retry_cards: Array[FlashCard] = []
 	var retry_indices: Array[int] = []
-	var can_reuse_deck_indices := (
-		not _active_card_indices.is_empty()
-		and _active_card_indices.size() == _session_cards.size()
+	var can_reuse_deck_indices := _study_plan.can_map_active_cards(
+		_session_cards.size()
 	)
 	for index in _session_outcomes.size():
 		if _session_outcomes[index] != StudyOutcome.Value.AGAIN:
 			continue
 		retry_cards.append(_session_cards[index])
 		if can_reuse_deck_indices:
-			retry_indices.append(_active_card_indices[index])
+			retry_indices.append(_study_plan.active_index_at(index))
 
 	if retry_cards.is_empty():
 		return
@@ -1829,7 +1754,7 @@ func _on_retry_again_pressed() -> void:
 	if can_reuse_deck_indices:
 		_begin_indexed_study(
 			retry_indices,
-			_active_order,
+			_study_plan.active_order,
 			StudyScope.WRONG,
 			false
 		)
