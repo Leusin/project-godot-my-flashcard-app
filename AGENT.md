@@ -26,7 +26,7 @@ Markdown 덱을 앱에서 만들고 편집하며, 스와이프와 버튼으로 �
 - AI는 파서·런타임 오류, 헤드리스 테스트, export 검증을 맡고 화면의 최종 감각은 사람이 판단한다.
 - 씬 노드 이름을 바꾸거나 제거하면 `main.gd`의 노드 경로와 `tests/main_smoke.gd`를 같은 변경에서 갱신한다.
 - 기능 묶음이 끝나면 관련 코드와 테스트를 함께 커밋한다.
-- 역사적 결정은 [docs/DEVLOG.md](docs/DEVLOG.md), 현재 구조는 [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md)에 기록한다.
+- [docs/DEVLOG.md](docs/DEVLOG.md)에는 재발 방지에 유용한 시행착오·원인·해결 근거만 남긴다. 단순 변경 이력과 테스트 개수는 적지 않는다. 현재 구조는 [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md)에 기록한다.
 
 ## 테스트
 
@@ -45,5 +45,5 @@ $godot = "C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windo
 - [docs/DESIGN.md](docs/DESIGN.md) — 제품과 데이터 규칙
 - [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md) — 현재 코드 구조와 데이터 흐름
 - [docs/CONVENTIONS.md](docs/CONVENTIONS.md) — 설계·GDScript 규칙
-- [docs/DEVLOG.md](docs/DEVLOG.md) — 변경 이력과 결정 이유
+- [docs/DEVLOG.md](docs/DEVLOG.md) — 재발 방지를 위한 시행착오와 판단 근거
 - [docs/MIGRATION_GDSCRIPT.md](docs/MIGRATION_GDSCRIPT.md) — 완료된 C# → GDScript 전환 기록
