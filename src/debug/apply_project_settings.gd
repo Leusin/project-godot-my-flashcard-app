@@ -27,10 +27,17 @@ const PROJECT_SETTINGS: Dictionary = {
 	"display/window/stretch/aspect": "expand",
 	"display/window/handheld/orientation": 1,
 
-	# 디자인 해상도는 720×1280(모바일 세로)이지만, 데스크톱 창은 그대로 띄우면 화면보다 크다.
-	# 창만 작게(9:16 유지) 띄우고 내용은 stretch로 축소한다. 화면이 더 작으면 이 값을 줄인다.
+	# 기본 세로 화면의 미리보기 크기. PC에서는 아래 .pc 설정으로 덮어쓴다.
 	"display/window/size/window_width_override": 375,
 	"display/window/size/window_height_override": 667,
+
+	# PC에서는 가로 16:9 화면을 유지한다. 창 크기가 달라지면 여백으로 비율을 보존한다.
+	# 1080 높이는 기존 학습 준비 화면의 최소 높이를 확보한다.
+	"display/window/size/viewport_width.pc": 1920,
+	"display/window/size/viewport_height.pc": 1080,
+	"display/window/size/window_width_override.pc": 1152,
+	"display/window/size/window_height_override.pc": 648,
+	"display/window/stretch/aspect.pc": "keep",
 
 	# 카드 내용이 대부분 한글이라 기본 폰트로는 렌더링이 아쉽다
 	"gui/theme/custom_font": "res://assets/fonts/PretendardVariable.ttf",
