@@ -6,16 +6,20 @@ signal duplicate_requested(deck_file: String)
 signal export_requested(deck_file: String)
 signal delete_requested(deck_file: String)
 
-@onready var rename_button: Button = %RenameDeckButton
-@onready var duplicate_button: Button = %DuplicateDeckButton
-@onready var export_button: Button = %ExportDeckButton
-@onready var delete_button: Button = %DeleteDeckButton
+var rename_button: Button
+var duplicate_button: Button
+var export_button: Button
+var delete_button: Button
 
 var _deck_file := ""
 
 
 func _ready() -> void:
 	super()
+	duplicate_button = add_item("DuplicateDeckButton", "덱 복제")
+	rename_button = add_item("RenameDeckButton", "이름 변경")
+	export_button = add_item("ExportDeckButton", "Markdown 내보내기")
+	delete_button = add_item("DeleteDeckButton", "덱 삭제")
 	rename_button.pressed.connect(_on_rename_button_pressed)
 	duplicate_button.pressed.connect(_on_duplicate_button_pressed)
 	export_button.pressed.connect(_on_export_button_pressed)

@@ -1003,6 +1003,9 @@ func _on_deck_menu_requested(deck_file: String, anchor: Control) -> void:
 
 
 func handle_back_request() -> bool:
+	if card_list_view.sort_menu.visible:
+		card_list_view.sort_menu.dismiss()
+		return true
 	if restart_study_overlay.visible:
 		restart_study_overlay.hide()
 		return true

@@ -42,16 +42,27 @@ func _run() -> void:
 	view.render("출퇴근 복습", cards)
 	await process_frame
 	await process_frame
-	view.sort_button.get_popup().id_pressed.emit(1)
+	await _button(view.sort_button.get_global_rect().get_center(), true)
+	await _button(view.sort_button.get_global_rect().get_center(), false)
+	await process_frame
+	_check(view.sort_menu.visible, "실제 포인터: 공통 정렬 메뉴 열기")
+	await _button(view.sort_items[1].get_global_rect().get_center(), true)
+	await _button(view.sort_items[1].get_global_rect().get_center(), false)
+	_check(not view.sort_menu.visible, "실제 포인터: 정렬 선택 후 메뉴 닫기")
 	await process_frame
 	_check(view.rows.get_child(0).card_index == 1, "질문 오름차순: 원본 index 보존")
 	var progress := Progress.new()
 	progress.set_wrong_count("momentum", 8)
 	view.render("출퇴근 복습", cards, progress)
-	view.sort_button.get_popup().id_pressed.emit(2)
+	view.sort_items[2].pressed.emit()
 	await process_frame
 	_check(view.rows.get_child(0).card_index == 2, "오답 많은 순: 8회 카드가 먼저 표시")
-	view.sort_button.get_popup().id_pressed.emit(1)
+	view.sort_items[1].pressed.emit()
+	await _button(view.sort_button.get_global_rect().get_center(), true)
+	await _button(view.sort_button.get_global_rect().get_center(), false)
+	await _button(Vector2(10, 800), true)
+	await _button(Vector2(10, 800), false)
+	_check(not view.sort_menu.visible, "실제 포인터: 바깥 클릭으로 메뉴 닫기")
 	view.search_field.text = "회복"
 	view.search_field.text_changed.emit("회복")
 	await process_frame

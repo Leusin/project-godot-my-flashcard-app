@@ -124,3 +124,10 @@ godot --path . --script res://tests/ui_interaction.gd -- --capture
 - 카드 목록은 AppSettings.CardSort(0 기본, 1 질문, 2 오답)로 행의 표시 순서를 선택한다. row.card_index는 원본 index이며 검색과 행 동작에서도 그대로 사용한다. 정렬은 파일·학습 순서·이어하기를 변경하지 않는다.
 
 - 카드 추가는 헤더의 ＋ 버튼을 사용하며 검색어가 있는 동안 숨긴다.
+
+### 공통 컨텍스트 메뉴
+
+- `src/main/context_menu.tscn`이 패널, 항목 템플릿, 구분선, 닫기 영역을 정의한다. `anchored_popup_menu.gd`의 `add_item`, `add_separator`, `set_radio`, `open_at`으로 구성한다.
+- 추가·덱·카드·라이브러리 메뉴 씬은 이 씬을 상속하며 각 스크립트는 항목과 의미별 signal만 담당한다.
+- `CardListView`도 같은 씬을 CanvasLayer에 표시하며 단일 정렬 선택과 닫힘을 처리한다. Main은 뒤로가기 시 화면 이동보다 메뉴 닫기를 먼저 처리한다.
+- `context_menu_panel.tres`가 검은 3px 테두리와 패널 여백·그림자를 공유한다. 학습 설정의 기본 PopupMenu에도 같은 패널 스타일을 사용한다.

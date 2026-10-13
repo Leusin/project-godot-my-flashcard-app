@@ -4,12 +4,14 @@ extends "res://src/main/anchored_popup_menu.gd"
 signal edit_requested
 signal delete_requested
 
-@onready var edit_button: Button = %EditCardActionButton
-@onready var delete_button: Button = %DeleteCardActionButton
+var edit_button: Button
+var delete_button: Button
 
 
 func _ready() -> void:
 	super()
+	edit_button = add_item("EditCardActionButton", "수정하기")
+	delete_button = add_item("DeleteCardActionButton", "카드 삭제")
 	edit_button.pressed.connect(_on_edit_button_pressed)
 	delete_button.pressed.connect(_on_delete_button_pressed)
 

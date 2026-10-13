@@ -15,6 +15,27 @@ func _ready() -> void:
 	dismiss_button.pressed.connect(dismiss)
 
 
+func add_item(item_name: String, caption: String) -> Button:
+	var button := $ItemTemplate.duplicate() as Button
+	button.name = item_name
+	button.text = caption
+	$MenuPanel/Margin/Content.add_child(button)
+	button.owner = self
+	button.unique_name_in_owner = true
+	button.show()
+	return button
+
+
+func add_separator() -> void:
+	var separator := $SeparatorTemplate.duplicate() as HSeparator
+	$MenuPanel/Margin/Content.add_child(separator)
+	separator.show()
+
+
+func set_radio(button: Button, selected: bool) -> void:
+	button.icon = get_theme_icon("radio_checked" if selected else "radio_unchecked", "PopupMenu")
+
+
 func open_at(anchor: Control) -> void:
 	show()
 	menu_panel.reset_size()

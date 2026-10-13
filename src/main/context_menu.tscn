@@ -1,0 +1,110 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
+[ext_resource type="Script" path="res://src/main/anchored_popup_menu.gd" id="2_script"]
+
+[ext_resource type="StyleBoxFlat" path="res://src/main/context_menu_panel.tres" id="3_menu_panel"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxBackdrop"]
+
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxMenuItem"]
+content_margin_left = 24.0
+content_margin_right = 16.0
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxMenuItemHover"]
+content_margin_left = 24.0
+content_margin_right = 16.0
+bg_color = Color(0.93, 0.93, 0.93, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxMenuItemPressed"]
+content_margin_left = 24.0
+content_margin_right = 16.0
+bg_color = Color(0.84, 0.84, 0.84, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxLine" id="SeparatorStyle"]
+color = Color(0.82, 0.82, 0.80, 1)
+thickness = 1
+
+[node name="ContextMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_theme")
+script = ExtResource("2_script")
+menu_panel_path = NodePath("MenuPanel")
+dismiss_button_path = NodePath("DismissButton")
+
+[node name="DismissButton" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+focus_mode = 0
+theme_override_styles/normal = SubResource("StyleBoxBackdrop")
+theme_override_styles/hover = SubResource("StyleBoxBackdrop")
+theme_override_styles/pressed = SubResource("StyleBoxBackdrop")
+theme_override_styles/focus = SubResource("StyleBoxBackdrop")
+
+[node name="MenuPanel" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(320, 0)
+layout_mode = 0
+offset_left = 190.0
+offset_top = 120.0
+offset_right = 510.0
+offset_bottom = 292.0
+theme_override_styles/panel = ExtResource("3_menu_panel")
+
+[node name="Margin" type="MarginContainer" parent="MenuPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 0
+theme_override_constants/margin_bottom = 0
+
+[node name="Content" type="VBoxContainer" parent="MenuPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="ItemTemplate" type="Button" parent="."]
+visible = false
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = SubResource("StyleBoxMenuItem")
+theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
+theme_override_styles/pressed = SubResource("StyleBoxMenuItemPressed")
+theme_override_styles/focus = SubResource("StyleBoxMenuItemHover")
+theme_override_constants/h_separation = 12
+text = ""
+alignment = 0
+
+
+[node name="SeparatorTemplate" type="HSeparator" parent="."]
+visible = false
+custom_minimum_size = Vector2(0, 16)
+theme_override_styles/separator = SubResource("SeparatorStyle")

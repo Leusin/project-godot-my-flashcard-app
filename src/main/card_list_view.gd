@@ -12,11 +12,15 @@ signal sort_changed(mode: int)
 
 const CARD_ROW_SCENE := preload("res://src/main/card_collection_row.tscn")
 
+const CONTEXT_MENU_SCENE := preload("res://src/main/context_menu.tscn")
+
+var sort_menu: AnchoredPopupMenu
+var sort_items: Array[Button] = []
 var _sort_mode := 0
 var _progress: Progress
 var _cards: Array[FlashCard] = []
 
-@onready var sort_button: MenuButton = $Header/RightActions/CardSortButton
+@onready var sort_button: Button = $Header/RightActions/CardSortButton
 @onready var back_button: Button = $Header/LeftActions/BackFromCardListButton
 @onready var deck_name_label: Label = $Header/TitleSlot/CardListDeckLabel
 @onready var search_field: LineEdit = $ContentBounds/Content/SearchField
@@ -26,10 +30,24 @@ var _cards: Array[FlashCard] = []
 
 
 func _ready() -> void:
-	var popup := sort_button.get_popup()
+	var menu_layer := CanvasLayer.new()
+	add_child(menu_layer)
+	sort_menu = CONTEXT_MENU_SCENE.instantiate() as AnchoredPopupMenu
+	menu_layer.add_child(sort_menu)
+	sort_menu.hide()
 	for caption in ["기본 순서", "질문 오름차순", "오답 많은 순"]:
-		popup.add_radio_check_item(caption)
-	popup.id_pressed.connect(_on_sort_selected)
+		var index := sort_items.size()
+		var item := sort_menu.add_item("SortItem%d" % index, caption)
+		item.pressed.connect(func() -> void:
+			sort_menu.dismiss()
+			_on_sort_selected(index)
+		)
+		sort_items.append(item)
+	sort_button.pressed.connect(func() -> void: sort_menu.open_at(sort_button))
+	visibility_changed.connect(func() -> void:
+		if not is_visible_in_tree():
+			sort_menu.dismiss()
+	)
 	set_sort(0)
 	search_field.text_changed.connect(_apply_search)
 	search_field.text_submitted.connect(func(_text: String) -> void: search_field.release_focus())
@@ -67,9 +85,8 @@ func _on_row_menu_requested(index: int, anchor: Control) -> void:
 
 func set_sort(mode: int) -> void:
 	_sort_mode = clampi(mode, 0, 2)
-	var popup := sort_button.get_popup()
-	for index in popup.item_count:
-		popup.set_item_checked(index, index == _sort_mode)
+	for index in sort_items.size():
+		sort_menu.set_radio(sort_items[index], index == _sort_mode)
 	_sort_rows()
 
 

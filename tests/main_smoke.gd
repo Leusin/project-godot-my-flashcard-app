@@ -1017,14 +1017,18 @@ func run_tests() -> void:
 		"Main Search: 검색 지우면 전체 목록과 재정렬 복원")
 	var original_markdown := DeckStorage.read_deck(EDIT_DECK)
 	var original_resume := DeckStorage.load_study_resume(EDIT_DECK).remaining_indices.duplicate()
-	search_view.sort_button.get_popup().id_pressed.emit(2)
+	search_view.sort_button.pressed.emit()
+	check(search_view.sort_menu.visible, "Main Card Sort: 공통 메뉴 표시")
+	app.handle_back_request()
+	check(not search_view.sort_menu.visible and search_view.visible, "Main Card Sort: 뒤로가기는 메뉴만 닫기")
+	search_view.sort_items[2].pressed.emit()
 	check(search_view.rows.get_child(0).card_index == 0 and DeckStorage.load_settings().card_sort == 2,
 		"Main Card List: 오답 많은 순 및 선택 기준 저장")
-	search_view.sort_button.get_popup().id_pressed.emit(1)
+	search_view.sort_items[1].pressed.emit()
 	check(DeckStorage.read_deck(EDIT_DECK) == original_markdown
 		and DeckStorage.load_study_resume(EDIT_DECK).remaining_indices == original_resume,
 		"Main Card List: 정렬해도 원본과 이어하기 보존")
-	search_view.sort_button.get_popup().id_pressed.emit(0)
+	search_view.sort_items[0].pressed.emit()
 	check(search_view.rows.get_child(0).card_index == 0 and search_view.rows.get_child(1).card_index == 1,
 		"Main Card List: 기본 순서 복원")
 	row_menu_button.pressed.emit()
