@@ -97,6 +97,22 @@ func _run() -> void:
 		await process_frame
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://build/card-list-preview.png")
+	view.search_field.text = ""
+	view.search_field.text_changed.emit("")
+	view.sort_button.pressed.emit()
+	var old_menu_position := view.sort_menu.menu_panel.global_position
+	root.size = Vector2i(1100, 900)
+	await process_frame
+	await process_frame
+	view.size = root.get_visible_rect().size
+	await process_frame
+	await process_frame
+	await RenderingServer.frame_post_draw
+	var menu_rect := view.sort_menu.menu_panel.get_global_rect()
+	var anchor_rect := view.sort_button.get_global_rect()
+	_check(not view.sort_menu.menu_panel.global_position.is_equal_approx(old_menu_position), "메뉴: 레이아웃 변경 후 위치 갱신")
+	_check(is_equal_approx(menu_rect.position.y, anchor_rect.end.y + 4), "메뉴: 크기 변경 후에도 버튼 바로 아래 표시")
+	view.sort_menu.dismiss()
 	view.free()
 	print("UI RESULT: %d checks, %d failures" % [checks, failures])
 	quit(failures)

@@ -7,12 +7,15 @@ const ANCHOR_GAP := 4.0
 @export_node_path("PanelContainer") var menu_panel_path: NodePath
 @export_node_path("Button") var dismiss_button_path: NodePath
 
+var _anchor: Control
+
 @onready var menu_panel: PanelContainer = get_node(menu_panel_path)
 @onready var dismiss_button: Button = get_node(dismiss_button_path)
 
 
 func _ready() -> void:
 	dismiss_button.pressed.connect(dismiss)
+	RenderingServer.frame_pre_draw.connect(_refresh_position)
 
 
 func add_item(item_name: String, caption: String) -> Button:
@@ -37,13 +40,25 @@ func set_radio(button: Button, selected: bool) -> void:
 
 
 func open_at(anchor: Control) -> void:
+	_anchor = anchor
 	show()
 	menu_panel.reset_size()
 	_position_at(anchor)
 
 
 func dismiss() -> void:
+	_anchor = null
 	hide()
+
+
+# 컨테이너 배치가 끝난 뒤 그리기 직전에 기준 버튼을 따라간다.
+func _refresh_position() -> void:
+	if not is_visible_in_tree():
+		return
+	if not is_instance_valid(_anchor) or not _anchor.is_visible_in_tree():
+		dismiss()
+		return
+	_position_at(_anchor)
 
 
 func _position_at(anchor: Control) -> void:
@@ -57,22 +72,22 @@ func _position_at(anchor: Control) -> void:
 	menu_position.x = clampf(
 		menu_position.x,
 		VIEWPORT_MARGIN,
-		size.x - menu_size.x - VIEWPORT_MARGIN
+		maxf(VIEWPORT_MARGIN, size.x - menu_size.x - VIEWPORT_MARGIN)
 	)
 	if menu_position.y + menu_size.y > size.y - VIEWPORT_MARGIN:
 		menu_position.y = anchor_rect.position.y - menu_size.y - ANCHOR_GAP
 	menu_position.y = clampf(
 		menu_position.y,
 		VIEWPORT_MARGIN,
-		size.y - menu_size.y - VIEWPORT_MARGIN
+		maxf(VIEWPORT_MARGIN, size.y - menu_size.y - VIEWPORT_MARGIN)
 	)
 	menu_panel.position = menu_position
 
 
 func _control_rect_in_overlay(control: Control) -> Rect2:
 	var control_to_overlay := (
-		get_global_transform().affine_inverse()
-		* control.get_global_transform()
+		get_global_transform_with_canvas().affine_inverse()
+		* control.get_global_transform_with_canvas()
 	)
 	var local_position := control_to_overlay * Vector2.ZERO
 	var end := control_to_overlay * control.size
