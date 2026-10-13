@@ -562,6 +562,7 @@ func run_tests() -> void:
 	var study_card_content := _view(app, "QuestionLabel").get_parent()
 	check(_view(app, "QuestionLabel").text == "A", "MVP: 첫 질문 표시")
 	check(not _view(app, "AnswerScroll").visible, "Main Study: 첫 화면에서 답 영역 숨김")
+	check(app.study_flow.next_card.visible, "Main Study: 다음 카드가 있으면 뒷장 표시")
 	check(
 		_view(app, "AgainButton").visible
 		and _view(app, "GoodButton").visible,
@@ -695,6 +696,7 @@ func run_tests() -> void:
 	_view(app, "AgainButton").pressed.emit()
 	check(_view(app, "QuestionLabel").text == "B", "MVP: Again 후 다음 질문")
 	check(_view(app, "RemainingLabel").text == "1장 남음", "MVP: Again 후 남은 수 감소")
+	check(not app.study_flow.next_card.visible, "Main Study: 마지막 카드에서 뒷장 숨김")
 	check(
 		DeckStorage.load_progress(TEST_DECK).get_wrong_count("A") == 1
 		and DeckStorage.load_progress(TEST_DECK).get_status("A")

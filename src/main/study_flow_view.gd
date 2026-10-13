@@ -12,6 +12,7 @@ signal return_requested
 
 @onready var back_button: Button = $Header/LeftActions/BackToReadyButton
 @onready var deck_name_label: Label = $Header/TitleSlot/DeckLabel
+@onready var next_card: Panel = $ContentBounds/Content/StudyContainer/CardStage/CardSlot/NextCard
 @onready var remaining_label: Label = $Header/RightActions/RemainingLabel
 @onready var current_view: VBoxContainer = (
 	$ContentBounds/Content/StudyContainer
@@ -95,6 +96,7 @@ func show_card(
 	answer_scroll.scroll_vertical = 0
 	set_answer_visible(false)
 	gesture_surface.previous_enabled = previous_enabled
+	next_card.visible = remaining > 1
 	remaining_label.text = "%d장 남음" % remaining
 
 

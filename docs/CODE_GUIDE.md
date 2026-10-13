@@ -141,3 +141,5 @@ godot --path . --script res://tests/ui_interaction.gd -- --capture
 - 버튼은 마우스 호버 시 평상시 외형을 유지한다. 공통 테마와 개별 씬의 hover는 normal을 공유하며, 눌림과 키보드 focus는 별도로 유지한다.
 
 - PC 화면은 project.godot의 `.pc` 오버라이드로 1920×1080·keep 비율을 사용하고 1152×648 창으로 시작한다. 모바일은 기본 세로 설정을 사용한다.
+
+- 학습 `NextCard`는 입력을 받지 않는 빈 뒷장으로 남은 카드가 2장 이상일 때만 보인다. 다음 카드는 이 위치에서 앞으로, PREVIOUS는 위에서 내려오며 전환 중 판정 입력을 잠근다.

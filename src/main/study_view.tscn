@@ -131,6 +131,19 @@ layout_mode = 0
 offset_right = 656.0
 offset_bottom = 984.0
 
+[node name="NextCard" type="Panel" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -12.0
+offset_right = 12.0
+offset_bottom = -12.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxStudyCard")
+
 [node name="CardFrame" type="PanelContainer" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot" unique_id=871367939]
 z_index = 2
 layout_mode = 1

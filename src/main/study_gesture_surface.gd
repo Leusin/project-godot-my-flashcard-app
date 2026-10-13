@@ -36,6 +36,7 @@ const VERTICAL_PREVIEW_MAX_OFFSET_RATIO := 0.16
 const EXIT_ROTATION_DEGREES := 15.0
 const EXIT_DURATION := 0.2
 const ENTER_DURATION := 0.12
+const PREVIOUS_ENTER_DURATION := 0.22
 const FLIP_LIFT_DURATION := 0.06
 const FLIP_HALF_DURATION := 0.14
 const FLIP_OPEN_DURATION := 0.16
@@ -458,12 +459,16 @@ func _on_swipe_exit_finished(direction: int) -> void:
 		_animating = false
 		return
 
-	position = Vector2.ZERO
 	rotation = 0.0
 	scale = Vector2.ONE
-	modulate.a = 0.0
+	modulate.a = 1.0
+	# 다음 카드는 뒤에 대기하던 자리에서 앞으로, 이전 카드는 위쪽에서 돌아온다.
+	position = Vector2(0, -_travel_distance(Vector2.UP)) if direction == PREVIOUS else ($"../NextCard" as Control).position
+	var duration := PREVIOUS_ENTER_DURATION if direction == PREVIOUS else ENTER_DURATION
+	_animating = true
+	_set_animation_controls_disabled(true)
 	_motion_tween = create_tween()
-	_motion_tween.tween_property(self, "modulate:a", 1.0, ENTER_DURATION)
+	_motion_tween.tween_property(self, "position", Vector2.ZERO, duration).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_motion_tween.finished.connect(_on_swipe_enter_finished)
 
 
