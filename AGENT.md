@@ -1,10 +1,10 @@
 # My Simple Flash Card
 
-Markdown 덱을 앱에서 만들고 편집하며, 스와이프와 버튼으로 복습하는 Godot 4.7.1 GDScript 앱이다. 기획은 [docs/DESIGN.md](docs/DESIGN.md), 현재 구조는 [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md)를 참고한다.
+Markdown 덱을 앱에서 만들고 편집하며, 스와이프와 버튼으로 복습하는 Godot 4.7 GDScript 앱이다. 기획은 [docs/DESIGN.md](docs/DESIGN.md), 현재 구조는 [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md)를 참고한다.
 
 ## 개발 환경
 
-- 일반 Godot 4.7.1 에디터를 사용한다. .NET/Mono 에디터와 .NET SDK는 필요 없다.
+- 일반 Godot 4.7 에디터를 사용한다. .NET/Mono 에디터와 .NET SDK는 필요 없다.
 - Main Scene은 `src/main/main.tscn`이다.
 - 프로젝트 설정의 출처는 [src/debug/apply_project_settings.gd](src/debug/apply_project_settings.gd)다. 설정을 바꿀 때 스크립트와 `project.godot`이 일치하는지 함께 확인한다.
 - 들여쓰기는 탭이며 [.editorconfig](.editorconfig)를 따른다.
@@ -30,10 +30,7 @@ Markdown 덱을 앱에서 만들고 편집하며, 스와이프와 버튼으로 �
 
 ## 테스트
 
-```powershell
-$godot = "C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe"
-& $godot --headless --path . --log-file .godot/latest-test.log res://tests/tests.tscn
-```
+실행 명령과 데이터 격리 방법은 [README](README.md#실행과-검증)를 따른다.
 
 - 중앙 실행기는 `tests/test_runner.gd`다.
 - 새 검증은 책임에 따라 `phase*_smoke.gd` 또는 `main_smoke.gd`에 추가한다.
@@ -42,6 +39,7 @@ $godot = "C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windo
 
 ## 문서 체계
 
+- [docs/MEMORY.md](docs/MEMORY.md) — 프로젝트 동기와 장기 방향
 - [docs/DESIGN.md](docs/DESIGN.md) — 제품과 데이터 규칙
 - [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md) — 현재 코드 구조와 데이터 흐름
 - [docs/CONVENTIONS.md](docs/CONVENTIONS.md) — 설계·GDScript 규칙

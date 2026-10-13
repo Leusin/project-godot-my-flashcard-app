@@ -291,13 +291,6 @@ MobileFoundationChecks.run(
 이 프로젝트에서는 `tests/mobile_foundation_smoke.gd`가 그 다리다.
 `res://tests/tests.tscn`을 헤드리스로 돌리면 나머지 테스트와 함께 실행된다.
 
-## 아직 옮기지 않은 것
+## 모듈 경계
 
-다음 후보들이다. 지금은 이 프로젝트 안에 남아 있고, 도메인과 얽힌 정도가 서로 다르다.
-
-| 후보 | 지금 자리 | 옮기기 전에 풀어야 할 것 |
-| --- | --- | --- |
-| `AppBackup` | `src/storage/` | 저장 경로와 파일 이름 규칙이 앱마다 다르다. 무엇을 묶을지 받는 API가 필요하다 |
-| `ModalDialog` | `src/main/` | 테마와 버튼 문구가 박혀 있다. 문구와 스타일을 밖에서 넣도록 갈라야 한다 |
-| `TopNotification` | `src/main/` | 위와 같다. 안전 영역 연동은 이미 `SafeArea`로 뺄 수 있다 |
-| `StudyGestureSurface` | `src/main/` | 탭/스와이프 판정은 범용이지만 카드 뒤집기 애니메이션과 한 몸이다. 입력 판정과 연출을 갈라야 한다 |
+앱의 백업 경로, 테마·문구, 학습 판정과 카드 애니메이션은 이 모듈에 포함하지 않는다. 해당 기능은 `src/storage/`와 `src/main/`에서 관리한다. 새 기능을 옮길 때도 앱 타입과 `res://src/` 참조 없이 독립 예제를 실행할 수 있어야 한다.

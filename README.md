@@ -1,68 +1,69 @@
 # My Simple Flash Card
 
-Markdown으로 카드를 작성하고, 스와이프와 버튼으로 복습하는 모바일 중심 플래시카드 앱. Google Play 테스트 배포 버전은 0.10.3이다 (패키지 `com.leusin.mysimpleflashcard`).
+Markdown으로 카드를 작성하고 버튼과 스와이프로 복습하는 모바일 중심 앱이다. Godot 4.7 / GDScript를 사용하며 .NET SDK는 필요하지 않다.
 
-- Engine: Godot 4.7.1
-- Language: GDScript
-- Data: Markdown (`.md`), JSON
-- Main scene: `src/main/main.tscn`
-- 기획서: [docs/DESIGN.md](docs/DESIGN.md)
-- 코드 가이드: [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md)
-- GDScript 전환 기록: [docs/MIGRATION_GDSCRIPT.md](docs/MIGRATION_GDSCRIPT.md)
+| 문서 | 내용 |
+| --- | --- |
+| [DESIGN](docs/DESIGN.md) | 현재 제품 동작과 데이터 규칙 |
+| [CODE_GUIDE](docs/CODE_GUIDE.md) | 코드 책임과 기능별 수정 위치 |
+| [CONVENTIONS](docs/CONVENTIONS.md) | 구현 규칙 |
+| [DEVLOG](docs/DEVLOG.md) | 재사용할 시행착오와 판단 근거 |
+| [MEMORY](docs/MEMORY.md) | 프로젝트 동기와 장기 방향 |
+| [GDScript 전환 기록](docs/MIGRATION_GDSCRIPT.md) | 완료된 언어 전환과 호환성 계약 |
 
-## 실행과 테스트
+## 실행과 검증
 
-일반 Godot 에디터에서 프로젝트를 열고 F6가 아니라 F5로 Main Scene을 실행한다.
+일반 Godot 에디터에서 `project.godot`을 열고 F5로 실행한다. 진입점은 `src/main/main.tscn`이다. 아래 `godot`은 설치한 실행 파일의 경로로 바꿔도 된다.
 
-```powershell
-$godot = "C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe"
-& $godot --headless --path . --log-file .godot/latest-test.log res://tests/tests.tscn
+```sh
+# 전역 클래스와 리소스 등록
+godot --headless --path . --import
+# core·storage·앱 smoke test
+godot --headless --path . --log-file .godot/latest-test.log res://tests/tests.tscn
 ```
 
-별도 .NET SDK나 `dotnet build`는 필요하지 않다.
+로그의 `RESULT: N checks, 0 failures`를 확인한다. 테스트 수 자체는 고정하지 않는다.
 
-## Android 배포 (Google Play)
+포인터 검증은 실제 앱 데이터와 분리한 프로젝트 복사본에서 `application/config/name`을 별도 이름으로 바꾸고 실행한다. 렌더링 프레임을 기다리므로 아래 명령에는 `--headless`를 붙이지 않는다.
 
-앱 이름과 버전의 원본은 `project.godot`(+ [src/debug/apply_project_settings.gd](src/debug/apply_project_settings.gd))와 `export_presets.cfg`다.
-
-| 프리셋 | 용도 | 출력 |
-| --- | --- | --- |
-| Android | 개발용 debug APK (기기 설치 테스트) | `build/android/my-simple-flash-card-debug.apk` |
-| Android Release AAB | Play 업로드용 release AAB, target SDK 36 | `build/android/my-simple-flash-card-0.10.3.aab` |
-
-- 앱 이름 **My Simple Flash Card**, 패키지 `com.leusin.mysimpleflashcard`, versionName `0.10.3`, versionCode `7`.
-- `package/unique_name`은 첫 Play Console 업로드 후 바꿀 수 없다. 업로드 전에 반드시 최종 확인한다.
-- target SDK 36은 2026-08-31부터 Play 신규 제출에 필요한 기준이다.
-- AAB export는 Gradle 빌드를 쓴다. Godot Editor에서 **Project > Install Android Build Template**을 한 번 실행하고, Editor Settings에 Android SDK/JDK 경로가 설정되어 있어야 한다.
-
-### Release 키스토어 (업로드 키)
-
-키스토어 파일과 비밀번호는 절대 저장소에 커밋하지 않는다. Editor의 Export 창에 입력한 값은 `export_credentials.cfg`에 저장되며 이 파일은 `.gitignore`에 있다.
-
-업로드 키 생성 (저장소 밖 경로에서 한 번만):
-
-```powershell
-keytool -genkeypair -v -keystore my-simple-flash-card-upload.jks -alias my-simple-flash-card-upload -keyalg RSA -keysize 2048 -validity 10000
+```sh
+godot --path . --script res://tests/ui_interaction.gd
+# 캡처도 저장하려면
+godot --path . --script res://tests/ui_interaction.gd -- --capture
 ```
 
-- 보관: 키스토어는 저장소 밖(예: 클라우드 드라이브 + 로컬 백업 2곳), 비밀번호는 패스워드 매니저에 둔다. Play App Signing 사용 시 이 키는 업로드 키이므로 분실해도 Play Console에서 재설정할 수 있지만, 백업이 원칙이다.
-- Editor 입력: Export 창 → Android Release AAB 프리셋 → Keystore 섹션의 Release / Release User / Release Password.
-- CLI/CI 주입: 프리셋 값 대신 환경 변수를 쓸 수 있다.
-  - `GODOT_ANDROID_KEYSTORE_RELEASE_PATH`, `GODOT_ANDROID_KEYSTORE_RELEASE_USER`, `GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD`
-  - debug 서명용: `GODOT_ANDROID_KEYSTORE_DEBUG_PATH`, `GODOT_ANDROID_KEYSTORE_DEBUG_USER`, `GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD`
+## Android 빌드
 
-### CLI export
+저장소에 설정된 버전은 `0.10.3` / versionCode `7`, 패키지는 `com.leusin.mysimpleflashcard`다. 실제 Play 배포 상태는 Console에서 확인한다.
 
-```powershell
-$godot = "C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe"
-& $godot --headless --path . --export-debug "Android" build/android/my-simple-flash-card-debug.apk
-& $godot --headless --path . --export-release "Android Release AAB" build/android/my-simple-flash-card-0.10.3.aab
+| 프리셋 | 용도 |
+| --- | --- |
+| Android | 기기 확인용 debug APK |
+| Android Release AAB | Play 업로드용 release AAB |
+
+에디터에 Android SDK/JDK 경로를 설정하고 Android Build Template을 설치한다. AAB는 Gradle 빌드를 사용한다. SDK 값은 `export_presets.cfg`가 기준이며, 제출 시점의 Play 요구사항은 별도로 확인한다.
+
+```sh
+godot --headless --path . --export-debug "Android" build/android/my-simple-flash-card-debug.apk
+godot --headless --path . --export-release "Android Release AAB" build/android/my-simple-flash-card-0.10.3.aab
 ```
 
-debug 빌드는 `tools\deploy_android_debug.bat` 한 번 실행으로 export, 연결된 폰 설치, 앱 실행까지 끝낼 수 있다.
+Windows에서는 `tools/deploy_android_debug.bat`로 debug export·기기 설치·실행을 연결할 수 있다. 스토어 이미지 재생성은 [store-listing](store-listing/README.md)을 참고한다.
 
-### 버전 올릴 때 함께 바꾸는 곳
+### 업로드 서명
 
-1. `project.godot`의 `config/version`과 `apply_project_settings.gd` (같은 값 유지)
-2. `export_presets.cfg`의 두 Android 프리셋 `version/name`, 그리고 `version/code`는 Play 업로드마다 +1
-3. Android Release AAB 프리셋의 `export_path` 파일명 (`…-<버전>.aab`)
+기존 업로드 키를 사용한다. 키스토어와 비밀번호는 저장소 밖에 보관하고 커밋하지 않는다. Export 창의 Android Release AAB → Keystore에서 설정하거나 아래 환경 변수로 주입한다.
+
+- `GODOT_ANDROID_KEYSTORE_RELEASE_PATH`
+- `GODOT_ANDROID_KEYSTORE_RELEASE_USER`
+- `GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD`
+
+에디터 자격 증명 파일 `export_credentials.cfg`는 gitignore 대상이다. 새 키 생성이나 분실 키 교체는 일반 버전 빌드와 별도 작업이다.
+
+### 버전 변경
+
+1. `project.godot`의 `config/version`과 `src/debug/apply_project_settings.gd`를 같은 값으로 바꾼다.
+2. `export_presets.cfg`의 두 Android 프리셋 `version/name`을 맞추고, 업로드할 `version/code`를 이전보다 높인다.
+3. release 프리셋의 `export_path`와 이 문서의 버전·예시 파일명을 맞춘다.
+
+프로젝트 설정을 바꿀 때는 `apply_project_settings.gd`와 실제 `project.godot`을 함께 확인한다. 스크립트에서 제거한 설정도 기존 파일에는 남아 있을 수 있다.
