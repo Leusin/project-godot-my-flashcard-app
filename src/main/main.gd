@@ -488,7 +488,8 @@ func _open_card_list(deck_file: String) -> bool:
 func _render_card_list() -> void:
 	card_list_view.render(
 		DeckNaming.display_name(_card_workspace.deck_file),
-		_card_workspace.cards
+		_card_workspace.cards,
+		DeckStorage.load_progress(_card_workspace.deck_file)
 	)
 
 

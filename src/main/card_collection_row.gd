@@ -28,7 +28,7 @@ var _scroll_start := 0
 var _scroll_container: ScrollContainer
 
 @onready var question_label: Label = $Margin/Row/Content/Top/QuestionLabel
-@onready var answer_label: Label = $Margin/Row/Content/AnswerLabel
+@onready var answer_label: Label = $Margin/Row/Content/AnswerRow/AnswerLabel
 @onready var outcome_badge: PanelContainer = $Margin/Row/Content/Top/OutcomeBadge
 @onready var outcome_label: Label = $Margin/Row/Content/Top/OutcomeBadge/Margin/OutcomeLabel
 @onready var menu_button: Button = $Margin/Row/RowMenuButton
@@ -37,6 +37,11 @@ var _scroll_container: ScrollContainer
 
 
 func _ready() -> void:
+	var count_label := $Margin/Row/Content/Top/WrongSummary/WrongCountLabel as Label
+	var italic_font := FontVariation.new()
+	italic_font.base_font = count_label.get_theme_font("font")
+	italic_font.variation_transform = Transform2D(Vector2(1, 0), Vector2(-0.2, 1), Vector2.ZERO)
+	count_label.add_theme_font_override("font", italic_font)
 	menu_button.pressed.connect(_on_menu_pressed)
 	reorder_handle.gui_input.connect(_on_reorder_handle_input)
 	_reorder_gesture.surface = reorder_handle
@@ -112,6 +117,7 @@ func activate() -> void:
 func setup(index: int, card: FlashCard, outcome: String = "") -> void:
 	card_index = index
 	question_label.text = card.question
+	($Margin/Row/Content/Top as Container).queue_sort()
 	answer_label.text = answer_preview(card.answer)
 	outcome_badge.visible = not outcome.is_empty()
 	if outcome.is_empty():
@@ -228,3 +234,22 @@ func _release_visual() -> void:
 	# 씬이 이미 override로 스타일을 준다. 지우지 말고 원래 것으로 되돌린다.
 	if _rest_style != null:
 		add_theme_stylebox_override("panel", _rest_style)
+
+# 목록에서만 누적 오답 표식을 표시한다. 결과 화면의 판정 배지와는 별개다.
+func show_learning_record(count: int) -> void:
+	var summary := $Margin/Row/Content/Top/WrongSummary as HBoxContainer
+	var tally := summary.get_node("WrongTally") as WrongTallyView
+	var count_label := summary.get_node("WrongCountLabel") as Label
+	summary.visible = count > 0
+	summary.tooltip_text = "오답 %d회" % count
+	tally.set_count(mini(count, 5))
+	tally.visible = count <= 5
+	tally.tooltip_text = summary.tooltip_text
+	count_label.visible = count > 5
+	count_label.text = str(count)
+	($Margin/Row/Content/Top as Container).queue_sort()
+	var style := get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	style.shadow_color = Color(0, 0, 0, 0.05)
+	style.shadow_size = 1
+	style.shadow_offset = Vector2(0, 1)
+	add_theme_stylebox_override("panel", style)

@@ -33,7 +33,7 @@ func _ready() -> void:
 	add_card_button.pressed.connect(func() -> void: add_card_pressed.emit())
 
 
-func render(deck_name: String, cards: Array[FlashCard]) -> void:
+func render(deck_name: String, cards: Array[FlashCard], progress: Progress = null) -> void:
 	_reorder.cancel()
 	if deck_name_label.text != deck_name:
 		search_field.text = ""
@@ -46,6 +46,7 @@ func render(deck_name: String, cards: Array[FlashCard]) -> void:
 		var row := CARD_ROW_SCENE.instantiate() as CardCollectionRow
 		rows.add_child(row)
 		row.setup(index, cards[index])
+		row.show_learning_record(progress.get_wrong_count(cards[index].question) if progress != null else 0)
 		row.selected.connect(_on_row_selected)
 		row.menu_requested.connect(_on_row_menu_requested)
 		row.reorder_started.connect(_on_row_reorder_started)
@@ -82,6 +83,7 @@ func _on_reordered(from_index: int, to_index: int) -> void:
 func _apply_search(text: String) -> void:
 	_reorder.cancel()
 	var query := text.strip_edges()
+	add_card_button.visible = query.is_empty()
 	var count := 0
 	for index in rows.get_child_count():
 		var row := rows.get_child(index) as CardCollectionRow
@@ -90,10 +92,10 @@ func _apply_search(text: String) -> void:
 		row.set_reorder_enabled(query.is_empty())
 		if row.visible:
 			count += 1
-	search_status.visible = not query.is_empty() or _cards.is_empty()
+	search_status.visible = count == 0
 	if _cards.is_empty():
 		search_status.text = "아직 카드가 없어요. 첫 카드를 추가해 보세요."
 	elif count == 0:
-		search_status.text = "검색 결과가 없어요. 다른 단어를 입력해 보세요."
+		search_status.text = "검색 결과가 없어요."
 	else:
-		search_status.text = "%d / %d장 · 순서를 바꾸려면 검색을 지우세요." % [count, _cards.size()]
+		search_status.text = ""

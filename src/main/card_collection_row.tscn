@@ -4,6 +4,11 @@
 [ext_resource type="Theme" uid="uid://bu5jyw4ehw6ya" path="res://src/main/main_theme.tres" id="2_theme"]
 [ext_resource type="Texture2D" uid="uid://33rmlntwrfjd" path="res://assets/icons/more_vertical.svg" id="3_more"]
 
+[ext_resource type="Texture2D" path="res://assets/icons/grip.svg" id="4_grip"]
+[ext_resource type="Script" path="res://src/main/wrong_tally.gd" id="5_tally"]
+
+[ext_resource type="Script" path="res://src/main/inline_question_row.gd" id="6_inline"]
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxCardRow"]
 bg_color = Color(1, 1, 1, 1)
 border_width_left = 2
@@ -74,7 +79,7 @@ theme_override_constants/separation = 8
 
 [node name="RowReorderHandle" type="Button" parent="Margin/Row" unique_id=81640705]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(56, 64)
+custom_minimum_size = Vector2(64, 88)
 layout_mode = 2
 size_flags_vertical = 4
 tooltip_text = "끌어서 카드 순서 변경"
@@ -87,7 +92,9 @@ theme_override_styles/pressed = SubResource("StyleBoxRowMenu")
 theme_override_styles/hover = SubResource("StyleBoxRowMenu")
 theme_override_styles/disabled = SubResource("StyleBoxRowMenu")
 theme_override_styles/focus = SubResource("StyleBoxRowMenu")
-text = "≡"
+icon = ExtResource("4_grip")
+icon_alignment = 1
+theme_override_constants/icon_max_width = 32
 
 [node name="Content" type="VBoxContainer" parent="Margin/Row" unique_id=1236552827]
 layout_mode = 2
@@ -96,10 +103,10 @@ size_flags_vertical = 4
 mouse_filter = 2
 theme_override_constants/separation = 10
 
-[node name="Top" type="HBoxContainer" parent="Margin/Row/Content" unique_id=2056593600]
+[node name="Top" type="Container" parent="Margin/Row/Content" unique_id=2056593600]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 16
+script = ExtResource("6_inline")
 
 [node name="QuestionLabel" type="Label" parent="Margin/Row/Content/Top" unique_id=818703497]
 layout_mode = 2
@@ -107,6 +114,29 @@ size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
 text = "질문"
 text_overrun_behavior = 3
+
+[node name="WrongSummary" type="HBoxContainer" parent="Margin/Row/Content/Top"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="WrongTally" type="Control" parent="Margin/Row/Content/Top/WrongSummary"]
+layout_mode = 2
+script = ExtResource("5_tally")
+stroke_color = Color(0.62, 0.62, 0.62, 1)
+stroke_width = 2.0
+stroke_spacing = 5.0
+group_gap = 8.0
+mark_top = 5.0
+mark_bottom = 23.0
+minimum_height = 28.0
+
+[node name="WrongCountLabel" type="Label" parent="Margin/Row/Content/Top/WrongSummary"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.62, 0.62, 1)
+theme_override_font_sizes/font_size = 20
 
 [node name="OutcomeBadge" type="PanelContainer" parent="Margin/Row/Content/Top" unique_id=961678395]
 custom_minimum_size = Vector2(112, 44)
@@ -130,8 +160,14 @@ text = "GOOD"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="AnswerLabel" type="Label" parent="Margin/Row/Content" unique_id=1879881845]
+[node name="AnswerRow" type="HBoxContainer" parent="Margin/Row/Content"]
 layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="AnswerLabel" type="Label" parent="Margin/Row/Content/AnswerRow" unique_id=1879881845]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.38, 0.38, 0.38, 1)
 theme_override_font_sizes/font_size = 24
 text = "답"

@@ -970,6 +970,21 @@ func run_tests() -> void:
 	)
 	var first_card_row = app.card_list_view.rows.get_child(0)
 	check(
+		_view(first_card_row, "WrongTally").wrong_count == 3
+		and _view(first_card_row, "WrongSummary").visible
+		and not _view(app.card_list_view.rows.get_child(1), "WrongSummary").visible,
+		"Main Card List: 저장된 오답 횟수 표시 및 0회 표식 숨김"
+	)
+	first_card_row.show_learning_record(123)
+	check(
+		not _view(first_card_row, "WrongTally").visible
+		and _view(first_card_row, "WrongCountLabel").text == "123"
+		and _view(first_card_row, "WrongCountLabel").visible,
+		"Main Card List: 5회 초과 오답은 막대를 숨기고 실제 횟수 표시"
+	)
+	first_card_row.show_learning_record(3)
+
+	check(
 		first_card_row.mouse_filter == Control.MOUSE_FILTER_PASS
 		and (_view(app, "CardListScroll") as ScrollContainer).vertical_scroll_mode
 		== ScrollContainer.SCROLL_MODE_AUTO,
@@ -979,7 +994,8 @@ func run_tests() -> void:
 	var search_view := app.card_list_view as CardListView
 	search_view.search_field.text = "sTaY"
 	search_view.search_field.text_changed.emit("sTaY")
-	check(not first_card_row.visible and search_view.rows.get_child(1).visible,
+	check(not first_card_row.visible and search_view.rows.get_child(1).visible
+		and not search_view.add_card_button.visible,
 		"Main Search: 답변 영문 대소문자 무시 검색")
 	check((search_view.rows.get_child(1) as CardCollectionRow).card_index == 1,
 		"Main Search: 검색 결과의 원본 카드 index 유지")
@@ -991,7 +1007,8 @@ func run_tests() -> void:
 		"Main Search: 한글 검색 결과 없음 안내")
 	search_view.search_field.text = ""
 	search_view.search_field.text_changed.emit("")
-	check(first_card_row.visible and first_card_row.reorder_handle.visible,
+	check(first_card_row.visible and first_card_row.reorder_handle.visible
+		and search_view.add_card_button.visible,
 		"Main Search: 검색 지우면 전체 목록과 재정렬 복원")
 	var row_reorder_handle := _view(first_card_row, "RowReorderHandle") as Button
 	check(
