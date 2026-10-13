@@ -125,8 +125,9 @@ primary_button_text = "변경"
 visible = false
 layout_mode = 1
 title_text = "덱을 삭제할까요?"
-description_text = "학습 기록도 함께 삭제되며 되돌릴 수 없습니다."
-primary_button_text = "삭제"
+description_text = "카드와 학습 기록도 함께 삭제돼요."
+primary_button_text = "덱 삭제"
+emphasize_secondary = true
 
 [node name="ExitConfirmationOverlay" parent="." unique_id=1336333327 instance=ExtResource("5_modal")]
 visible = false
@@ -139,16 +140,18 @@ primary_button_text = "종료"
 visible = false
 layout_mode = 1
 title_text = "이 카드를 삭제할까요?"
-description_text = "카드와 해당 학습 기록이 함께 삭제됩니다."
-primary_button_text = "삭제"
+description_text = "카드와 오답 횟수 등 학습 기록이 삭제됩니다."
+primary_button_text = "카드 삭제"
+emphasize_secondary = true
 
 [node name="DiscardCardChangesOverlay" parent="." unique_id=18728453 instance=ExtResource("5_modal")]
 visible = false
 layout_mode = 1
 title_text = "변경사항을 버릴까요?"
-description_text = "저장하지 않은 질문과 답은 복구할 수 없습니다."
+description_text = "저장하지 않은 변경사항은 사라집니다."
 secondary_button_text = "계속 편집"
-primary_button_text = "버리기"
+primary_button_text = "변경사항 버리기"
+emphasize_secondary = true
 
 [node name="RestoreBackupConfirmationOverlay" parent="." unique_id=1567319902 instance=ExtResource("5_modal")]
 visible = false

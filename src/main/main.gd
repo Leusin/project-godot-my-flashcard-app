@@ -1309,9 +1309,10 @@ func _on_delete_pressed(deck_file: String) -> void:
 		return
 
 	_pending_deck_action_file = deck_file
-	delete_confirmation_overlay.title_label.text = "'%s' 덱을 삭제할까요?" % DeckNaming.display_name(
-		deck_file
-	)
+	delete_confirmation_overlay.description_label.text = "‘%s’\n\n%s" % [
+		DeckNaming.display_name(deck_file),
+		delete_confirmation_overlay.description_text,
+	]
 	delete_confirmation_overlay.show()
 
 

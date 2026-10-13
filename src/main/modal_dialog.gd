@@ -9,6 +9,7 @@ extends ColorRect
 @export var input_max_length := 0
 @export var secondary_button_text := "취소"
 @export var primary_button_text := "확인"
+@export var emphasize_secondary := false
 # 0이면 내용 높이를 그대로 따른다. 확인 전용 시트끼리 높이를 맞추고 싶을 때만 값을 준다.
 @export var minimum_panel_height := 0.0
 @export var bottom_margin := 40.0
@@ -28,6 +29,17 @@ var bottom_inset := 0.0
 
 func _ready() -> void:
 	dialog_input.text_changed.connect(_on_input_text_changed)
+	if emphasize_secondary:
+		for style_name in ["normal", "hover", "pressed", "focus"]:
+			var primary_style := primary_button.get_theme_stylebox(style_name)
+			var secondary_style := secondary_button.get_theme_stylebox(style_name)
+			primary_button.add_theme_stylebox_override(style_name, secondary_style)
+			secondary_button.add_theme_stylebox_override(style_name, primary_style)
+		for color_name in ["font_color", "font_focus_color", "font_pressed_color", "font_hover_color", "font_hover_pressed_color"]:
+			var primary_color := primary_button.get_theme_color(color_name)
+			var secondary_color := secondary_button.get_theme_color(color_name)
+			primary_button.add_theme_color_override(color_name, secondary_color)
+			secondary_button.add_theme_color_override(color_name, primary_color)
 	apply_configuration()
 
 

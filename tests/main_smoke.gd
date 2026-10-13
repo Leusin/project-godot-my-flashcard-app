@@ -358,8 +358,7 @@ func run_tests() -> void:
 		"Main Delete: 삭제 선택 후 확인창으로 전환"
 	)
 	check(
-		_dialog(app, "DeleteConfirmationOverlay", "DialogTitle").text
-		== "'__gd_main' 덱을 삭제할까요?",
+		_dialog(app, "DeleteConfirmationOverlay", "DialogDescription").text.contains("‘__gd_main’"),
 		"Main Delete: 삭제할 덱 이름 표시"
 	)
 	check(
@@ -367,9 +366,9 @@ func run_tests() -> void:
 			"학습 기록"
 		)
 		and _dialog(app, "DeleteConfirmationOverlay", "DialogDescription").text.contains(
-			"되돌릴 수 없습니다"
+			"카드"
 		),
-		"Main Delete: 학습 기록 삭제와 복구 불가 안내"
+		"Main Delete: 카드와 학습 기록 삭제 안내"
 	)
 	check(app.handle_back_request(), "Main Delete: 확인창에서 뒤로가기 요청 소비")
 	check(not delete_overlay.visible, "Main Delete: 확인창에서 뒤로가면 취소")
