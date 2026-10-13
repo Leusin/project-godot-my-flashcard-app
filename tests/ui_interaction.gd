@@ -114,6 +114,87 @@ func _run() -> void:
 	_check(is_equal_approx(menu_rect.position.y, anchor_rect.end.y + 4), "메뉴: 크기 변경 후에도 버튼 바로 아래 표시")
 	view.sort_menu.dismiss()
 	view.free()
+	var study := load("res://src/main/study_view.tscn").instantiate() as StudyFlowView
+	root.add_child(study)
+	study.set_deck_name("출퇴근 복습")
+	study.show_card(FlashCard.new("resilient", "회복력이 있는"), 0, "NEW", 4, true)
+	study.gesture_surface.haptics_enabled = false
+	for viewport_size in [Vector2i(720, 1280), Vector2i(1100, 900)]:
+		root.size = viewport_size
+		await process_frame
+		await process_frame
+		study.size = root.get_visible_rect().size
+		await process_frame
+		await process_frame
+		var surface := study.gesture_surface
+		var swipe_start := surface.get_global_rect().get_center()
+		var screen_transform := root.get_final_transform()
+		await _button(screen_transform * swipe_start, true)
+		await _motion(screen_transform * (swipe_start + Vector2(0, -140)))
+		_check(surface.position.y < 0.0,
+			"스와이프: 위로 드래그하면 카드만 이동")
+		await _motion(screen_transform * (swipe_start + Vector2(0, 140)))
+		_check(surface.position.y > 0.0,
+			"스와이프: 방향을 바꾸면 카드 이동 방향도 전환")
+		surface.cancel_drag()
+		await _button(screen_transform * swipe_start, false)
+		_check(surface.position.is_zero_approx(),
+			"스와이프: 취소하면 카드 위치 복원")
+	root.size = Vector2i(720, 1280)
+	await process_frame
+	study.size = root.get_visible_rect().size
+	var swipe_actions: Array[int] = []
+	study.gesture_surface.swiped.connect(func(direction: int) -> void: swipe_actions.append(direction))
+	for answer_visible in [true, false]:
+		study.show_card(FlashCard.new("긴 질문입니다.\n".repeat(80), "긴 답변입니다.\n".repeat(80)), 0, "NEW", 2, true)
+		study.set_answer_visible(answer_visible)
+		await process_frame
+		await process_frame
+		var scroll := study.answer_scroll if answer_visible else study.question_scroll
+		var scroll_start := scroll.get_global_rect().get_center()
+		await _touch(scroll_start, true)
+		await _touch_motion(scroll_start - Vector2(0, 120), Vector2(0, -120))
+		_check(scroll.scroll_vertical == 120 and study.gesture_surface.position.is_zero_approx(),
+			"긴 카드: 터치 드래그로 내용만 스크롤")
+		await _touch_motion(scroll_start - Vector2(0, 60), Vector2(0, 60))
+		_check(scroll.scroll_vertical == 60, "긴 카드: 드래그 방향을 바꾸면 내용도 되돌아감")
+		await _touch(scroll_start - Vector2(0, 60), false)
+		scroll.scroll_vertical = 0
+		await _button(scroll_start, true)
+		await _motion(scroll_start - Vector2(0, 120))
+		await _button(scroll_start - Vector2(0, 120), false)
+		_check(scroll.scroll_vertical == 120 and swipe_actions.is_empty()
+			and study.is_answer_visible() == answer_visible,
+			"긴 카드: 마우스로도 스크롤하며 판정이나 카드 뒤집기를 실행하지 않음")
+	study.free()
+	var detail := load("res://src/main/card_detail_view.tscn").instantiate() as CardDetailView
+	root.add_child(detail)
+	detail.size = root.get_visible_rect().size
+	detail.card_surface.animations_enabled = false
+	detail.present("긴 카드 확인", FlashCard.new("긴 질문입니다.\n".repeat(80), "긴 답변입니다.\n".repeat(80)), 2, "LEARNING", true, "뒤로")
+	for detail_answer_visible in [false, true]:
+		await process_frame
+		await process_frame
+		var detail_scroll := detail.answer_scroll if detail_answer_visible else detail.question_scroll
+		var detail_start := detail_scroll.get_global_rect().get_center()
+		await _touch(detail_start, true)
+		await _touch_motion(detail_start - Vector2(0, 120), Vector2(0, -120))
+		await _touch(detail_start - Vector2(0, 120), false)
+		_check(detail_scroll.scroll_vertical == 120
+			and detail.answer_scroll.visible == detail_answer_visible,
+			"카드 상세: 터치 드래그로 내용을 읽으며 카드를 뒤집지 않음")
+		detail_scroll.scroll_vertical = 0
+		await _button(detail_start, true)
+		await _motion(detail_start - Vector2(0, 120))
+		await _button(detail_start - Vector2(0, 120), false)
+		_check(detail_scroll.scroll_vertical == 120
+			and detail.answer_scroll.visible == detail_answer_visible,
+			"카드 상세: 마우스 드래그로 내용을 읽으며 카드를 뒤집지 않음")
+		await _button(detail_start, true)
+		await _button(detail_start, false)
+		_check(detail.answer_scroll.visible != detail_answer_visible,
+			"카드 상세: 짧은 탭으로만 앞뒷면 전환")
+	detail.free()
 	print("UI RESULT: %d checks, %d failures" % [checks, failures])
 	quit(failures)
 
@@ -133,6 +214,24 @@ func _motion(point: Vector2) -> void:
 	event.button_mask = MOUSE_BUTTON_MASK_LEFT
 	event.position = point
 	event.global_position = point
+	Input.parse_input_event(event)
+	await process_frame
+
+
+func _touch(point: Vector2, down: bool) -> void:
+	var event := InputEventScreenTouch.new()
+	event.index = 0
+	event.pressed = down
+	event.position = point
+	Input.parse_input_event(event)
+	await process_frame
+
+
+func _touch_motion(point: Vector2, relative: Vector2) -> void:
+	var event := InputEventScreenDrag.new()
+	event.index = 0
+	event.position = point
+	event.relative = relative
 	Input.parse_input_event(event)
 	await process_frame
 

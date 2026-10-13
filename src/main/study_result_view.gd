@@ -9,9 +9,9 @@ signal retry_requested
 signal return_requested
 
 const OUTCOME_LABELS := {
-	StudyOutcome.Value.GOOD: "기억나요",
-	StudyOutcome.Value.AGAIN: "다시 볼게요",
-	StudyOutcome.Value.SKIP: "건너뜀",
+	StudyOutcome.Value.GOOD: "GOOD",
+	StudyOutcome.Value.AGAIN: "AGAIN",
+	StudyOutcome.Value.SKIP: "SKIP",
 }
 
 var _primary_styles: Dictionary = {}

@@ -635,8 +635,8 @@ func run_tests() -> void:
 	check(
 		_view(app, "AnswerScroll").visible
 		and _view(app, "CardProperties").visible
-		and not _view(app, "StatusBadge").visible,
-		"Main Study: 답 공개 시 오답 횟수는 유지하고 상태 배지만 숨김"
+		and _view(app, "StatusBadge").visible,
+		"Main Study: 상세 화면과 동일하게 오답 횟수와 상태 배지 표시"
 	)
 	var gesture_center := gesture_surface.get_global_rect().get_center()
 	check(
@@ -667,8 +667,8 @@ func run_tests() -> void:
 	)
 	check(_view(app, "AnswerLabel").text == "1", "MVP: 현재 카드의 답 표시")
 	check(
-		_view(app, "AnswerLabel").horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER,
-		"Main Study: 짧은 답은 중앙 정렬"
+		_view(app, "AnswerLabel").horizontal_alignment == HORIZONTAL_ALIGNMENT_LEFT,
+		"Main Study: 상세 화면과 동일하게 답을 왼쪽 정렬"
 	)
 	check(
 		_view(app, "Actions").visible
@@ -775,12 +775,12 @@ func run_tests() -> void:
 		"Main Result: 결과 snapshot을 흔드는 카드 삭제 숨김"
 	)
 	app.card_context_menu.dismiss()
-	_view(app, "CardTapButton").pressed.emit()
+	app.card_detail_view.card_surface.tapped.emit()
 	check(
 		_view(app, "DetailAnswerScroll").visible
 		and _view(app, "DetailAnswerLabel").text == "1"
 		and (_view(app, "DetailWrongTally") as WrongTallyView).wrong_count == 1,
-		"Main Result: 실제 카드 tap 버튼으로 뒷면과 tally 확인"
+		"Main Result: 카드 tap으로 뒷면과 tally 확인"
 	)
 	_view(app, "BackFromCardDetailButton").pressed.emit()
 	check(
@@ -1064,7 +1064,7 @@ func run_tests() -> void:
 		and _view(app, "CardDetailMenuButton").visible,
 		"Main Card Detail: 선택한 카드 상세 화면 열기"
 	)
-	_view(app, "CardTapButton").pressed.emit()
+	app.card_detail_view.card_surface.tapped.emit()
 	check(
 		_view(app, "DetailAnswerScroll").visible
 		and _view(app, "DetailAnswerLabel").text == "Answer"
@@ -1244,12 +1244,24 @@ func run_tests() -> void:
 		_view(study_card_content, "QuestionLabel").text == "Study old",
 		"Main Study: 설정한 첫 카드 학습"
 	)
+	top_notification.hide_message()
+	app._on_previous_requested()
+	check(not top_notification.visible,
+		"Main Study: 돌아갈 카드가 없으면 이전 카드 알림을 표시하지 않음")
 	_view(app, "GoodButton").pressed.emit()
 	check(
 		_view(study_card_content, "QuestionLabel").text == "Study keep"
 		and _view(app, "RemainingLabel").text.to_int() == 1,
 		"Main Study: 설정 UI 없이 다음 카드 계속 학습"
 	)
+	app._reset_study_input_lock()
+	app._on_previous_requested()
+	check(top_notification.visible
+		and top_notification.message_label.text == "이전 카드로 돌아왔습니다"
+		and _view(study_card_content, "QuestionLabel").text == "Study old",
+		"Main Study: 이전 카드 이동 완료 후 상단 알림 표시")
+	app._reset_study_input_lock()
+	_view(app, "GoodButton").pressed.emit()
 	app._reset_study_input_lock()
 	_view(app, "AgainButton").pressed.emit()
 	var indexed_result_rows := app.study_flow.result_view.rows as VBoxContainer
@@ -1283,6 +1295,10 @@ func run_tests() -> void:
 		== StudyResultView.OUTCOME_LABELS[StudyOutcome.Value.SKIP],
 		"Main Result: 건너뜀 집계와 재학습 버튼 숨김"
 	)
+	check(top_notification.visible
+		and top_notification.message_label.text == "건너뛰었습니다"
+		and is_equal_approx(dismiss_timer.wait_time, 1.2),
+		"Main Study: 건너뛰기 완료 후 짧은 상단 알림 표시")
 
 	app.show_library()
 	_view(app, "LibraryAddButton").pressed.emit()

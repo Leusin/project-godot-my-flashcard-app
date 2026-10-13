@@ -119,34 +119,9 @@ func is_answer_visible() -> bool:
 
 
 func set_answer_visible(show_answer: bool) -> void:
-	answer_scroll.visible = show_answer
-	card_properties.visible = show_answer
-	status_badge.hide()
-	if show_answer:
-		question_scroll.scroll_vertical = 0
-		question_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-		question_scroll.anchor_bottom = 0.0
-		question_scroll.offset_top = 60.0
-		question_scroll.offset_bottom = 156.0
-		question_label.add_theme_font_size_override("font_size", 28)
-		question_label.max_lines_visible = 2
-		question_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		question_label.add_theme_color_override(
-			"font_color",
-			Color(0.56, 0.56, 0.56, 1)
-		)
-	else:
-		question_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-		question_scroll.anchor_bottom = 1.0
-		question_scroll.offset_top = 0.0
-		question_scroll.offset_bottom = 0.0
-		question_label.max_lines_visible = -1
-		question_label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
-		question_label.remove_theme_color_override("font_color")
-		question_label.add_theme_font_size_override("font_size", 42)
-	var short_answer := answer_label.text.length() <= 40 and not answer_label.text.contains("\n")
-	answer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER if short_answer else HORIZONTAL_ALIGNMENT_LEFT
-	answer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	CardFaceLayout.set_answer_visible(
+		question_scroll, question_label, answer_scroll, answer_label, card_properties, show_answer
+	)
 	actions.show()
 
 

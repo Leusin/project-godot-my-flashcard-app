@@ -35,6 +35,32 @@ Markdown 파일로 만든 카드를 한 장씩 복습하는 간단한 플래시�
 # 한 덱을 끝내면 어떻게 되나요?
 학습 완료 화면이 나타납니다. 「다시 시작」을 누르면 같은 덱을 처음부터 복습할 수 있습니다."""
 
+const PREVIOUS_GESTURE_SAMPLE_TEXT := """# 여기를 눌러보세요
+잘하셨습니다!
+지금 보이는 쪽은 뒷면입니다.
+아래 GOOD 버튼을 누르세요.
+
+# 답을 아는 내용이라고요?
+GOOD 버튼을 눌러 주세요.
+
+# 잘 기억나지 않는 내용인가요?
+AGAIN 버튼을 눌러 주세요.
+
+# 그냥 넘기고 싶은가요?
+위로 밀어 SKIP할 수 있습니다.
+
+# 실수로 다음 카드로 넘어갔나요?
+아래로 밀어 이전 카드로 돌아갈 수 있어요.
+
+# 직접 덱을 만들어 볼까요?
+학습을 마친 뒤 덱 목록의 + 버튼을 누르세요.
+
+# 준비 끝
+
+축하합니다!
+
+아래 GOOD 버튼을 눌러 튜토리얼을 마치세요."""
+
 
 func run_tests() -> void:
 	_cleanup()
@@ -61,6 +87,15 @@ func run_tests() -> void:
 
 
 func _test_sample_upgrade_detection() -> void:
+	check(
+		DeckStorage.is_legacy_sample_text(PREVIOUS_GESTURE_SAMPLE_TEXT),
+		"저장소: 이전 스와이프 튜토리얼은 갱신 대상"
+	)
+	check(
+		not DeckStorage.is_legacy_sample_text(PREVIOUS_GESTURE_SAMPLE_TEXT + "\n사용자 수정")
+		and not DeckStorage.is_legacy_sample_text(FileAccess.get_file_as_string(DeckStorage.SAMPLE_DECK_PATH)),
+		"저장소: 수정한 튜토리얼과 최신 튜토리얼은 갱신 대상에서 제외"
+	)
 	check(
 		DeckStorage.is_legacy_sample_text(LEGACY_SAMPLE_TEXT),
 		"저장소: 손대지 않은 옛 샘플 덱 감지"

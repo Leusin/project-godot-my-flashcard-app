@@ -20,9 +20,6 @@ corner_radius_top_left = 14
 corner_radius_top_right = 14
 corner_radius_bottom_right = 14
 corner_radius_bottom_left = 14
-shadow_color = Color(0, 0, 0, 0.16)
-shadow_size = 7
-shadow_offset = Vector2(4, 6)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxActionActive"]
 bg_color = Color(0, 0, 0, 1)
@@ -163,14 +160,13 @@ theme_override_constants/margin_top = 30
 theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 30
 
-[node name="CardContent" type="Control" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin" unique_id=1658595310]
+[node name="CardContent" type="VBoxContainer" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin" unique_id=1658595310]
 layout_mode = 2
 mouse_filter = 2
+theme_override_constants/separation = 18
 
 [node name="CardProperties" type="HBoxContainer" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent" unique_id=671315536]
-layout_mode = 1
-anchor_right = 1.0
-offset_bottom = 42.0
+layout_mode = 2
 theme_override_constants/separation = 10
 
 [node name="WrongTally" type="Control" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/CardProperties" unique_id=1362740289]
@@ -197,9 +193,7 @@ vertical_alignment = 1
 tooltip_text = "카드 상태"
 
 [node name="QuestionScroll" type="ScrollContainer" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent" unique_id=1980546292]
-layout_mode = 1
-anchor_right = 1.0
-anchor_bottom = 1.0
+layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
@@ -215,11 +209,7 @@ autowrap_mode = 2
 
 [node name="AnswerScroll" type="ScrollContainer" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent" unique_id=1726778592]
 visible = false
-layout_mode = 1
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = 174.0
-offset_bottom = -174.0
+layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
@@ -230,51 +220,6 @@ size_flags_vertical = 3
 theme_override_font_sizes/font_size = 36
 text = "답"
 autowrap_mode = 2
-
-[node name="GestureHints" type="Control" parent="ContentBounds/Content/StudyContainer/CardStage" unique_id=597136455]
-z_index = 1
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-
-[node name="SkipHint" type="Label" parent="ContentBounds/Content/StudyContainer/CardStage/GestureHints" unique_id=1344649837]
-visible = false
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -110.0
-offset_top = -52.0
-offset_right = 110.0
-offset_bottom = -14.0
-grow_horizontal = 2
-grow_vertical = 0
-theme_override_colors/font_color = Color(0, 0, 0, 0.78)
-theme_override_font_sizes/font_size = 36
-text = "↑  SKIP"
-horizontal_alignment = 1
-
-[node name="PreviousHint" type="Label" parent="ContentBounds/Content/StudyContainer/CardStage/GestureHints" unique_id=1986694635]
-visible = false
-layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -110.0
-offset_top = 14.0
-offset_right = 110.0
-offset_bottom = 52.0
-grow_horizontal = 2
-theme_override_colors/font_color = Color(0, 0, 0, 0.78)
-theme_override_font_sizes/font_size = 36
-text = "↓  PREV"
-horizontal_alignment = 1
 
 [node name="Actions" type="HBoxContainer" parent="ContentBounds/Content/StudyContainer" unique_id=128708548]
 layout_mode = 2

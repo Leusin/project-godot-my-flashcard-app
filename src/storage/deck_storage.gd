@@ -17,6 +17,7 @@ const SAMPLE_SEEDED_MARKER := "user://.sample_deck_seeded"
 const SAMPLE_SEED_VERSION := "seeded-v2"
 const LEGACY_SAMPLE_DECK_SHA256 := "0c6a1f24394c6caaf52a2962c38f3ccdfa80337a80b95640b01c87a1969d23da"
 const PREVIOUS_TUTORIAL_SAMPLE_SHA256 := "a0411d4ab0fe029e9b4a30a8b163ca9db0d96a54ad1cec691c2ac5ab31d6467f"
+const PREVIOUS_GESTURE_SAMPLE_SHA256 := "886a2c48944137429e479ccc64a800e685d2066aa89b5941718f77067b0fe8b6"
 
 static var _decks_dir := DEFAULT_DECKS_DIR
 
@@ -194,6 +195,7 @@ static func is_legacy_sample_text(content: String) -> bool:
 	return content_hash in [
 		LEGACY_SAMPLE_DECK_SHA256,
 		PREVIOUS_TUTORIAL_SAMPLE_SHA256,
+		PREVIOUS_GESTURE_SAMPLE_SHA256,
 	]
 
 

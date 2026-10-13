@@ -179,12 +179,4 @@ horizontal_alignment = 0
 vertical_alignment = 0
 autowrap_mode = 2
 
-[node name="CardTapButton" type="Button" parent="CardDetailStage/CardDetailFrame"]
-layout_mode = 2
-focus_mode = 0
-theme_override_styles/normal = SubResource("StyleBoxEmpty")
-theme_override_styles/hover = SubResource("StyleBoxEmpty")
-theme_override_styles/pressed = SubResource("StyleBoxEmpty")
-theme_override_styles/focus = SubResource("StyleBoxEmpty")
-
 [editable path="Header"]

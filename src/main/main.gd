@@ -1489,6 +1489,8 @@ func _commit_study_outcome(outcome: int) -> void:
 		return
 	_save_active_study_resume()
 	_show_current()
+	if outcome == StudyOutcome.Value.SKIP:
+		top_notification.show_message("건너뛰었습니다", 1.2)
 
 
 func _on_previous_requested() -> void:
@@ -1498,6 +1500,7 @@ func _on_previous_requested() -> void:
 	_study_run.previous()
 	_save_active_study_resume()
 	_show_current()
+	top_notification.show_message("이전 카드로 돌아왔습니다", 1.2)
 
 
 func _try_lock_study_input() -> bool:

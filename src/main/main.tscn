@@ -167,7 +167,6 @@ layout_mode = 1
 [node name="RestartStudyOverlay" parent="." instance=ExtResource("5_modal")]
 visible = false
 layout_mode = 1
-title_text = "새로 시작할까요?"
-description_text = "이어서 학습할 진행 위치가 초기화됩니다.
-오답 횟수와 카드별 학습 상태는 유지됩니다."
+title_text = "처음부터 다시 시작할까요?"
+description_text = "오답 횟수와 카드별 학습 상태는 그대로 유지됩니다."
 primary_button_text = "새로 시작"
