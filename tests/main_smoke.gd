@@ -110,11 +110,11 @@ func run_tests() -> void:
 	)
 	_view(app, "OpenSettingsButton").pressed.emit()
 	var settings_view := _view(app, "SettingsView") as SettingsView
-	var privacy_policy_link := _view(settings_view, "PrivacyPolicyLink") as LinkButton
+	var privacy_policy_link := _view(settings_view, "PrivacyPolicyLink") as Button
 	check(
 		settings_view.visible
 		and not _view(app, "LibraryContainer").visible
-		and privacy_policy_link.text == "개인정보처리방침"
+		and privacy_policy_link.get_node("Margin/Content/Text/Title").text == "개인정보처리방침"
 		and privacy_policy_link.pressed.is_connected(
 			Callable(settings_view, "_on_privacy_policy_pressed")
 		)
@@ -280,27 +280,8 @@ func run_tests() -> void:
 		),
 		"Main Clipboard: 클립보드 생성 버튼 signal 연결"
 	)
-	check(
-		(_view(app, "CopyAiPromptButton") as Button).pressed.is_connected(
-			Callable(settings_view, "_on_copy_ai_prompt_pressed")
-		)
-		and settings_view.copy_ai_prompt_pressed.is_connected(
-			Callable(app, "_on_copy_ai_prompt_pressed")
-		)
-		and _view(app, "AiPromptPreviewLabel").text == MainApp.AI_PROMPT_TEMPLATE
-		and _view(app, "TipNextStep").text.contains("클립보드에서 만들기"),
-		"Main Settings: AI 프롬프트 미리보기·복사 signal·다음 단계 안내"
-	)
 	check(app.handle_back_request(), "Main Create: 추가 선택창에서 뒤로가기 요청 소비")
 	check(not add_deck_menu.visible, "Main Create: 뒤로가기로 추가 선택창 닫기")
-	app.call("_on_copy_ai_prompt_pressed")
-	check(
-		_view(app, "SettingsView").visible
-		and top_notification.visible
-		and top_notification.message_label.text == MainApp.AI_PROMPT_COPIED_MESSAGE
-		and DeckParser.parse(MainApp.AI_PROMPT_TEMPLATE).size() == 2,
-		"Main Settings: AI 프롬프트 복사 후 다음 단계 안내"
-	)
 	app.show_library()
 	deck_buttons = _view(app, "DeckList").get_children()
 	_view(deck_buttons[0], "DeckButton").pressed.emit()

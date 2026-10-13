@@ -133,3 +133,5 @@ godot --path . --script res://tests/ui_interaction.gd -- --capture
 - `context_menu_panel.tres`가 검은 3px 테두리와 패널 여백·그림자를 공유한다. 학습 설정의 기본 PopupMenu에도 같은 패널 스타일을 사용한다.
 
 - `ModalDialog.emphasize_secondary`는 보조 동작을 검게 강조하는 선택 옵션이다. 편집 취소 확인창은 계속 편집을 강조하며, 기존 primary/secondary signal 연결은 그대로 유지한다.
+
+- `settings_action_row.tscn`은 설정 작업용 공통 Button 씬이다. 제목·설명·화살표의 mouse_filter를 IGNORE로 지정해 행 전체가 클릭되며 백업과 복원에서 재사용한다.

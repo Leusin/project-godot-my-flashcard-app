@@ -30,15 +30,6 @@ const DUPLICATE_DECK_FAILED_MESSAGE := DeckActionService.DUPLICATE_DECK_FAILED_M
 const CREATE_DECK_SAVE_FAILED_MESSAGE := DeckActionService.CREATE_DECK_SAVE_FAILED_MESSAGE
 const CLIPBOARD_EMPTY_MESSAGE := DeckActionService.CLIPBOARD_EMPTY_MESSAGE
 const CLIPBOARD_BROKEN_MESSAGE := DeckActionService.CLIPBOARD_BROKEN_MESSAGE
-const AI_PROMPT_TEMPLATE := """사진에 보이는 영어 단어를 아래 형식의 Markdown으로 만들어줘.
-다른 설명 없이 코드 블록 하나로만 답해줘.
-
-# apple
-사과
-
-# run
-달리다"""
-const AI_PROMPT_COPIED_MESSAGE := "AI 프롬프트를 복사했습니다. AI 앱에 단어장 사진과 함께 붙여넣으세요."
 const CARD_QUESTION_EMPTY_MESSAGE := CardEditCoordinator.CARD_QUESTION_EMPTY_MESSAGE
 const CARD_ANSWER_HEADING_MESSAGE := CardEditCoordinator.CARD_ANSWER_HEADING_MESSAGE
 const CARD_SAVE_FAILED_MESSAGE := CardEditCoordinator.CARD_SAVE_FAILED_MESSAGE
@@ -143,7 +134,6 @@ func _connect_library_signals() -> void:
 func _configure_settings() -> void:
 	var settings := DeckStorage.load_settings()
 	settings_view.configure(
-		AI_PROMPT_TEMPLATE,
 		settings.haptics_enabled,
 		is_mobile()
 	)
@@ -151,7 +141,6 @@ func _configure_settings() -> void:
 	settings_view.back_pressed.connect(show_library)
 	settings_view.haptics_toggled.connect(_on_haptics_toggled)
 	settings_view.privacy_policy_pressed.connect(_on_privacy_policy_pressed)
-	settings_view.copy_ai_prompt_pressed.connect(_on_copy_ai_prompt_pressed)
 	settings_view.backup_path_selected.connect(_on_backup_path_selected)
 	settings_view.restore_path_selected.connect(_on_restore_path_selected)
 
@@ -1127,11 +1116,6 @@ func _on_create_deck_submitted(_new_name: String) -> void:
 
 func _on_create_from_clipboard_pressed() -> void:
 	begin_clipboard_deck_creation(DisplayServer.clipboard_get())
-
-
-func _on_copy_ai_prompt_pressed() -> void:
-	DisplayServer.clipboard_set(AI_PROMPT_TEMPLATE)
-	_show_settings_notice(AI_PROMPT_COPIED_MESSAGE)
 
 
 func begin_clipboard_deck_creation(markdown_text: String) -> bool:

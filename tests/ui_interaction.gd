@@ -35,6 +35,20 @@ func _run() -> void:
 	_check(selected.is_empty(), "실제 포인터: 이동 후 덱 열림 방지")
 	library.free()
 
+	var action_row := load("res://src/main/settings_action_row.tscn").instantiate() as Button
+	root.add_child(action_row)
+	action_row.size = Vector2(640, 140)
+	var row_clicks: Array[int] = []
+	action_row.pressed.connect(func() -> void: row_clicks.append(1))
+	await process_frame
+	await process_frame
+	for child_path in ["Margin/Content/Text/Title", "Margin/Content/Text/Description", "Margin/Content/Arrow"]:
+		var hit := (action_row.get_node(child_path) as Control).get_global_rect().get_center()
+		await _button(hit, true)
+		await _button(hit, false)
+	_check(row_clicks.size() == 3, "실제 포인터: 설정 행 제목·설명·화살표 모두 클릭 가능")
+	action_row.free()
+
 	var view := load("res://src/main/card_list_view.tscn").instantiate() as CardListView
 	root.add_child(view)
 	view.size = Vector2(720, 1280)

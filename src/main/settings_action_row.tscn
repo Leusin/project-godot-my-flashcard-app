@@ -1,0 +1,70 @@
+[gd_scene load_steps=4 format=3]
+
+[sub_resource type="StyleBoxEmpty" id="Normal"]
+
+[sub_resource type="StyleBoxFlat" id="Hover"]
+bg_color = Color(0.96, 0.96, 0.95, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[sub_resource type="StyleBoxFlat" id="Pressed"]
+bg_color = Color(0.91, 0.91, 0.90, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+[node name="SettingsActionRow" type="Button"]
+custom_minimum_size = Vector2(0, 140)
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("Normal")
+theme_override_styles/hover = SubResource("Hover")
+theme_override_styles/pressed = SubResource("Pressed")
+theme_override_styles/focus = SubResource("Hover")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_bottom = 16
+mouse_filter = 2
+
+[node name="Content" type="HBoxContainer" parent="Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 20
+
+[node name="Text" type="VBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Margin/Content/Text"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 27
+text = "항목"
+
+[node name="Description" type="Label" parent="Margin/Content/Text"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.4, 0.4, 0.4, 1)
+theme_override_font_sizes/font_size = 23
+text = "설명"
+autowrap_mode = 3
+
+[node name="Arrow" type="Label" parent="Margin/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
+theme_override_font_sizes/font_size = 32
+text = "›"
+vertical_alignment = 1

@@ -7,7 +7,6 @@ extends VBoxContainer
 signal back_pressed
 signal haptics_toggled(enabled: bool)
 signal privacy_policy_pressed
-signal copy_ai_prompt_pressed
 signal backup_path_selected(path: String)
 signal restore_path_selected(path: String)
 
@@ -28,17 +27,11 @@ signal restore_path_selected(path: String)
 @onready var restore_backup_button: Button = (
 	$SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions/RestoreBackupButton
 )
-@onready var ai_prompt_preview_label: Label = (
-	$SettingsScroll/Content/TipsSection/TipsPanel/Margin/TipsContent/PromptPreviewPanel/Margin/AiPromptPreviewLabel
-)
-@onready var copy_ai_prompt_button: Button = (
-	$SettingsScroll/Content/TipsSection/TipsPanel/Margin/TipsContent/CopyAiPromptButton
-)
-@onready var privacy_policy_link: LinkButton = (
+@onready var privacy_policy_link: Button = (
 	$SettingsScroll/Content/InfoSection/InfoPanel/Margin/Content/PrivacyPolicyLink
 )
 @onready var app_version_label: Label = (
-	$SettingsScroll/Content/InfoSection/InfoPanel/Margin/Content/AppVersionLabel
+	$SettingsScroll/Content/InfoSection/AppVersionLabel
 )
 @onready var backup_dialog: FileDialog = $BackupDialog
 @onready var restore_dialog: FileDialog = $RestoreDialog
@@ -48,7 +41,6 @@ func _ready() -> void:
 	back_button.pressed.connect(func() -> void: back_pressed.emit())
 	haptics_toggle.toggled.connect(_on_haptics_toggled)
 	privacy_policy_link.pressed.connect(_on_privacy_policy_pressed)
-	copy_ai_prompt_button.pressed.connect(_on_copy_ai_prompt_pressed)
 	create_backup_button.pressed.connect(_on_create_backup_pressed)
 	restore_backup_button.pressed.connect(_on_restore_backup_pressed)
 	backup_dialog.file_selected.connect(
@@ -62,11 +54,9 @@ func _ready() -> void:
 
 
 func configure(
-	ai_prompt: String,
 	haptics_enabled: bool,
 	interaction_settings_visible: bool
 ) -> void:
-	ai_prompt_preview_label.text = ai_prompt
 	haptics_toggle.button_pressed = haptics_enabled
 	learning_section.visible = interaction_settings_visible
 	interaction_title.visible = interaction_settings_visible
@@ -83,10 +73,6 @@ func _on_haptics_toggled(enabled: bool) -> void:
 
 func _on_privacy_policy_pressed() -> void:
 	privacy_policy_pressed.emit()
-
-
-func _on_copy_ai_prompt_pressed() -> void:
-	copy_ai_prompt_pressed.emit()
 
 
 func _on_create_backup_pressed() -> void:

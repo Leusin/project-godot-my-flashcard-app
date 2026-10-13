@@ -7,6 +7,8 @@
 [ext_resource type="PackedScene" path="res://src/main/app_header.tscn" id="5_header"]
 [ext_resource type="Script" path="res://src/main/settings_view.gd" id="6_view"]
 
+[ext_resource type="PackedScene" path="res://src/main/settings_action_row.tscn" id="7_action_row"]
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxSection"]
 bg_color = Color(1, 1, 1, 1)
 border_width_left = 3
@@ -24,13 +26,6 @@ color = Color(0.82, 0.82, 0.8, 1)
 thickness = 2
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxIconButton"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxPromptPreview"]
-bg_color = Color(0.945, 0.941, 0.925, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
 
 [node name="SettingsView" type="VBoxContainer"]
 layout_mode = 2
@@ -150,110 +145,38 @@ theme_override_styles/panel = SubResource("StyleBoxSection")
 
 [node name="Margin" type="MarginContainer" parent="SettingsScroll/Content/DataSection/DataPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 28
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 28
-theme_override_constants/margin_bottom = 24
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
 
 [node name="DataActions" type="VBoxContainer" parent="SettingsScroll/Content/DataSection/DataPanel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_override_constants/separation = 0
 
-[node name="BackupDescription" type="Label" parent="SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions"]
+[node name="CreateBackupButton" parent="SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions" instance=ExtResource("7_action_row")]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.35, 0.35, 0.35, 1)
-theme_override_font_sizes/font_size = 23
-text = "덱, 학습 기록, 즐겨찾기, 설정을 ZIP 하나로 보관합니다."
-autowrap_mode = 3
+tooltip_text = "백업 저장"
 
-[node name="CreateBackupButton" type="Button" parent="SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions"]
-custom_minimum_size = Vector2(0, 78)
-layout_mode = 2
-mouse_default_cursor_shape = 2
-theme_override_font_sizes/font_size = 27
-text = "전체 백업"
+[node name="Title" parent="SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions/CreateBackupButton/Margin/Content/Text" index="0"]
+text = "백업 저장"
+
+[node name="Description" parent="SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions/CreateBackupButton/Margin/Content/Text" index="1"]
+text = "덱과 학습 기록, 설정을 파일로 보관해요."
 
 [node name="Separator" type="HSeparator" parent="SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions"]
 layout_mode = 2
 theme_override_styles/separator = SubResource("StyleBoxSeparator")
 
-[node name="RestoreDescription" type="Label" parent="SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions"]
+[node name="RestoreBackupButton" parent="SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions" instance=ExtResource("7_action_row")]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.35, 0.35, 0.35, 1)
-theme_override_font_sizes/font_size = 23
-text = "백업에 포함된 데이터로 현재 앱 데이터를 교체합니다."
-autowrap_mode = 3
+tooltip_text = "백업 불러오기"
 
-[node name="RestoreBackupButton" type="Button" parent="SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions"]
-custom_minimum_size = Vector2(0, 78)
-layout_mode = 2
-mouse_default_cursor_shape = 2
-theme_override_font_sizes/font_size = 27
-text = "전체 복원"
+[node name="Title" parent="SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions/RestoreBackupButton/Margin/Content/Text" index="0"]
+text = "백업 불러오기"
 
-[node name="TipsSection" type="VBoxContainer" parent="SettingsScroll/Content"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="TipsTitle" type="Label" parent="SettingsScroll/Content/TipsSection"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 28
-text = "AI 덱 만들기"
-
-[node name="TipsPanel" type="PanelContainer" parent="SettingsScroll/Content/TipsSection"]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxSection")
-
-[node name="Margin" type="MarginContainer" parent="SettingsScroll/Content/TipsSection/TipsPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 28
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 28
-theme_override_constants/margin_bottom = 24
-
-[node name="TipsContent" type="VBoxContainer" parent="SettingsScroll/Content/TipsSection/TipsPanel/Margin"]
-layout_mode = 2
-theme_override_constants/separation = 18
-
-[node name="TipDescription" type="Label" parent="SettingsScroll/Content/TipsSection/TipsPanel/Margin/TipsContent"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 25
-text = "단어장 사진과 함께 아래 프롬프트를 AI 앱에 보내세요."
-autowrap_mode = 3
-
-[node name="PromptPreviewPanel" type="PanelContainer" parent="SettingsScroll/Content/TipsSection/TipsPanel/Margin/TipsContent"]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxPromptPreview")
-
-[node name="Margin" type="MarginContainer" parent="SettingsScroll/Content/TipsSection/TipsPanel/Margin/TipsContent/PromptPreviewPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 16
-
-[node name="AiPromptPreviewLabel" type="Label" parent="SettingsScroll/Content/TipsSection/TipsPanel/Margin/TipsContent/PromptPreviewPanel/Margin"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
-theme_override_constants/line_spacing = 4
-theme_override_font_sizes/font_size = 22
-text = "프롬프트 미리보기"
-autowrap_mode = 3
-
-[node name="CopyAiPromptButton" type="Button" parent="SettingsScroll/Content/TipsSection/TipsPanel/Margin/TipsContent"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 78)
-layout_mode = 2
-mouse_default_cursor_shape = 2
-theme_override_font_sizes/font_size = 27
-text = "AI 프롬프트 복사"
-
-[node name="TipNextStep" type="Label" parent="SettingsScroll/Content/TipsSection/TipsPanel/Margin/TipsContent"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.35, 0.35, 0.35, 1)
-theme_override_font_sizes/font_size = 23
-text = "AI 답변은 덱 목록의 '클립보드에서 만들기'로 가져오세요."
-autowrap_mode = 3
+[node name="Description" parent="SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions/RestoreBackupButton/Margin/Content/Text" index="1"]
+text = "현재 데이터를 백업 내용으로 바꿔요."
 
 [node name="InfoSection" type="VBoxContainer" parent="SettingsScroll/Content"]
 layout_mode = 2
@@ -270,37 +193,31 @@ theme_override_styles/panel = SubResource("StyleBoxSection")
 
 [node name="Margin" type="MarginContainer" parent="SettingsScroll/Content/InfoSection/InfoPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 28
-theme_override_constants/margin_top = 22
-theme_override_constants/margin_right = 28
-theme_override_constants/margin_bottom = 22
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
 
-[node name="Content" type="HBoxContainer" parent="SettingsScroll/Content/InfoSection/InfoPanel/Margin"]
+[node name="Content" type="VBoxContainer" parent="SettingsScroll/Content/InfoSection/InfoPanel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 16
 
-[node name="PrivacyPolicyLink" type="LinkButton" parent="SettingsScroll/Content/InfoSection/InfoPanel/Margin/Content"]
-custom_minimum_size = Vector2(0, 64)
+[node name="PrivacyPolicyLink" parent="SettingsScroll/Content/InfoSection/InfoPanel/Margin/Content" instance=ExtResource("7_action_row")]
+custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
-size_flags_horizontal = 3
-mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
-theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
-theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 26
+tooltip_text = "개인정보처리방침 열기"
+
+[node name="Title" parent="SettingsScroll/Content/InfoSection/InfoPanel/Margin/Content/PrivacyPolicyLink/Margin/Content/Text" index="0"]
 text = "개인정보처리방침"
-underline = 1
-alignment = 0
 
-[node name="AppVersionLabel" type="Label" parent="SettingsScroll/Content/InfoSection/InfoPanel/Margin/Content"]
+[node name="Description" parent="SettingsScroll/Content/InfoSection/InfoPanel/Margin/Content/PrivacyPolicyLink/Margin/Content/Text" index="1"]
+visible = false
+
+[node name="AppVersionLabel" type="Label" parent="SettingsScroll/Content/InfoSection"]
 layout_mode = 2
-size_flags_vertical = 4
-theme_override_colors/font_color = Color(0.35, 0.35, 0.35, 1)
-theme_override_font_sizes/font_size = 23
+theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
+theme_override_font_sizes/font_size = 22
 text = "버전"
 horizontal_alignment = 2
-vertical_alignment = 1
 
 [node name="BottomSpacer" type="Control" parent="SettingsScroll/Content"]
 custom_minimum_size = Vector2(0, 8)
@@ -317,3 +234,7 @@ initial_position = 2
 size = Vector2i(720, 900)
 
 [editable path="Header"]
+
+[editable path="SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions/CreateBackupButton"]
+[editable path="SettingsScroll/Content/DataSection/DataPanel/Margin/DataActions/RestoreBackupButton"]
+[editable path="SettingsScroll/Content/InfoSection/InfoPanel/Margin/Content/PrivacyPolicyLink"]
