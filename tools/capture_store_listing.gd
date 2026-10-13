@@ -49,7 +49,7 @@ func _capture_store_listing() -> void:
 	app = MAIN_SCENE.instantiate() as MainApp
 	app.auto_start = false
 	root.add_child(app)
-	app.study_gesture_surface.animations_enabled = false
+	app.study_flow.gesture_surface.animations_enabled = false
 	app.show_library()
 	await _save_screenshot("01-deck-library.png")
 
@@ -57,7 +57,7 @@ func _capture_store_listing() -> void:
 	await _save_screenshot("02-study-ready.png")
 
 	app.start_deck(CAPTURE_DECK)
-	app.call("_on_card_tapped")
+	app.study_flow.set_answer_visible(true)
 	await _save_screenshot("03-card-answer.png")
 
 	app.call("_on_again_pressed")
