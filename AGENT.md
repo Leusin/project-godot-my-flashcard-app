@@ -1,47 +1,20 @@
-# My Simple Flash Card
+# 에이전트 작업 규칙
 
-Markdown 덱을 앱에서 만들고 편집하며, 스와이프와 버튼으로 복습하는 Godot 4.7 GDScript 앱이다. 기획은 [docs/DESIGN.md](docs/DESIGN.md), 현재 구조는 [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md)를 참고한다.
+## 참고 문서
 
-## 개발 환경
+- [개발 가이드](docs/DEVELOPMENT.md)
 
-- 일반 Godot 4.7 에디터를 사용한다. .NET/Mono 에디터와 .NET SDK는 필요 없다.
-- Main Scene은 `src/main/main.tscn`이다.
-- 프로젝트 설정의 출처는 [src/debug/apply_project_settings.gd](src/debug/apply_project_settings.gd)다. 설정을 바꿀 때 스크립트와 `project.godot`이 일치하는지 함께 확인한다.
-- 들여쓰기는 탭이며 [.editorconfig](.editorconfig)를 따른다.
-- 외부에서 씬을 편집할 때 같은 씬을 Godot 에디터에 열어 두면 F5/F6 시 오래된 에디터 버퍼가 파일을 덮어쓸 수 있다. 작업 중에는 해당 씬 탭을 닫거나 외부 변경을 다시 불러온다.
-- 창 크기와 모바일 비율은 에디터 내 Game 탭뿐 아니라 별도 실행 창에서도 확인한다.
+## 작업 시 주의사항
 
-## 설계 규칙
+- 프로젝트 설정 변경 시 `src/debug/apply_project_settings.gd`와 `project.godot` 함께 수정
+- 외부에서 씬 수정 시 에디터의 해당 씬 탭을 닫거나 변경 내용을 다시 불러오기
+- 씬 노드 이름이나 타입 변경 시 참조 경로와 관련 테스트 함께 수정
+- 테스트 추가 시 `tests/test_runner.gd`를 통해 실행되는 기존 테스트 파일에 반영
+- 화면과 조작감의 최종 판단은 사용자에게 맡기고, 자동 검증 결과와 구분해서 보고
 
-[docs/CONVENTIONS.md](docs/CONVENTIONS.md)가 기준이다.
+## 문서 갱신
 
-- 하위 데이터·입력 컴포넌트는 상위 화면 전환과 저장 흐름을 직접 호출하지 않는다.
-- 하위는 탭, 드래그 방향, 파싱 결과 같은 사실을 노출하고 `main.gd`가 의미를 해석한다.
-- `src/core/`의 순수 로직은 `RefCounted`로 유지하고 Scene Tree와 파일 IO에 의존하지 않는다.
-- 저장 경로와 파일 IO는 `src/storage/deck_storage.gd`에 모은다.
-- 조작감에 영향을 주는 임계값과 애니메이션 시간은 자동 테스트뿐 아니라 실제 마우스·터치로 확인한다.
-
-## 협업 규칙
-
-- AI는 파서·런타임 오류, 헤드리스 테스트, export 검증을 맡고 화면의 최종 감각은 사람이 판단한다.
-- 씬 노드 이름을 바꾸거나 제거하면 `main.gd`의 노드 경로와 `tests/main_smoke.gd`를 같은 변경에서 갱신한다.
-- 기능 묶음이 끝나면 관련 코드와 테스트를 함께 커밋한다.
-- [docs/DEVLOG.md](docs/DEVLOG.md)에는 재발 방지에 유용한 시행착오·원인·해결 근거만 남긴다. 단순 변경 이력과 테스트 개수는 적지 않는다. 현재 구조는 [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md)에 기록한다.
-
-## 테스트
-
-실행 명령과 데이터 격리 방법은 [README](README.md#실행과-검증)를 따른다.
-
-- 중앙 실행기는 `tests/test_runner.gd`다.
-- 새 검증은 책임에 따라 `phase*_smoke.gd` 또는 `main_smoke.gd`에 추가한다.
-- core 테스트는 씬 없이 검증하고, UI 배선은 실제 버튼 signal과 pointer input 경로를 우선 검증한다.
-- 테스트가 멈추면 재시도만 하지 말고 로그의 parse error, 잘못된 노드 경로, 실패 전에 발생한 예외부터 확인한다.
-
-## 문서 체계
-
-- [docs/MEMORY.md](docs/MEMORY.md) — 프로젝트 동기와 장기 방향
-- [docs/DESIGN.md](docs/DESIGN.md) — 제품과 데이터 규칙
-- [docs/CODE_GUIDE.md](docs/CODE_GUIDE.md) — 현재 코드 구조와 데이터 흐름
-- [docs/CONVENTIONS.md](docs/CONVENTIONS.md) — 설계·GDScript 규칙
-- [docs/DEVLOG.md](docs/DEVLOG.md) — 재발 방지를 위한 시행착오와 판단 근거
-- [docs/MIGRATION_GDSCRIPT.md](docs/MIGRATION_GDSCRIPT.md) — 완료된 C# → GDScript 전환 기록
+- 기능 변경은 README, 개발 관련 변경은 DEVELOPMENT에 반영
+- DEVLOG는 실제 겪은 문제와 원인, 해결방안만 기록
+- 문장은 간결하게 작성, 불릿은 개조식, 본문은 격식체(~합니다, ~입니다) 사용
+- 미들닷 사용 금지
