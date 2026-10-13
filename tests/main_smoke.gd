@@ -183,20 +183,20 @@ func run_tests() -> void:
 	var deck_buttons := _view(app, "DeckList").get_children()
 	check(deck_buttons.size() == 1, "Main: 덱 목록에는 저장된 덱만 표시")
 	check(
-		DeckStorage.load_settings().deck_order.has(TEST_DECK),
-		"Main: 화면에 그린 덱 차례를 설정에 남긴다"
+		DeckStorage.load_settings().deck_sort == "name",
+		"Main: 기본 정렬은 이름 오름차순"
 	)
 	var library := _view(app, "LibraryContainer") as LibraryView
 	check(
-		library.current_order() == DeckStorage.load_settings().deck_order,
-		"Main: 화면 차례와 저장된 차례가 같다"
+		library.current_order() == [TEST_DECK],
+		"Main: 덱 파일을 정렬해 표시한다"
 	)
 	check(
 		_view(deck_buttons[0], "DeckNameLabel").text == "__gd_main",
 		"Main: 카드 뭉치 타일에 덱 표시 이름 사용"
 	)
 	check(
-		_view(deck_buttons[0], "DeckCountLabel").text == "2장",
+		_view(deck_buttons[0], "DeckCountLabel").text == "완료 0 / 2장",
 		"Main: 카드 뭉치 타일에 카드 수 표시"
 	)
 	var first_deck_tile := deck_buttons[0] as DeckTileView
@@ -236,22 +236,27 @@ func run_tests() -> void:
 		and deck_selection_count[0] == 0,
 		"Main Deck List: mouse drag로 scroll하고 덱은 열지 않음"
 	)
-	var insertion_decks: Array[DeckInfo] = [
-		DeckInfo.new("a.md", "A", 1),
-		DeckInfo.new("b.md", "B", 1),
-		DeckInfo.new("c.md", "C", 1),
-	]
-	library.render(insertion_decks)
-	var insertion_tiles := library.deck_list.get_children()
-	var insertion_anchor := insertion_tiles[1] as DeckTileView
-	var anchor_rect := insertion_anchor.get_global_rect()
-	var insertion_pointer := Vector2(anchor_rect.end.x, anchor_rect.get_center().y)
-	library.call("_on_tile_reorder_started", "a.md")
-	library.call("_on_tile_reorder_ended", "a.md", insertion_pointer)
+	var sort_files: Array[String] = ["deck10.md", "Beta.md", "deck2.md", "alpha.md"]
 	check(
-		library.current_order() == ["b.md", "a.md", "c.md"],
-		"Main Deck List: 손을 뗀 타일 경계로 덱 순서를 이동"
+		DeckLibraryOrder.sorted_files(sort_files, "name", []) == ["alpha.md", "Beta.md", "deck2.md", "deck10.md"],
+		"덱 정렬: 대소문자 무시 및 자연수 이름순"
 	)
+	check(
+		DeckLibraryOrder.sorted_files(sort_files, "recent", ["deck10.md", "alpha.md"]) == ["deck10.md", "alpha.md", "Beta.md", "deck2.md"],
+		"덱 정렬: 최근 학습 우선 및 미학습 이름순"
+	)
+	app.library_context_menu.get_node("%SortRecentButton").pressed.emit()
+	check(DeckStorage.load_settings().deck_sort == "recent", "덱 정렬: 메뉴에서 최근 학습순 저장")
+	app.library_context_menu.get_node("%SortNameButton").pressed.emit()
+	check(DeckStorage.load_settings().deck_sort == "name", "덱 정렬: 메뉴에서 이름순 복원")
+	app.call("_remember_last_study_deck", TEST_DECK)
+	check(DeckStorage.load_settings().recent_decks[0] == TEST_DECK, "덱 정렬: 학습 시작 기록 저장")
+	var sort_settings := AppSettings.new()
+	sort_settings.deck_sort = "recent"
+	sort_settings.recent_decks = ["b.md", "a.md"]
+	var restored_sort := AppSettings.from_json(sort_settings.to_json())
+	check(restored_sort.deck_sort == "recent" and restored_sort.recent_decks == ["b.md", "a.md"], "덱 정렬: 재실행용 설정 왕복")
+	check(AppSettings.from_json('{"LastDeckFile":"old.md"}').recent_decks == ["old.md"], "덱 정렬: 이전 마지막 학습 기록 이관")
 	app.show_library()
 	deck_buttons = _view(app, "DeckList").get_children()
 	var library_add_button := _view(app, "LibraryAddButton") as Button
@@ -999,7 +1004,7 @@ func run_tests() -> void:
 		"Main Search: 답변 영문 대소문자 무시 검색")
 	check((search_view.rows.get_child(1) as CardCollectionRow).card_index == 1,
 		"Main Search: 검색 결과의 원본 카드 index 유지")
-	check(not (search_view.rows.get_child(1) as CardCollectionRow).reorder_handle.visible,
+	check(not search_view.rows.get_child(1).has_node("Margin/Row/RowReorderHandle"),
 		"Main Search: 필터 중 재정렬 비활성화")
 	search_view.search_field.text = "없는 검색어"
 	search_view.search_field.text_changed.emit("없는 검색어")
@@ -1007,42 +1012,21 @@ func run_tests() -> void:
 		"Main Search: 한글 검색 결과 없음 안내")
 	search_view.search_field.text = ""
 	search_view.search_field.text_changed.emit("")
-	check(first_card_row.visible and first_card_row.reorder_handle.visible
+	check(first_card_row.visible
 		and search_view.add_card_button.visible,
 		"Main Search: 검색 지우면 전체 목록과 재정렬 복원")
-	var row_reorder_handle := _view(first_card_row, "RowReorderHandle") as Button
-	check(
-		row_menu_button != null
-		and row_menu_button.visible
-		and row_reorder_handle != null
-		and row_reorder_handle.visible
-		and not row_reorder_handle.disabled,
-		"Main Card List: 카드 관리와 순서 변경 action 제공"
-	)
-	var reorder_deck_before := DeckParser.parse(DeckStorage.read_deck(EDIT_DECK))
-	var second_card_row := app.card_list_view.rows.get_child(1) as CardCollectionRow
-	var second_row_bottom := second_card_row.get_global_rect().end.y
-	app.card_list_view.call("_on_row_reorder_started", 0)
-	app.card_list_view.call("_on_row_reorder_ended", 0, second_row_bottom)
-	var reorder_deck_after := DeckParser.parse(DeckStorage.read_deck(EDIT_DECK))
-	check(
-		reorder_deck_before.size() == reorder_deck_after.size()
-		and reorder_deck_after[0].question == reorder_deck_before[1].question
-		and reorder_deck_after[1].question == reorder_deck_before[0].question,
-		"Main Card List: 손잡이로 옮긴 카드 순서를 Markdown에 저장"
-	)
-	check(
-		app.card_list_view.rows.get_child(0).card_index == 0
-		and app.card_list_view.rows.get_child(1).card_index == 1
-		and (app.card_list_view.rows.get_child(0) as CardCollectionRow).question_label.text
-		== reorder_deck_after[0].question
-		and DeckStorage.load_study_resume(EDIT_DECK) == null,
-		"Main Card List: 순서 변경 후 행 index와 이어하기 기록 정리"
-	)
-	var restore_anchor := app.card_list_view.rows.get_child(0) as CardCollectionRow
-	var restore_top := restore_anchor.get_global_rect().position.y
-	app.card_list_view.call("_on_row_reorder_started", first_card_row.card_index)
-	app.card_list_view.call("_on_row_reorder_ended", first_card_row.card_index, restore_top)
+	var original_markdown := DeckStorage.read_deck(EDIT_DECK)
+	var original_resume := DeckStorage.load_study_resume(EDIT_DECK).remaining_indices.duplicate()
+	search_view.sort_button.get_popup().id_pressed.emit(2)
+	check(search_view.rows.get_child(0).card_index == 0 and DeckStorage.load_settings().card_sort == 2,
+		"Main Card List: 오답 많은 순 및 선택 기준 저장")
+	search_view.sort_button.get_popup().id_pressed.emit(1)
+	check(DeckStorage.read_deck(EDIT_DECK) == original_markdown
+		and DeckStorage.load_study_resume(EDIT_DECK).remaining_indices == original_resume,
+		"Main Card List: 정렬해도 원본과 이어하기 보존")
+	search_view.sort_button.get_popup().id_pressed.emit(0)
+	check(search_view.rows.get_child(0).card_index == 0 and search_view.rows.get_child(1).card_index == 1,
+		"Main Card List: 기본 순서 복원")
 	row_menu_button.pressed.emit()
 	check(
 		_view(app, "CardContextMenu").visible
@@ -1094,28 +1078,8 @@ func run_tests() -> void:
 	first_card_row._gui_input(row_press)
 	first_card_row._gui_input(row_release)
 	check(
-		row_selection_count[0] == 2 and not first_card_row.get("_reordering"),
+		row_selection_count[0] == 2,
 		"Main Card List: 행 본체는 눌러도 집히지 않고 카드를 연다"
-	)
-	var handle_pick_started := [0]
-	first_card_row.reorder_started.connect(
-		func(_index: int) -> void: handle_pick_started[0] += 1
-	)
-	var handle_press := InputEventMouseButton.new()
-	handle_press.button_index = MOUSE_BUTTON_LEFT
-	handle_press.pressed = true
-	row_reorder_handle.gui_input.emit(handle_press)
-	check(
-		handle_pick_started[0] == 1
-		and first_card_row.get("_reordering"),
-		"Main Card List: 손잡이를 누르면 순서 변경 시작"
-	)
-	var handle_release := InputEventMouseButton.new()
-	handle_release.button_index = MOUSE_BUTTON_LEFT
-	row_reorder_handle.gui_input.emit(handle_release)
-	check(
-		not first_card_row.get("_reordering"),
-		"Main Card List: 손잡이에서 손을 떼면 순서 변경 종료"
 	)
 	check(
 		_view(app, "CardDetailView").visible
@@ -1423,7 +1387,7 @@ func run_tests() -> void:
 	var created_tile := _find_deck_tile(app, "__gd_main_created")
 	check(
 		created_tile != null
-		and _view(created_tile, "DeckCountLabel").text == "1장",
+		and _view(created_tile, "DeckCountLabel").text == "완료 0 / 1장",
 		"Main Create: 덱 목록에 새 카드 뭉치 즉시 표시"
 	)
 
@@ -1464,7 +1428,7 @@ func run_tests() -> void:
 	var clipboard_tile := _find_deck_tile(app, "__gd_main_clipboard")
 	check(
 		clipboard_tile != null
-		and _view(clipboard_tile, "DeckCountLabel").text == "2장",
+		and _view(clipboard_tile, "DeckCountLabel").text == "완료 0 / 2장",
 		"Main Clipboard: 생성한 덱을 라이브러리에 즉시 표시"
 	)
 

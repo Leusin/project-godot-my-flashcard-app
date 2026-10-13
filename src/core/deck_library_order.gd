@@ -30,3 +30,21 @@ static func moved(order: Array[String], from_index: int, to_index: int) -> Array
 	var result: Array[String] = []
 	result.assign(ArrayOrder.moved(order, from_index, to_index))
 	return result
+
+
+static func sorted_files(files: Array[String], mode: String, recent: Array[String]) -> Array[String]:
+	var sorted := files.duplicate()
+	sorted.sort_custom(func(a: String, b: String) -> bool:
+		if mode == "recent":
+			var a_rank := recent.find(a)
+			var b_rank := recent.find(b)
+			if a_rank != b_rank:
+				if a_rank == -1:
+					return false
+				if b_rank == -1:
+					return true
+				return a_rank < b_rank
+		var comparison := DeckNaming.display_name(a).naturalnocasecmp_to(DeckNaming.display_name(b))
+		return a < b if comparison == 0 else comparison < 0
+	)
+	return sorted

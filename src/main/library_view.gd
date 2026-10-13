@@ -5,7 +5,6 @@ extends VBoxContainer
 # 어떤 덱을 열지 같은 해석은 main.gd가 맡는다.
 
 signal deck_selected(deck_file: String)
-signal deck_order_changed(order: Array[String])
 signal add_pressed(anchor: Control)
 signal settings_pressed(anchor: Control)
 signal import_file_selected(path: String)
@@ -14,7 +13,6 @@ signal export_canceled
 
 const DECK_TILE_SCENE := preload("res://src/main/deck_tile.tscn")
 
-var _reorder := ListReorder.new()
 
 @onready var deck_list: HFlowContainer = $DeckListScroll/DeckList
 @onready var empty_decks_label: Label = $EmptyDecksLabel
@@ -25,10 +23,6 @@ var _reorder := ListReorder.new()
 
 
 func _ready() -> void:
-	_reorder.items = deck_list
-	_reorder.layout = ListReorder.Layout.FLOW
-	add_child(_reorder)
-	_reorder.reordered.connect(_on_reordered)
 	add_button.pressed.connect(_on_add_pressed)
 	settings_button.pressed.connect(_on_settings_pressed)
 	_configure_markdown_dialog(import_dialog, FileDialog.FILE_MODE_OPEN_FILE)
@@ -39,7 +33,6 @@ func _ready() -> void:
 
 
 func render(decks: Array[DeckInfo]) -> void:
-	_reorder.cancel()
 	for child in deck_list.get_children():
 		child.free()
 
@@ -49,11 +42,8 @@ func render(decks: Array[DeckInfo]) -> void:
 		var deck_tile := DECK_TILE_SCENE.instantiate() as DeckTileView
 		deck_tile.name = "Deck_%s" % deck.file_name.validate_node_name()
 		deck_list.add_child(deck_tile)
-		deck_tile.setup(deck.file_name, deck.display_name, deck.card_count)
+		deck_tile.setup(deck.file_name, deck.display_name, deck.card_count, deck.completed_count)
 		deck_tile.selected.connect(_on_deck_tile_selected)
-		deck_tile.reorder_started.connect(_on_tile_reorder_started)
-		deck_tile.reorder_ended.connect(_on_tile_reorder_ended)
-		deck_tile.reorder_canceled.connect(_reorder.cancel)
 
 
 func popup_import() -> void:
@@ -77,31 +67,11 @@ func _on_deck_tile_selected(deck_file: String) -> void:
 	deck_selected.emit(deck_file)
 
 
-func _on_tile_reorder_started(deck_file: String) -> void:
-	_reorder.begin(_tile_of(deck_file))
-
-
-func _on_tile_reorder_ended(deck_file: String, pointer: Vector2) -> void:
-	_reorder.finish(_tile_of(deck_file), pointer)
-
-
-func _on_reordered(_from_index: int, _to_index: int) -> void:
-	deck_order_changed.emit(current_order())
-
-
 func current_order() -> Array[String]:
 	var order: Array[String] = []
 	for child in deck_list.get_children():
 		order.append((child as DeckTileView).deck_file())
 	return order
-
-
-func _tile_of(deck_file: String) -> DeckTileView:
-	for child in deck_list.get_children():
-		var tile := child as DeckTileView
-		if tile.deck_file() == deck_file:
-			return tile
-	return null
 
 
 func _on_add_pressed() -> void:

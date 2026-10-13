@@ -31,7 +31,7 @@ func _run() -> void:
 	var target := (library.deck_list.get_child(1) as Control).get_global_rect().end - Vector2(1, 10)
 	await _motion(target)
 	await _button(target, false)
-	_check(library.current_order() == ["b.md", "a.md", "c.md"], "실제 포인터: 길게 눌러 덱 이동")
+	_check(library.current_order() == ["a.md", "b.md", "c.md"], "실제 포인터: 길게 누른 뒤 드래그해도 덱 순서 유지")
 	_check(selected.is_empty(), "실제 포인터: 이동 후 덱 열림 방지")
 	library.free()
 
@@ -42,27 +42,28 @@ func _run() -> void:
 	view.render("출퇴근 복습", cards)
 	await process_frame
 	await process_frame
-	var moves: Array[Vector2i] = []
-	view.card_move_requested.connect(func(a: int, b: int) -> void: moves.append(Vector2i(a, b)))
-	var row := view.rows.get_child(0) as CardCollectionRow
-	start = row.reorder_handle.get_global_rect().get_center()
-	target = (view.rows.get_child(1) as Control).get_global_rect().end - Vector2(25, 1)
-	await _button(start, true)
-	await _motion(target)
-	await _button(target, false)
-	_check(moves == [Vector2i(0, 1)], "실제 포인터: 카드 손잡이 이동")
+	view.sort_button.get_popup().id_pressed.emit(1)
+	await process_frame
+	_check(view.rows.get_child(0).card_index == 1, "질문 오름차순: 원본 index 보존")
+	var progress := Progress.new()
+	progress.set_wrong_count("momentum", 8)
+	view.render("출퇴근 복습", cards, progress)
+	view.sort_button.get_popup().id_pressed.emit(2)
+	await process_frame
+	_check(view.rows.get_child(0).card_index == 2, "오답 많은 순: 8회 카드가 먼저 표시")
+	view.sort_button.get_popup().id_pressed.emit(1)
 	view.search_field.text = "회복"
 	view.search_field.text_changed.emit("회복")
 	await process_frame
 	await process_frame
-	_check(not view.rows.get_child(0).visible and view.rows.get_child(1).visible, "검색: 재정렬 후에도 올바른 카드 필터")
+	_check(not view.rows.get_child(0).visible and view.rows.get_child(2).visible, "검색: 정렬 후에도 올바른 카드 필터")
 	var opened: Array[int] = []
 	view.card_selected.connect(func(index: int) -> void: opened.append(index))
-	var result := view.rows.get_child(1) as CardCollectionRow
+	var result := view.rows.get_child(2) as CardCollectionRow
 	var point := result.question_label.get_global_rect().get_center()
 	await _button(point, true)
 	await _button(point, false)
-	_check(opened == [1], "실제 포인터: 검색 결과 선택은 원본 index")
+	_check(opened == [0], "실제 포인터: 검색 결과 선택은 원본 index")
 	if "--capture" in OS.get_cmdline_user_args():
 		await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://build/search-preview.png")

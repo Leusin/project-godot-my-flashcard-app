@@ -21,7 +21,7 @@
 앱과 무관한 바닥 기능은 [`addons/mobile_foundation/`](../addons/mobile_foundation/README.md)에 따로 있다.
 끌기 범위(`DragBounds`), 삽입 위치(`ListInsertion`), 배열 자리 옮기기(`ArrayOrder`),
 종횡비 맞춤(`AspectFit`), 안전 영역(`SafeArea`), 가상 키보드 피하기(`KeyboardInsetAvoider`)가 거기 산다.
-`ListReorder`는 세로 카드 목록과 덱 타일 목록의 놓기 위치 계산·자식 순서 변경을 맡는다.
+`ListReorder`는 공통 프레임워크의 놓기 위치 계산·자식 순서 변경을 제공한다. 앱의 덱·카드 목록은 정렬 기준 선택을 사용하며 직접 재정렬하지 않는다.
 화면은 `begin`/`finish`를 전달하고 `reordered`에서 도메인 index 갱신·저장을 연결한다.
 `ReorderGesture`는 긴 누르기/즉시 집기, 스크롤 구분과 입력 취소를 맡는다.
 row/tile은 입력 signal을 연결하고 들어 올리는 연출을 담당한다.
@@ -100,7 +100,7 @@ $godot = "C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windo
 `RESULT: N checks, 0 failures`를 확인한다. signal을 직접 발신하는 테스트만으로는 실제 pointer hit-test 버그를 놓칠 수 있으므로, 클릭 영역이 중요한 UI는 실제 `InputEventMouseButton` 경로도 검증한다.
 
 
-`tests/ui_interaction.gd`는 실제 포인터 이벤트를 화면에 보내 선택·덱/카드 재정렬·검색 결과 선택을 검사한다.
+`tests/ui_interaction.gd`는 실제 포인터 이벤트를 화면에 보내 덱 선택·길게 누른 뒤 순서 유지·카드 정렬 후 검색 결과 선택을 검사한다.
 실제 앱 데이터와 분리한 프로젝트 복사본에서 실행한다.
 
 ```sh
@@ -111,8 +111,16 @@ godot --path . --script res://tests/ui_interaction.gd -- --capture
 
 - 학습 결과는 한국어 판정 라벨을 사용한다. 재학습 대상이 있으면 장수를 포함한 복습 버튼을 강조하고, 없으면 해당 버튼을 숨긴다. 학습 준비로 버튼은 단독 표시 시에도 흰 배경과 검은 글자를 유지한다.
 
-- 카드 목록은 Main이 전달한 Progress에서 오답 횟수를 읽어 행에 표시한다. 0회 표식은 숨기고 5회 초과는 막대를 숨기고 총횟수만 기울임꼴로 표시한다. 목록 전용 행 그림자 조정은 결과 화면에 적용하지 않는다.
+- 카드 목록은 Main이 전달한 Progress에서 오답 횟수를 읽어 행에 표시한다. 0회 표식은 숨기고 5회 초과는 막대를 숨기고 총횟수만 일반체로 표시한다. 목록 전용 행 그림자 조정은 결과 화면에 적용하지 않는다.
 
 - 카드 목록의 오답 표식은 질문 옆에 표시한다. 검색어가 있으면 카드 추가 버튼을 숨기며 지우면 복원한다.
 
 - inline_question_row.gd는 질문의 실제 글자 너비에 맞춰 오답 표식을 붙이고 긴 질문에서는 표식 공간을 확보한 뒤 말줄임한다.
+
+- 덱 목록의 DeckInfo는 완료 장수를 포함한다. Main이 현재 덱의 카드 상태를 집계하고 타일은 완료 N / 전체장으로 표시한다.
+
+- AppSettings의 DeckSort(name/recent)와 RecentDecks가 덱 정렬 기준·최근 학습 이력을 보존한다. DeckLibraryOrder.sorted_files는 이름 자연 정렬과 최근 이력 우선 정렬을 담당한다. DeckOrder는 이전 설정 호환용이며 새 정렬에 사용하지 않는다.
+
+- 카드 목록은 AppSettings.CardSort(0 기본, 1 질문, 2 오답)로 행의 표시 순서를 선택한다. row.card_index는 원본 index이며 검색과 행 동작에서도 그대로 사용한다. 정렬은 파일·학습 순서·이어하기를 변경하지 않는다.
+
+- 카드 추가는 헤더의 ＋ 버튼을 사용하며 검색어가 있는 동안 숨긴다.

@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
 [ext_resource type="PackedScene" path="res://src/main/card_collection_view.tscn" id="2_collection"]
@@ -8,6 +8,10 @@
 [ext_resource type="Script" path="res://src/main/card_list_view.gd" id="6_script"]
 
 [ext_resource type="Texture2D" path="res://assets/icons/search.svg" id="7_search"]
+
+[ext_resource type="Texture2D" path="res://assets/icons/more_vertical.svg" id="8_more"]
+
+[ext_resource type="Texture2D" path="res://assets/icons/plus.svg" id="9_plus"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxHeaderButton"]
 
@@ -74,6 +78,27 @@ horizontal_alignment = 0
 vertical_alignment = 1
 text_overrun_behavior = 3
 
+[node name="AddCardButton" type="Button" parent="Header/RightActions"]
+custom_minimum_size = Vector2(72, 72)
+layout_mode = 2
+icon = ExtResource("9_plus")
+icon_alignment = 1
+tooltip_text = "카드 추가"
+theme_override_styles/normal = SubResource("StyleBoxHeaderButton")
+theme_override_styles/pressed = SubResource("StyleBoxHeaderButton")
+theme_override_styles/hover = SubResource("StyleBoxHeaderButton")
+theme_override_styles/disabled = SubResource("StyleBoxHeaderButton")
+theme_override_styles/focus = SubResource("StyleBoxHeaderButton")
+
+[node name="CardSortButton" type="MenuButton" parent="Header/RightActions"]
+custom_minimum_size = Vector2(72, 72)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+icon = ExtResource("8_more")
+icon_alignment = 1
+tooltip_text = "카드 정렬"
+flat = true
+
 [node name="ContentBounds" type="MarginContainer" parent="."]
 layout_mode = 2
 size_flags_vertical = 3
@@ -114,11 +139,5 @@ autowrap_mode = 2
 
 [node name="CardListScroll" parent="ContentBounds/Content" instance=ExtResource("2_collection")]
 layout_mode = 2
-
-[node name="AddCardButton" type="Button" parent="ContentBounds/Content"]
-custom_minimum_size = Vector2(0, 82)
-layout_mode = 2
-theme_override_font_sizes/font_size = 28
-text = "+ 카드 추가"
 
 [editable path="Header"]

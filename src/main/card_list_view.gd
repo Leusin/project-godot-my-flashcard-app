@@ -8,25 +8,29 @@ signal back_pressed
 signal add_card_pressed
 signal card_selected(index: int)
 signal card_menu_requested(index: int, anchor: Control)
-signal card_move_requested(index: int, target: int)
+signal sort_changed(mode: int)
 
 const CARD_ROW_SCENE := preload("res://src/main/card_collection_row.tscn")
 
-var _reorder := ListReorder.new()
+var _sort_mode := 0
+var _progress: Progress
 var _cards: Array[FlashCard] = []
 
+@onready var sort_button: MenuButton = $Header/RightActions/CardSortButton
 @onready var back_button: Button = $Header/LeftActions/BackFromCardListButton
 @onready var deck_name_label: Label = $Header/TitleSlot/CardListDeckLabel
 @onready var search_field: LineEdit = $ContentBounds/Content/SearchField
 @onready var search_status: Label = $ContentBounds/Content/SearchStatus
 @onready var rows: VBoxContainer = $ContentBounds/Content/CardListScroll/Rows
-@onready var add_card_button: Button = $ContentBounds/Content/AddCardButton
+@onready var add_card_button: Button = $Header/RightActions/AddCardButton
 
 
 func _ready() -> void:
-	_reorder.items = rows
-	add_child(_reorder)
-	_reorder.reordered.connect(_on_reordered)
+	var popup := sort_button.get_popup()
+	for caption in ["기본 순서", "질문 오름차순", "오답 많은 순"]:
+		popup.add_radio_check_item(caption)
+	popup.id_pressed.connect(_on_sort_selected)
+	set_sort(0)
 	search_field.text_changed.connect(_apply_search)
 	search_field.text_submitted.connect(func(_text: String) -> void: search_field.release_focus())
 	back_button.pressed.connect(func() -> void: back_pressed.emit())
@@ -34,10 +38,10 @@ func _ready() -> void:
 
 
 func render(deck_name: String, cards: Array[FlashCard], progress: Progress = null) -> void:
-	_reorder.cancel()
 	if deck_name_label.text != deck_name:
 		search_field.text = ""
 	_cards = cards.duplicate()
+	_progress = progress
 	deck_name_label.text = deck_name
 	for child in rows.get_children():
 		child.free()
@@ -49,9 +53,7 @@ func render(deck_name: String, cards: Array[FlashCard], progress: Progress = nul
 		row.show_learning_record(progress.get_wrong_count(cards[index].question) if progress != null else 0)
 		row.selected.connect(_on_row_selected)
 		row.menu_requested.connect(_on_row_menu_requested)
-		row.reorder_started.connect(_on_row_reorder_started)
-		row.reorder_ended.connect(_on_row_reorder_ended)
-		row.reorder_canceled.connect(_reorder.cancel)
+	_sort_rows()
 	_apply_search(search_field.text)
 
 
@@ -63,33 +65,46 @@ func _on_row_menu_requested(index: int, anchor: Control) -> void:
 	card_menu_requested.emit(index, anchor)
 
 
-func _on_row_reorder_started(index: int) -> void:
-	if search_field.text.strip_edges().is_empty() and index >= 0 and index < rows.get_child_count():
-		_reorder.begin(rows.get_child(index) as Control)
+func set_sort(mode: int) -> void:
+	_sort_mode = clampi(mode, 0, 2)
+	var popup := sort_button.get_popup()
+	for index in popup.item_count:
+		popup.set_item_checked(index, index == _sort_mode)
+	_sort_rows()
 
 
-func _on_row_reorder_ended(index: int, pointer_y: float) -> void:
-	if search_field.text.strip_edges().is_empty() and index >= 0 and index < rows.get_child_count():
-		_reorder.finish(rows.get_child(index) as Control, Vector2(0, pointer_y))
+func _on_sort_selected(mode: int) -> void:
+	set_sort(mode)
+	sort_changed.emit(_sort_mode)
 
 
-func _on_reordered(from_index: int, to_index: int) -> void:
-	_cards.assign(ArrayOrder.moved(_cards, from_index, to_index))
-	for row_index in rows.get_child_count():
-		(rows.get_child(row_index) as CardCollectionRow).set_index(row_index)
-	card_move_requested.emit(from_index, to_index)
+func _sort_rows() -> void:
+	var ordered := rows.get_children()
+	ordered.sort_custom(func(a: CardCollectionRow, b: CardCollectionRow) -> bool:
+		if _sort_mode == 2 and _progress != null:
+			var a_count := _progress.get_wrong_count(_cards[a.card_index].question)
+			var b_count := _progress.get_wrong_count(_cards[b.card_index].question)
+			if a_count != b_count:
+				return a_count > b_count
+		if _sort_mode == 1:
+			var comparison := _cards[a.card_index].question.naturalnocasecmp_to(_cards[b.card_index].question)
+			if comparison != 0:
+				return comparison < 0
+		return a.card_index < b.card_index
+	)
+	for index in ordered.size():
+		rows.move_child(ordered[index], index)
+	(rows.get_parent() as ScrollContainer).scroll_vertical = 0
 
 
 func _apply_search(text: String) -> void:
-	_reorder.cancel()
 	var query := text.strip_edges()
 	add_card_button.visible = query.is_empty()
 	var count := 0
 	for index in rows.get_child_count():
 		var row := rows.get_child(index) as CardCollectionRow
-		var card := _cards[index]
+		var card := _cards[row.card_index]
 		row.visible = query.is_empty() or card.question.findn(query) >= 0 or card.answer.findn(query) >= 0
-		row.set_reorder_enabled(query.is_empty())
 		if row.visible:
 			count += 1
 	search_status.visible = count == 0

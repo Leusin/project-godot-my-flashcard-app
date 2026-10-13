@@ -3,23 +3,14 @@ extends PanelContainer
 
 signal selected(index: int)
 signal menu_requested(index: int, anchor: Control)
-signal reorder_started(index: int)
-signal reorder_ended(index: int, pointer_y: float)
-signal reorder_canceled
 
 const FALLBACK_DRAG_THRESHOLD := 12.0
-const PICKED_SHADOW_SIZE := 12
-const PICKED_SHADOW_OFFSET := Vector2(0, 6)
 
 @export var good_badge_style: StyleBoxFlat
 @export var again_badge_style: StyleBoxFlat
 @export var skip_badge_style: StyleBoxFlat
 
 var card_index := -1
-var _reordering := false
-var _reorder_gesture := ReorderGesture.new()
-var _rest_position := Vector2.ZERO
-var _rest_style: StyleBox
 var _pointer_down := false
 var _dragged := false
 var _scrolling := false
@@ -32,25 +23,8 @@ var _scroll_container: ScrollContainer
 @onready var outcome_badge: PanelContainer = $Margin/Row/Content/Top/OutcomeBadge
 @onready var outcome_label: Label = $Margin/Row/Content/Top/OutcomeBadge/Margin/OutcomeLabel
 @onready var menu_button: Button = $Margin/Row/RowMenuButton
-# 손잡이를 잡고 위아래로 끌면 카드 자리가 바뀐다. 어디로 옮길지는 목록 View가 정한다.
-@onready var reorder_handle: Button = $Margin/Row/RowReorderHandle
-
-
 func _ready() -> void:
-	var count_label := $Margin/Row/Content/Top/WrongSummary/WrongCountLabel as Label
-	var italic_font := FontVariation.new()
-	italic_font.base_font = count_label.get_theme_font("font")
-	italic_font.variation_transform = Transform2D(Vector2(1, 0), Vector2(-0.2, 1), Vector2.ZERO)
-	count_label.add_theme_font_override("font", italic_font)
 	menu_button.pressed.connect(_on_menu_pressed)
-	reorder_handle.gui_input.connect(_on_reorder_handle_input)
-	_reorder_gesture.surface = reorder_handle
-	_reorder_gesture.hold_seconds = 0.0
-	add_child(_reorder_gesture)
-	_reorder_gesture.picked.connect(_on_reorder_picked)
-	_reorder_gesture.dragged.connect(_on_reorder_dragged)
-	_reorder_gesture.dropped.connect(func(pointer: Vector2) -> void: _finish_reorder(pointer.y))
-	_reorder_gesture.canceled.connect(_on_reorder_canceled)
 	_scroll_container = _find_scroll_container()
 	if _scroll_container != null:
 		_scroll_container.scroll_started.connect(_on_scroll_started)
@@ -59,46 +33,10 @@ func _ready() -> void:
 
 func set_row_actions_visible(actions_visible: bool) -> void:
 	menu_button.visible = actions_visible
-	reorder_handle.visible = actions_visible
 
 
 func _on_menu_pressed() -> void:
 	menu_requested.emit(card_index, menu_button)
-
-
-func set_reorder_enabled(enabled: bool) -> void:
-	reorder_handle.visible = enabled
-	if not enabled:
-		_reorder_gesture.cancel()
-
-
-func set_index(index: int) -> void:
-	card_index = index
-
-
-func _on_reorder_handle_input(event: InputEvent) -> void:
-	var was_dragging := _reordering
-	_reorder_gesture.feed(event)
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		accept_event()
-	elif event is InputEventMouseMotion and (was_dragging or _reordering):
-		accept_event()
-
-
-func _on_reorder_picked() -> void:
-	_reordering = true
-	_pick_visual()
-	reorder_started.emit(card_index)
-
-
-func _on_reorder_dragged(offset: Vector2) -> void:
-	position = DragBounds.clamped(_rest_position + offset, self, _scroll_container)
-
-
-func _on_reorder_canceled() -> void:
-	_reordering = false
-	_release_visual()
-	reorder_canceled.emit()
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -158,13 +96,6 @@ func _handle_mouse_button(event: InputEventMouseButton) -> void:
 		activate()
 
 
-func _finish_reorder(pointer_y: float) -> void:
-	_pointer_down = false
-	_reordering = false
-	_release_visual()
-	reorder_ended.emit(card_index, pointer_y)
-
-
 func _handle_mouse_motion(event: InputEventMouseMotion) -> void:
 	if not _pointer_down or (event.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
 		return
@@ -214,26 +145,6 @@ func _on_scroll_started() -> void:
 func _on_scroll_ended() -> void:
 	_scrolling = false
 
-
-# 행은 프레임 폭을 꽉 채워 키울 수 없다. 그림자를 키워 들어올린 티를 낸다.
-func _pick_visual() -> void:
-	_rest_position = position
-	z_index = 1
-	_rest_style = get_theme_stylebox("panel")
-	var lifted := _rest_style.duplicate() as StyleBoxFlat
-	if lifted == null:
-		return
-	lifted.shadow_size = PICKED_SHADOW_SIZE
-	lifted.shadow_offset = PICKED_SHADOW_OFFSET
-	add_theme_stylebox_override("panel", lifted)
-
-
-func _release_visual() -> void:
-	z_index = 0
-	position = _rest_position
-	# 씬이 이미 override로 스타일을 준다. 지우지 말고 원래 것으로 되돌린다.
-	if _rest_style != null:
-		add_theme_stylebox_override("panel", _rest_style)
 
 # 목록에서만 누적 오답 표식을 표시한다. 결과 화면의 판정 배지와는 별개다.
 func show_learning_record(count: int) -> void:

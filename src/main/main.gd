@@ -124,7 +124,6 @@ func _ready() -> void:
 
 func _connect_library_signals() -> void:
 	library_view.deck_selected.connect(_on_deck_selected)
-	library_view.deck_order_changed.connect(_on_deck_order_changed)
 	library_view.import_file_selected.connect(import_deck_from_path)
 	library_view.export_file_selected.connect(_on_export_file_selected)
 	library_view.export_canceled.connect(_on_export_canceled)
@@ -134,6 +133,7 @@ func _connect_library_signals() -> void:
 	library_view.add_pressed.connect(_on_library_add_pressed)
 	library_view.settings_pressed.connect(_on_library_settings_pressed)
 	library_context_menu.settings_requested.connect(_on_open_settings_pressed)
+	library_context_menu.sort_requested.connect(_on_deck_sort_requested)
 	deck_context_menu.rename_requested.connect(_on_rename_pressed)
 	deck_context_menu.duplicate_requested.connect(_on_duplicate_pressed)
 	deck_context_menu.export_requested.connect(_on_export_pressed)
@@ -187,7 +187,7 @@ func _connect_card_management_signals() -> void:
 	card_list_view.add_card_pressed.connect(_on_add_card_pressed)
 	card_list_view.card_selected.connect(_on_card_row_selected)
 	card_list_view.card_menu_requested.connect(_on_card_row_menu_requested)
-	card_list_view.card_move_requested.connect(_on_card_move_requested)
+	card_list_view.sort_changed.connect(_on_card_sort_changed)
 	card_context_menu.edit_requested.connect(_on_card_context_edit_pressed)
 	card_context_menu.delete_requested.connect(_on_card_context_delete_pressed)
 	card_detail_view.back_pressed.connect(_close_card_detail)
@@ -283,19 +283,21 @@ func _remember_last_study_deck(deck_file: String) -> void:
 		return
 
 	var settings := DeckStorage.load_settings()
-	if settings.last_deck_file == deck_file:
-		return
-
+	settings.recent_decks.erase(deck_file)
+	settings.recent_decks.push_front(deck_file)
 	settings.last_deck_file = deck_file
 	_save_settings_or_warn(settings)
 
 
 func _replace_last_study_deck(old_file: String, new_file: String) -> void:
 	var settings := DeckStorage.load_settings()
-	if settings.last_deck_file.to_lower() != old_file.to_lower():
-		return
-
-	settings.last_deck_file = new_file
+	if settings.last_deck_file.to_lower() == old_file.to_lower():
+		settings.last_deck_file = new_file
+	var index := settings.recent_decks.find(old_file)
+	if index >= 0:
+		settings.recent_decks.remove_at(index)
+		if not new_file.is_empty():
+			settings.recent_decks.insert(index, new_file)
 	_save_settings_or_warn(settings)
 
 
@@ -415,31 +417,32 @@ func _start_cards(
 
 func _refresh_deck_list() -> void:
 	var settings := DeckStorage.load_settings()
-	var ordered := DeckLibraryOrder.apply(
-		settings.deck_order,
-		DeckStorage.list_deck_files()
+	var ordered := DeckLibraryOrder.sorted_files(
+		DeckStorage.list_deck_files(), settings.deck_sort, settings.recent_decks
 	)
-	# 새로 생긴 덱이 앞에 놓인 결과를 그대로 굳혀 다음에도 같은 자리에 있게 한다.
-	if ordered != settings.deck_order:
-		settings.deck_order = ordered
-		_save_settings_or_warn(settings)
 
 	var decks: Array[DeckInfo] = []
 	for deck_file in ordered:
+		var cards := DeckParser.parse(DeckStorage.read_deck(deck_file))
+		var progress := DeckStorage.load_progress(deck_file)
+		var completed := 0
+		for card in cards:
+			if progress.get_status(card.question) == CardStatus.Value.MASTERED:
+				completed += 1
 		decks.append(DeckInfo.new(
 			deck_file,
 			DeckNaming.display_name(deck_file),
-			DeckParser.parse(DeckStorage.read_deck(deck_file)).size()
+			cards.size(),
+			completed
 		))
 	library_view.render(decks)
 
 
-func _on_deck_order_changed(order: Array[String]) -> void:
+func _on_deck_sort_requested(mode: String) -> void:
 	var settings := DeckStorage.load_settings()
-	if settings.deck_order == order:
-		return
-	settings.deck_order = order
+	settings.deck_sort = mode
 	_save_settings_or_warn(settings)
+	_refresh_deck_list()
 
 
 func _on_deck_selected(deck_file: String) -> void:
@@ -486,6 +489,7 @@ func _open_card_list(deck_file: String) -> bool:
 	return true
 
 func _render_card_list() -> void:
+	card_list_view.set_sort(DeckStorage.load_settings().card_sort)
 	card_list_view.render(
 		DeckNaming.display_name(_card_workspace.deck_file),
 		_card_workspace.cards,
@@ -493,17 +497,10 @@ func _render_card_list() -> void:
 	)
 
 
-func _on_card_move_requested(index: int, target: int) -> void:
-	match _card_workspace.move_card(index, target):
-		CardWorkspace.MoveResult.SAVED:
-			pass
-		CardWorkspace.MoveResult.UNCHANGED:
-			_render_card_list()
-		CardWorkspace.MoveResult.SAVE_FAILED:
-			_render_card_list()
-			push_warning(
-				"Card order save failed: %s" % _card_workspace.deck_file
-			)
+func _on_card_sort_changed(mode: int) -> void:
+	var settings := DeckStorage.load_settings()
+	settings.card_sort = mode
+	_save_settings_or_warn(settings)
 
 
 func _on_card_row_selected(index: int) -> void:
@@ -981,6 +978,7 @@ func _on_library_add_pressed(anchor: Control) -> void:
 func _on_library_settings_pressed(anchor: Control) -> void:
 	add_deck_menu.dismiss()
 	deck_context_menu.dismiss()
+	library_context_menu.set_sort(DeckStorage.load_settings().deck_sort)
 	library_context_menu.open_at(anchor)
 
 

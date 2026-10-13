@@ -4,7 +4,6 @@
 [ext_resource type="Theme" uid="uid://bu5jyw4ehw6ya" path="res://src/main/main_theme.tres" id="2_theme"]
 [ext_resource type="Texture2D" uid="uid://33rmlntwrfjd" path="res://assets/icons/more_vertical.svg" id="3_more"]
 
-[ext_resource type="Texture2D" path="res://assets/icons/grip.svg" id="4_grip"]
 [ext_resource type="Script" path="res://src/main/wrong_tally.gd" id="5_tally"]
 
 [ext_resource type="Script" path="res://src/main/inline_question_row.gd" id="6_inline"]
@@ -76,25 +75,6 @@ theme_override_constants/margin_bottom = 14
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
-
-[node name="RowReorderHandle" type="Button" parent="Margin/Row" unique_id=81640705]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(64, 88)
-layout_mode = 2
-size_flags_vertical = 4
-tooltip_text = "끌어서 카드 순서 변경"
-theme_override_colors/font_color = Color(0.45, 0.45, 0.45, 1)
-theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
-theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 30
-theme_override_styles/normal = SubResource("StyleBoxRowMenu")
-theme_override_styles/pressed = SubResource("StyleBoxRowMenu")
-theme_override_styles/hover = SubResource("StyleBoxRowMenu")
-theme_override_styles/disabled = SubResource("StyleBoxRowMenu")
-theme_override_styles/focus = SubResource("StyleBoxRowMenu")
-icon = ExtResource("4_grip")
-icon_alignment = 1
-theme_override_constants/icon_max_width = 32
 
 [node name="Content" type="VBoxContainer" parent="Margin/Row" unique_id=1236552827]
 layout_mode = 2

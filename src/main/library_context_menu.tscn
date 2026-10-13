@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
 [ext_resource type="Script" path="res://src/main/library_context_menu.gd" id="2_script"]
@@ -42,6 +42,10 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
+[sub_resource type="StyleBoxLine" id="StyleBoxSortSeparator"]
+color = Color(0.82, 0.82, 0.80, 1)
+thickness = 1
+
 [node name="LibraryContextMenu" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -68,7 +72,7 @@ theme_override_styles/pressed = SubResource("StyleBoxBackdrop")
 theme_override_styles/focus = SubResource("StyleBoxBackdrop")
 
 [node name="LibraryContextMenuPanel" type="PanelContainer" parent="."]
-custom_minimum_size = Vector2(320, 96)
+custom_minimum_size = Vector2(340, 96)
 layout_mode = 0
 offset_left = 190.0
 offset_top = 120.0
@@ -86,6 +90,46 @@ theme_override_constants/margin_bottom = 12
 [node name="Content" type="VBoxContainer" parent="LibraryContextMenuPanel/Margin"]
 layout_mode = 2
 theme_override_constants/separation = 4
+
+[node name="SortNameButton" type="Button" parent="LibraryContextMenuPanel/Margin/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxMenuItem")
+theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
+theme_override_styles/pressed = SubResource("StyleBoxMenuItemPressed")
+theme_override_styles/focus = SubResource("StyleBoxMenuItemHover")
+text = "이름 오름차순"
+alignment = 0
+
+[node name="SortRecentButton" type="Button" parent="LibraryContextMenuPanel/Margin/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 72)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_focus_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_color = Color(0, 0, 0, 1)
+theme_override_colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+theme_override_colors/font_pressed_color = Color(0, 0, 0, 1)
+theme_override_styles/normal = SubResource("StyleBoxMenuItem")
+theme_override_styles/hover = SubResource("StyleBoxMenuItemHover")
+theme_override_styles/pressed = SubResource("StyleBoxMenuItemPressed")
+theme_override_styles/focus = SubResource("StyleBoxMenuItemHover")
+text = "최근 학습순"
+alignment = 0
+
+[node name="SortSettingsSeparator" type="HSeparator" parent="LibraryContextMenuPanel/Margin/Content"]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/separator = SubResource("StyleBoxSortSeparator")
 
 [node name="OpenSettingsButton" type="Button" parent="LibraryContextMenuPanel/Margin/Content"]
 unique_name_in_owner = true
