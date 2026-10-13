@@ -8,6 +8,15 @@ signal card_selected(index: int)
 signal retry_requested
 signal return_requested
 
+const OUTCOME_LABELS := {
+	StudyOutcome.Value.GOOD: "기억나요",
+	StudyOutcome.Value.AGAIN: "다시 볼게요",
+	StudyOutcome.Value.SKIP: "건너뜀",
+}
+
+var _primary_styles: Dictionary = {}
+var _secondary_styles: Dictionary = {}
+
 const CARD_ROW_SCENE := preload("res://src/main/card_collection_row.tscn")
 
 @onready var good_count_label: Label = (
@@ -25,6 +34,9 @@ const CARD_ROW_SCENE := preload("res://src/main/card_collection_row.tscn")
 
 
 func _ready() -> void:
+	for state in ["normal", "hover", "pressed"]:
+		_primary_styles[state] = retry_button.get_theme_stylebox(state)
+		_secondary_styles[state] = return_button.get_theme_stylebox(state)
 	retry_button.pressed.connect(func() -> void: retry_requested.emit())
 	return_button.pressed.connect(func() -> void: return_requested.emit())
 
@@ -53,6 +65,7 @@ func render(cards: Array[FlashCard], outcomes: Array[int]) -> void:
 		var row := CARD_ROW_SCENE.instantiate() as CardCollectionRow
 		rows.add_child(row)
 		row.setup(index, cards[index], StudyOutcome.display_text(outcome))
+		row.outcome_label.text = OUTCOME_LABELS.get(outcome, "—")
 		row.set_row_actions_visible(false)
 		row.selected.connect(_on_row_selected)
 
@@ -60,13 +73,20 @@ func render(cards: Array[FlashCard], outcomes: Array[int]) -> void:
 	again_count_label.text = str(again_count)
 	skip_count_label.text = str(skip_count)
 	retry_button.disabled = again_count == 0
-	retry_button.text = (
-		"AGAIN 카드 없음"
-		if again_count == 0
-		else "AGAIN 카드 다시 학습"
-	)
+	retry_button.visible = again_count > 0
+	retry_button.text = "다시 복습 (%d장)" % again_count
+	_set_primary(retry_button, again_count > 0)
+	_set_primary(return_button, false)
 	(rows.get_parent() as ScrollContainer).scroll_vertical = 0
 
 
 func _on_row_selected(index: int) -> void:
 	card_selected.emit(index)
+
+
+func _set_primary(button: Button, primary: bool) -> void:
+	var styles := _primary_styles if primary else _secondary_styles
+	for state in styles:
+		button.add_theme_stylebox_override(state, styles[state])
+	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+		button.add_theme_color_override(state, Color.WHITE if primary else Color.BLACK)

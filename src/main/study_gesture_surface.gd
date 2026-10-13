@@ -61,6 +61,7 @@ const HAPTIC_AMPLITUDE := 0.25
 
 @onready var card_slot: Control = get_parent() as Control
 @onready var card_stage: Control = card_slot.get_parent() as Control
+@onready var reveal_button: Button = $"../../../Actions/RevealAnswerButton"
 @onready var again_button: Button = $"../../../Actions/AgainButton"
 @onready var good_button: Button = $"../../../Actions/GoodButton"
 @onready var question_scroll: ScrollContainer = $CardMargin/CardContent/QuestionScroll
@@ -94,7 +95,7 @@ func _ready() -> void:
 	visibility_changed.connect(_on_visibility_changed)
 	judgment_threshold_crossed.connect(_vibrate_for_judgment_threshold)
 	card_stage.resized.connect(_on_stage_resized)
-	for button in [again_button, good_button]:
+	for button in [reveal_button, again_button, good_button]:
 		button.button_down.connect(_on_action_button_down.bind(button))
 		button.button_up.connect(_on_action_button_up.bind(button))
 	_fit_to_stage()
@@ -552,6 +553,7 @@ func _on_flip_finished(finished: Callable) -> void:
 
 func _set_animation_controls_disabled(disabled: bool) -> void:
 	var controls_disabled := disabled or _animating or not input_enabled
+	reveal_button.disabled = controls_disabled
 	again_button.disabled = controls_disabled
 	good_button.disabled = controls_disabled
 

@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
 [ext_resource type="PackedScene" path="res://src/main/card_collection_view.tscn" id="2_collection"]
@@ -15,6 +15,27 @@ corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxStudyPrimaryNormal"]
+bg_color = Color(0.08, 0.08, 0.08, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxStudyPrimaryHover"]
+bg_color = Color(0.18, 0.18, 0.18, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxStudyPrimaryPressed"]
+bg_color = Color(0.28, 0.28, 0.28, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [node name="StudyResultView" type="VBoxContainer"]
 layout_mode = 2
@@ -56,7 +77,7 @@ horizontal_alignment = 1
 [node name="Caption" type="Label" parent="ResultSummary/Good/Margin/Content"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "GOOD"
+text = "기억나요"
 horizontal_alignment = 1
 
 [node name="Again" type="PanelContainer" parent="ResultSummary"]
@@ -81,7 +102,7 @@ horizontal_alignment = 1
 [node name="Caption" type="Label" parent="ResultSummary/Again/Margin/Content"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "AGAIN"
+text = "다시 볼게요"
 horizontal_alignment = 1
 
 [node name="Skip" type="PanelContainer" parent="ResultSummary"]
@@ -106,7 +127,7 @@ horizontal_alignment = 1
 [node name="Caption" type="Label" parent="ResultSummary/Skip/Margin/Content"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "SKIP"
+text = "건너뜀"
 horizontal_alignment = 1
 
 [node name="ResultListScroll" parent="." instance=ExtResource("2_collection")]
@@ -121,7 +142,10 @@ custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
-text = "AGAIN 카드 다시 학습"
+theme_override_styles/normal = SubResource("StyleBoxStudyPrimaryNormal")
+theme_override_styles/hover = SubResource("StyleBoxStudyPrimaryHover")
+theme_override_styles/pressed = SubResource("StyleBoxStudyPrimaryPressed")
+text = "다시 복습"
 
 [node name="ReturnToReadyButton" type="Button" parent="Actions"]
 custom_minimum_size = Vector2(0, 88)

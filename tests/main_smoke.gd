@@ -386,17 +386,15 @@ func run_tests() -> void:
 		"Main Ready: 학습 범위와 카드 순서 설정 표시"
 	)
 	check(
-		_view(app, "OverviewContent").visible
-		and not _view(app, "NewStudyContent").visible,
-		"Main Ready: 준비 단계에서는 덱 요약과 필요한 진입 버튼만 표시"
+		_view(app, "StudyScopeOption").is_visible_in_tree()
+		and _view(app, "StudyOrderOption").is_visible_in_tree()
+		and _view(app, "StartStudyButton").is_visible_in_tree(),
+		"Main Ready: 준비 화면에서 설정과 시작을 바로 사용"
 	)
-	_view(app, "OpenStudySetupButton").pressed.emit()
 	check(
-		not _view(app, "OverviewContent").visible
-		and _view(app, "NewStudyContent").visible
-		and _view(app, "StartStudyButton").visible
-		and _view(app, "CancelStudySetupButton").visible,
-		"Main Ready: 새 학습 설정 면에는 설정·시작·취소만 표시"
+		app.study_ready_view.start_button.get_theme_color("font_color") == Color.WHITE
+		and _view(app, "CompletionLabel").text == "완료 0 / 2장",
+		"Main Ready: 새 학습 시작 강조와 덱 완료 비율 표시"
 	)
 	_view(app, "StudyScopeOption").select(MainApp.StudyScope.WRONG)
 	_view(app, "StartStudyButton").pressed.emit()
@@ -419,13 +417,26 @@ func run_tests() -> void:
 		and _view(app, "ContinueStudyButton").text == "이어서 학습 (2장 남음)",
 		"Main Ready: 저장된 세션의 남은 카드 수 표시"
 	)
-	_view(app, "OpenStudySetupButton").pressed.emit()
 	check(
-		_view(app, "StartStudyButton").text == "진행 중 세션 교체하고 시작"
-		and _view(app, "SetupDescription").text.contains("세션은 교체"),
-		"Main Ready: 새 학습이 진행 중 세션을 교체한다고 명확히 안내"
+		_view(app, "StartStudyButton").text == "새로 시작",
+		"Main Ready: 진행 중에는 새로 시작 버튼 표시"
 	)
-	_view(app, "CancelStudySetupButton").pressed.emit()
+	var ready_view := app.study_ready_view as StudyReadyView
+	check(ready_view.continue_button.get_theme_color("font_color") == Color.WHITE, "Main Ready: 저장된 설정과 같으면 이어하기 강조")
+	ready_view.order_option.select(1)
+	ready_view.order_option.item_selected.emit(1)
+	check(
+		ready_view.start_button.get_theme_color("font_color") == Color.WHITE
+		and ready_view.continue_button.get_theme_color("font_color") == Color.BLACK
+		and DeckStorage.load_study_resume(TEST_DECK).order == DeckOrdering.StudyOrder.SEQUENTIAL,
+		"Main Ready: 순서 변경은 새로 시작을 강조하고 저장 세션은 보존"
+	)
+	ready_view.select_order(DeckOrdering.StudyOrder.SEQUENTIAL)
+	ready_view.scope_option.select(MainApp.StudyScope.WRONG)
+	ready_view.scope_option.item_selected.emit(MainApp.StudyScope.WRONG)
+	check(ready_view.start_button.get_theme_color("font_color") == Color.WHITE, "Main Ready: 범위 변경도 새로 시작 강조")
+	ready_view.select_scope(MainApp.StudyScope.ALL)
+	check(ready_view.continue_button.get_theme_color("font_color") == Color.WHITE, "Main Ready: 설정을 되돌리면 이어하기 강조 복원")
 	_view(app, "ContinueStudyButton").pressed.emit()
 	check(_view(app, "QuestionLabel").text == "A", "Main Ready: 저장된 첫 카드부터 이어서 학습")
 	_view(app, "GoodButton").pressed.emit()
@@ -437,6 +448,27 @@ func run_tests() -> void:
 	_view(app, "ContinueStudyButton").pressed.emit()
 	check(_view(app, "QuestionLabel").text == "B", "Main Ready: 남은 카드부터 정확히 이어서 학습")
 	check(app.handle_back_request(), "Main Ready: 이어서 학습 화면에서 뒤로가기 요청 소비")
+	var saved_progress := DeckStorage.load_progress(TEST_DECK).to_json()
+	_view(app, "StartStudyButton").pressed.emit()
+	check(app.restart_study_overlay.visible, "Main Ready: 기존 세션이 있으면 새로 시작 확인")
+	app.restart_study_overlay.secondary_button.pressed.emit()
+	check(
+		not app.restart_study_overlay.visible
+		and DeckStorage.load_study_resume(TEST_DECK).remaining_indices.size() == 1,
+		"Main Ready: 취소하면 이어하기 위치 보존"
+	)
+	_view(app, "StartStudyButton").pressed.emit()
+	app.handle_back_request()
+	check(not app.restart_study_overlay.visible and app.study_ready_view.visible, "Main Ready: 뒤로가기로 확인창만 닫기")
+	_view(app, "StartStudyButton").pressed.emit()
+	app.restart_study_overlay.primary_button.pressed.emit()
+	check(
+		_view(app, "QuestionLabel").text == "A"
+		and DeckStorage.load_study_resume(TEST_DECK).remaining_indices.size() == 2
+		and DeckStorage.load_progress(TEST_DECK).to_json() == saved_progress,
+		"Main Ready: 확인하면 처음부터 시작하고 카드 학습 기록 유지"
+	)
+	app.handle_back_request()
 	check(app.handle_back_request(), "Main Ready: 준비 화면에서 뒤로가기 요청 소비")
 	check(_view(app, "LibraryContainer").visible, "Main Ready: 준비 화면에서 덱 목록으로 복귀")
 	check(app.handle_back_request(), "MVP Android Back: 덱 목록에서 종료 요청 소비")
@@ -545,7 +577,12 @@ func run_tests() -> void:
 	var study_card_content := _view(app, "QuestionLabel").get_parent()
 	check(_view(app, "QuestionLabel").text == "A", "MVP: 첫 질문 표시")
 	check(not _view(app, "AnswerScroll").visible, "Main Study: 첫 화면에서 답 영역 숨김")
-	check(_view(app, "Actions").visible, "Main Study: 답 공개 전에도 자기평가 버튼 표시")
+	check(
+		_view(app, "RevealAnswerButton").visible
+		and not _view(app, "AgainButton").visible
+		and not _view(app, "GoodButton").visible,
+		"Main Study: 답 공개 전에는 답 보기 버튼만 표시"
+	)
 	check(_view(app, "RemainingLabel").text == "2장 남음", "MVP: 남은 카드 수 표시")
 	check(
 		StudyGestureSurface.drag_direction(Vector2(120, 10))
@@ -607,7 +644,7 @@ func run_tests() -> void:
 	)
 	check(
 		export_presets_text.count(
-			"exclude_filter=\"store-listing/*,tests/*,tools/*,"
+			"exclude_filter=\"store-listing/*,tests/*,tools/*,build/*,"
 			+ "addons/mobile_foundation/tests/*\""
 		) == 2,
 		"Main Android: 배포와 무관한 스토어 자료·테스트·도구·모듈 테스트 제외"
@@ -622,8 +659,8 @@ func run_tests() -> void:
 	check(
 		_view(app, "AnswerScroll").visible
 		and _view(app, "CardProperties").visible
-		and _view(app, "StatusBadge").text == "MASTERED",
-		"Main Study: 카드 tap으로 답·tally·상태 딱지를 함께 공개"
+		and not _view(app, "StatusBadge").visible,
+		"Main Study: 답 공개 시 오답 횟수는 유지하고 상태 배지만 숨김"
 	)
 	var gesture_center := gesture_surface.get_global_rect().get_center()
 	check(
@@ -654,9 +691,14 @@ func run_tests() -> void:
 	)
 	check(_view(app, "AnswerLabel").text == "1", "MVP: 현재 카드의 답 표시")
 	check(
+		_view(app, "AnswerLabel").horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER
+		and not _view(app, "RevealAnswerButton").visible,
+		"Main Study: 짧은 답은 중앙 정렬하고 답 보기 숨김"
+	)
+	check(
 		_view(app, "Actions").visible
-		and _view(app, "AgainButton").text == "AGAIN"
-		and _view(app, "GoodButton").text == "GOOD",
+		and _view(app, "AgainButton").text == "다시 볼게요"
+		and _view(app, "GoodButton").text == "기억나요",
 		"Main Study: 답 공개 후 자기평가 버튼 유지"
 	)
 	(_view(app, "CardFrame") as StudyGestureSurface).tapped.emit()
@@ -666,6 +708,8 @@ func run_tests() -> void:
 		"Main Study: 카드를 다시 tap하면 질문만 보는 앞면으로 복귀"
 	)
 
+	_view(app, "RevealAnswerButton").pressed.emit()
+	check(_view(app, "AnswerScroll").visible, "Main Study: 답 보기 버튼으로 답 공개")
 	_view(app, "AgainButton").pressed.emit()
 	check(_view(app, "QuestionLabel").text == "B", "MVP: Again 후 다음 질문")
 	check(_view(app, "RemainingLabel").text == "1장 남음", "MVP: Again 후 남은 수 감소")
@@ -710,9 +754,9 @@ func run_tests() -> void:
 	)
 	check(
 		_view(first_result_rows.get_child(0), "QuestionLabel").text == "A"
-		and _view(first_result_rows.get_child(0), "OutcomeLabel").text == "AGAIN"
+		and _view(first_result_rows.get_child(0), "OutcomeLabel").text == "다시 볼게요"
 		and _view(first_result_rows.get_child(1), "QuestionLabel").text == "B"
-		and _view(first_result_rows.get_child(1), "OutcomeLabel").text == "GOOD",
+		and _view(first_result_rows.get_child(1), "OutcomeLabel").text == "기억나요",
 		"Main Result: 카드별 마지막 판정을 학습 순서대로 표시"
 	)
 	var first_result_row = first_result_rows.get_child(0)
@@ -1232,7 +1276,6 @@ func run_tests() -> void:
 	study_edit_progress.set_status("Study old", CardStatus.Value.LEARNING)
 	DeckStorage.save_progress(STUDY_EDIT_DECK, study_edit_progress)
 	app.show_study_ready(STUDY_EDIT_DECK)
-	_view(app, "OpenStudySetupButton").pressed.emit()
 	_view(app, "StudyScopeOption").select(
 		_view(app, "StudyScopeOption").get_item_index(MainApp.StudyScope.ALL)
 	)
@@ -1262,9 +1305,9 @@ func run_tests() -> void:
 		and _view(indexed_result_rows.get_child(0), "QuestionLabel").text
 		== "Study old"
 		and _view(indexed_result_rows.get_child(0), "OutcomeLabel").text
-		== "GOOD"
+		== "기억나요"
 		and _view(indexed_result_rows.get_child(1), "OutcomeLabel").text
-		== "AGAIN",
+		== "다시 볼게요",
 		"Main Result: 설정 버튼 제거 후에도 indexed 학습 결과 유지"
 	)
 	_view(app, "RetryAgainButton").pressed.emit()
@@ -1280,10 +1323,11 @@ func run_tests() -> void:
 		_view(app, "StudyResultView").visible
 		and _view(app, "ResultSkipCountLabel").text == "1"
 		and _view(app, "ResultAgainCountLabel").text == "0"
-		and _view(app, "RetryAgainButton").disabled
+		and not _view(app, "RetryAgainButton").visible
+		and app.study_flow.result_view.return_button.get_theme_color("font_color") == Color.BLACK
 		and _view(app.study_flow.result_view.rows.get_child(0), "OutcomeLabel").text
-		== "SKIP",
-		"Main Result: SKIP 판정 표시 및 AGAIN이 없으면 재학습 비활성화"
+		== "건너뜀",
+		"Main Result: 건너뜀 판정 표시 및 재학습 대상이 없으면 흰색 복귀 버튼만 표시"
 	)
 
 	app.show_library()

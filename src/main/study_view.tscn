@@ -54,6 +54,27 @@ corner_radius_bottom_left = 8
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxHeaderButton"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxStudyPrimaryNormal"]
+bg_color = Color(0.08, 0.08, 0.08, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxStudyPrimaryHover"]
+bg_color = Color(0.18, 0.18, 0.18, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxStudyPrimaryPressed"]
+bg_color = Color(0.28, 0.28, 0.28, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
 [node name="StudyFlow" type="VBoxContainer" unique_id=1949007233]
 size_flags_vertical = 3
 theme = ExtResource("1_theme")
@@ -135,12 +156,14 @@ theme_override_constants/margin_top = 30
 theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 30
 
-[node name="CardContent" type="VBoxContainer" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin" unique_id=1658595310]
+[node name="CardContent" type="Control" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin" unique_id=1658595310]
 layout_mode = 2
-theme_override_constants/separation = 18
+mouse_filter = 2
 
 [node name="CardProperties" type="HBoxContainer" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent" unique_id=671315536]
-layout_mode = 2
+layout_mode = 1
+anchor_right = 1.0
+offset_bottom = 42.0
 theme_override_constants/separation = 10
 
 [node name="WrongTally" type="Control" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent/CardProperties" unique_id=1362740289]
@@ -167,7 +190,9 @@ vertical_alignment = 1
 tooltip_text = "카드 상태"
 
 [node name="QuestionScroll" type="ScrollContainer" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent" unique_id=1980546292]
-layout_mode = 2
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
@@ -183,7 +208,11 @@ autowrap_mode = 2
 
 [node name="AnswerScroll" type="ScrollContainer" parent="ContentBounds/Content/StudyContainer/CardStage/CardSlot/CardFrame/CardMargin/CardContent" unique_id=1726778592]
 visible = false
-layout_mode = 2
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 174.0
+offset_bottom = -174.0
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
@@ -244,12 +273,19 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_constants/separation = 16
 
+[node name="RevealAnswerButton" type="Button" parent="ContentBounds/Content/StudyContainer/Actions"]
+custom_minimum_size = Vector2(0, 88)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+text = "답 보기"
+
 [node name="AgainButton" type="Button" parent="ContentBounds/Content/StudyContainer/Actions" unique_id=613358101]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
-text = "AGAIN"
+text = "다시 볼게요"
 tooltip_text = "왼쪽 방향키"
 
 [node name="GoodButton" type="Button" parent="ContentBounds/Content/StudyContainer/Actions" unique_id=1868244667]
@@ -257,7 +293,14 @@ custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
-text = "GOOD"
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
+theme_override_styles/normal = SubResource("StyleBoxStudyPrimaryNormal")
+theme_override_styles/hover = SubResource("StyleBoxStudyPrimaryHover")
+theme_override_styles/pressed = SubResource("StyleBoxStudyPrimaryPressed")
+text = "기억나요"
 tooltip_text = "오른쪽 방향키"
 
 [node name="StudyResultView" parent="ContentBounds/Content" unique_id=1976919345 instance=ExtResource("4_result")]

@@ -57,6 +57,7 @@ const STUDY_INPUT_LOCK_SECONDS := 0.22
 @onready var card_context_menu: CardContextMenuView = $CardContextMenu
 @onready var rename_deck_overlay: ModalDialog = $RenameDeckOverlay
 @onready var delete_confirmation_overlay: ModalDialog = $DeleteConfirmationOverlay
+@onready var restart_study_overlay: ModalDialog = $RestartStudyOverlay
 @onready var exit_confirmation_overlay: ModalDialog = $ExitConfirmationOverlay
 @onready var restore_backup_confirmation_overlay: ModalDialog = $RestoreBackupConfirmationOverlay
 @onready var create_deck_overlay: ModalDialog = $CreateDeckOverlay
@@ -85,7 +86,6 @@ const STUDY_INPUT_LOCK_SECONDS := 0.22
 	BackNavigation.Action.CLOSE_CARD_EDITOR: _request_close_card_editor,
 	BackNavigation.Action.CLOSE_CARD_DETAIL: _close_card_detail,
 	BackNavigation.Action.CLOSE_CARD_LIST: _return_to_ready_from_card_list,
-	BackNavigation.Action.CANCEL_STUDY_SETUP: _on_cancel_study_setup,
 	BackNavigation.Action.RETURN_LIBRARY_FROM_READY: show_library,
 	BackNavigation.Action.RETURN_TO_STUDY_READY: _return_to_study_ready,
 }
@@ -157,6 +157,8 @@ func _configure_settings() -> void:
 
 
 func _connect_deck_dialog_signals() -> void:
+	restart_study_overlay.secondary_button.pressed.connect(restart_study_overlay.hide)
+	restart_study_overlay.primary_button.pressed.connect(_on_restart_study_confirmed)
 	rename_deck_overlay.secondary_button.pressed.connect(_on_rename_canceled)
 	rename_deck_overlay.primary_button.pressed.connect(_on_rename_confirmed)
 	rename_deck_overlay.dialog_input.text_submitted.connect(_on_rename_submitted)
@@ -178,10 +180,8 @@ func _connect_deck_dialog_signals() -> void:
 func _connect_card_management_signals() -> void:
 	study_ready_view.back_pressed.connect(show_library)
 	study_ready_view.menu_pressed.connect(_on_ready_deck_menu_pressed)
-	study_ready_view.open_setup_pressed.connect(_on_open_study_setup)
 	study_ready_view.continue_pressed.connect(_on_continue_study_pressed)
 	study_ready_view.start_study_pressed.connect(_on_start_study_pressed)
-	study_ready_view.cancel_setup_pressed.connect(_on_cancel_study_setup)
 	study_ready_view.manage_cards_pressed.connect(_on_manage_cards_pressed)
 	card_list_view.back_pressed.connect(_return_to_ready_from_card_list)
 	card_list_view.add_card_pressed.connect(_on_add_card_pressed)
@@ -245,6 +245,7 @@ func _apply_safe_area() -> void:
 		rename_deck_overlay,
 		delete_confirmation_overlay,
 		exit_confirmation_overlay,
+		restart_study_overlay,
 		card_delete_confirmation_overlay,
 		discard_card_changes_overlay,
 		restore_backup_confirmation_overlay,
@@ -328,6 +329,7 @@ func show_library() -> void:
 	card_context_menu.dismiss()
 	create_deck_overlay.hide()
 	rename_deck_overlay.hide()
+	restart_study_overlay.hide()
 	delete_confirmation_overlay.hide()
 	card_delete_confirmation_overlay.hide()
 	discard_card_changes_overlay.hide()
@@ -357,6 +359,9 @@ func show_study_ready(deck_file: String) -> bool:
 		_show_library_notice(error_message)
 		return false
 
+	if _study_plan.deck_file != deck_file:
+		study_ready_view.select_scope(StudyScope.ALL)
+		study_ready_view.select_order(DeckOrdering.StudyOrder.SEQUENTIAL)
 	_study_plan.prepare(deck_file, DeckParser.parse(deck_text), deck_text.hash())
 	_pending_deck_action_file = ""
 	deck_context_menu.dismiss()
@@ -364,7 +369,6 @@ func show_study_ready(deck_file: String) -> bool:
 	_show_page(study_ready_view)
 	_update_study_ready_summary()
 	_update_continue_action()
-	_show_ready_overview()
 	return true
 
 
@@ -464,25 +468,6 @@ func _update_study_ready_summary() -> void:
 		summary.learning_count,
 		summary.mastered_count
 	)
-
-
-func _show_ready_overview() -> void:
-	study_ready_view.show_overview()
-
-
-func _on_open_study_setup() -> void:
-	var resume := DeckStorage.load_study_resume(_study_plan.deck_file)
-	var replacing_resume := _study_plan.is_valid_resume(resume)
-	study_ready_view.show_setup(
-		"진행 중 세션은 교체되며 카드별 진행 기록은 유지됩니다."
-		if replacing_resume
-		else "진행 기록은 유지하고 새로운 학습 세션을 시작합니다.",
-		"진행 중 세션 교체하고 시작" if replacing_resume else "새 학습 시작"
-	)
-
-
-func _on_cancel_study_setup() -> void:
-	_show_ready_overview()
 
 
 func _on_manage_cards_pressed() -> void:
@@ -890,13 +875,28 @@ func _update_continue_action() -> void:
 		return
 
 	study_ready_view.set_continue_action(
-		"이어서 학습 (%d장 남음)" % resume.remaining_indices.size()
+		"이어서 학습 (%d장 남음)" % resume.remaining_indices.size(),
+		resume.scope,
+		resume.order
 	)
 	study_ready_view.select_scope(resume.scope)
 	study_ready_view.select_order(resume.order)
 
 
 func _on_start_study_pressed() -> void:
+	var resume := DeckStorage.load_study_resume(_study_plan.deck_file)
+	if _study_plan.is_valid_resume(resume):
+		restart_study_overlay.show()
+		return
+	_start_selected_study()
+
+
+func _on_restart_study_confirmed() -> void:
+	restart_study_overlay.hide()
+	_start_selected_study()
+
+
+func _start_selected_study() -> void:
 	if (
 		_study_plan.deck_file.is_empty()
 		or not DeckStorage.deck_exists(_study_plan.deck_file)
@@ -1004,6 +1004,9 @@ func _on_deck_menu_requested(deck_file: String, anchor: Control) -> void:
 
 
 func handle_back_request() -> bool:
+	if restart_study_overlay.visible:
+		restart_study_overlay.hide()
+		return true
 	var action := BackNavigation.resolve({
 		BackNavigation.Action.CANCEL_RESTORE:
 			restore_backup_confirmation_overlay.visible,
@@ -1025,8 +1028,6 @@ func handle_back_request() -> bool:
 		BackNavigation.Action.CLOSE_CARD_EDITOR: card_editor_view.visible,
 		BackNavigation.Action.CLOSE_CARD_DETAIL: card_detail_view.visible,
 		BackNavigation.Action.CLOSE_CARD_LIST: card_list_view.visible,
-		BackNavigation.Action.CANCEL_STUDY_SETUP:
-			study_ready_view.visible and study_ready_view.is_setup_visible(),
 		BackNavigation.Action.RETURN_LIBRARY_FROM_READY: study_ready_view.visible,
 	})
 	var handler: Callable = _back_handlers.get(action, Callable())
