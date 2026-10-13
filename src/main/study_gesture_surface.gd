@@ -35,10 +35,7 @@ const VERTICAL_PREVIEW_FOLLOW_RATIO := 0.35
 const VERTICAL_PREVIEW_MAX_OFFSET_RATIO := 0.16
 const EXIT_ROTATION_DEGREES := 15.0
 const EXIT_DURATION := 0.2
-const ENTER_OVERSHOOT_DISTANCE := 12.0
-const ENTER_ROTATION_DEGREES := 4.0
-const ENTER_DURATION := 0.28
-const ENTER_SETTLE_DURATION := 0.08
+const ENTER_DURATION := 0.12
 const FLIP_LIFT_DURATION := 0.06
 const FLIP_HALF_DURATION := 0.14
 const FLIP_OPEN_DURATION := 0.16
@@ -461,50 +458,12 @@ func _on_swipe_exit_finished(direction: int) -> void:
 		_animating = false
 		return
 
-	var direction_vector := action_vector(direction)
-	var enter_distance := _travel_distance(direction_vector)
-	position = -direction_vector * enter_distance
-	rotation = deg_to_rad(-direction_vector.x * ENTER_ROTATION_DEGREES)
-	scale = Vector2(0.97, 0.97)
-	modulate.a = 0.25
-	var overshoot_position := direction_vector * ENTER_OVERSHOOT_DISTANCE
+	position = Vector2.ZERO
+	rotation = 0.0
+	scale = Vector2.ONE
+	modulate.a = 0.0
 	_motion_tween = create_tween()
-	_motion_tween.tween_property(
-		self,
-		"position",
-		overshoot_position,
-		ENTER_DURATION
-	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_motion_tween.parallel().tween_property(
-		self,
-		"rotation",
-		0.0,
-		ENTER_DURATION
-	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_motion_tween.parallel().tween_property(
-		self,
-		"scale",
-		Vector2(1.01, 1.01),
-		ENTER_DURATION
-	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_motion_tween.parallel().tween_property(
-		self,
-		"modulate:a",
-		1.0,
-		ENTER_DURATION
-	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_motion_tween.tween_property(
-		self,
-		"position",
-		Vector2.ZERO,
-		ENTER_SETTLE_DURATION
-	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	_motion_tween.parallel().tween_property(
-		self,
-		"scale",
-		Vector2.ONE,
-		ENTER_SETTLE_DURATION
-	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_motion_tween.tween_property(self, "modulate:a", 1.0, ENTER_DURATION)
 	_motion_tween.finished.connect(_on_swipe_enter_finished)
 
 
