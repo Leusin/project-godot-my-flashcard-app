@@ -607,7 +607,7 @@ func parse(text: String) -> Array[FlashCard]:
 
 - 저장소에서 C# 참조를 검색해 결과가 없다.
 - 일반 Godot 빌드만으로 개발, 테스트, export가 가능하다.
-- `README`, `AGENT`, `CODE_GUIDE`, `ROADMAP`이 실제 GDScript 구조와 일치한다.
+- `README`, `AGENT`, `CODE_GUIDE`가 실제 GDScript 구조와 일치한다.
 
 ## 8. 단계별 커밋 권장 단위
 
