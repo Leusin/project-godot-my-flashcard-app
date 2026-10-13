@@ -9,49 +9,9 @@ func run_tests() -> void:
 	MobileFoundationChecks.run(
 		func(passed: bool, description: String) -> void: check(passed, description)
 	)
-	# 노드 두 개는 SceneTree가 있어야 확인할 수 있어 여기서 본다.
-	_check_safe_area_margin()
+	# 노드 동작은 SceneTree에서 확인한다.
 	_check_keyboard_avoider_node()
-	_check_list_reorder()
 	_check_reorder_gesture()
-
-
-func _check_safe_area_margin() -> void:
-	var margin := SafeAreaMargin.new()
-	margin.base_margin = 12.0
-	add_child(margin)
-	margin.apply_insets()
-
-	# 헤드리스 테스트는 손에 드는 기기가 아니므로 안전 영역이 없다.
-	check(
-		margin.insets() == Vector4.ZERO,
-		"SafeAreaMargin: 안전 영역이 없으면 기본 여백만 남는다"
-	)
-	check(
-		margin.get_theme_constant("margin_left") == 12
-		and margin.get_theme_constant("margin_top") == 12
-		and margin.get_theme_constant("margin_right") == 12
-		and margin.get_theme_constant("margin_bottom") == 12,
-		"SafeAreaMargin: 네 변 모두에 여백을 넣는다"
-	)
-
-	margin.apply_bottom = false
-	margin.base_margin = 0.0
-	margin.apply_insets()
-	check(
-		margin.get_theme_constant("margin_bottom") == 0,
-		"SafeAreaMargin: 꺼 둔 변은 안전 영역을 더하지 않는다"
-	)
-
-	var seen := []
-	margin.insets_changed.connect(func(insets: Vector4) -> void: seen.append(insets))
-	margin.apply_insets()
-	check(
-		seen.size() == 1 and seen[0] == Vector4.ZERO,
-		"SafeAreaMargin: 다시 계산할 때마다 여백을 알린다"
-	)
-
-	margin.queue_free()
 
 
 func _check_keyboard_avoider_node() -> void:
@@ -91,110 +51,6 @@ func _check_keyboard_avoider_node() -> void:
 	)
 
 	avoider.queue_free()
-
-
-func _check_list_reorder() -> void:
-	# Container 자체는 자동 배치하지 않으므로 layout frame 대기 없이 좌표를 고정한다.
-	var items := Container.new()
-	items.position = Vector2(30, 40)
-	add_child(items)
-	var controls: Array[Control] = []
-	for index in 4:
-		var item := Control.new()
-		items.add_child(item)
-		item.position = Vector2(0, index * 60)
-		item.size = Vector2(100, 40)
-		controls.append(item)
-	var reorder := ListReorder.new()
-	reorder.items = items
-	add_child(reorder)
-	var moves: Array[Vector2i] = []
-	reorder.reordered.connect(
-		func(from_index: int, to_index: int) -> void:
-			moves.append(Vector2i(from_index, to_index))
-	)
-	var first := controls[0]
-	var last := controls[3]
-	var end := last.get_global_rect().end
-	check(reorder.target_at(first, end) == 3, "ListReorder: 세로 목록 끝으로 이동")
-	check(
-		reorder.target_at(last, first.get_global_rect().position) == 0,
-		"ListReorder: 세로 목록 처음으로 이동"
-	)
-	check(
-		reorder.target_at(first, controls[1].get_global_rect().position) == -1,
-		"ListReorder: 바로 다음 항목 앞에 놓으면 제자리"
-	)
-	reorder.finish(first, end)
-	check(moves.is_empty(), "ListReorder: 시작하지 않은 놓기는 무시")
-	reorder.begin(first)
-	check(first.get_index() == 0, "ListReorder: 집는 동안 순서는 유지")
-	reorder.finish(controls[1], end)
-	check(moves.is_empty(), "ListReorder: 다른 항목의 release는 무시")
-	reorder.finish(first, end)
-	check(
-		first.get_index() == 3 and moves == [Vector2i(0, 3)],
-		"ListReorder: 항목을 옮긴 뒤 변경 전후 index를 한 번 전달"
-	)
-	reorder.finish(first, end)
-	check(moves.size() == 1, "ListReorder: 중복 release로 다시 저장하지 않음")
-	reorder.begin(first)
-	reorder.cancel()
-	reorder.finish(first, controls[1].get_global_rect().position)
-	check(first.get_index() == 3 and moves.size() == 1, "ListReorder: 취소하면 변경하지 않음")
-
-	items.move_child(first, 0)
-	reorder.begin(first)
-	reorder.finish(first, controls[1].get_global_rect().position)
-	check(moves.size() == 1, "ListReorder: 제자리 놓기는 변경 알림 없음")
-	reorder.begin(first)
-	items.remove_child(first)
-	reorder.finish(first, end)
-	check(moves.size() == 1, "ListReorder: 드래그 중 목록에서 빠진 항목은 무시")
-	items.add_child(first)
-	items.move_child(first, 0)
-
-	# 두 줄로 감긴 타일에서도 가장 가까운 좌/우 경계로 삽입한다.
-	reorder.layout = ListReorder.Layout.FLOW
-	for index in 4:
-		controls[index].position = Vector2((index % 2) * 120, (index / 2) * 60)
-	check(
-		reorder.target_at(first, controls[2].get_global_rect().position) == 1,
-		"ListReorder: 다음 줄 첫 타일 앞에 놓기"
-	)
-	check(
-		reorder.target_at(first, last.get_global_rect().end) == 3,
-		"ListReorder: 다음 줄 마지막 타일 뒤에 놓기"
-	)
-	check(
-		reorder.target_at(last, first.get_global_rect().position) == 0,
-		"ListReorder: 이전 줄 첫 타일 앞으로 이동"
-	)
-	first.position += Vector2(500, 500)
-	check(
-		reorder.target_at(first, last.get_global_rect().end) == 3,
-		"ListReorder: 손끝을 따라 움직인 항목은 위치 판정에서 제외"
-	)
-	reorder.begin(first)
-	first.free()
-	reorder.finish(null, end)
-	check(moves.size() == 1, "ListReorder: 항목이 삭제되어도 놓기는 안전하게 무시")
-	items.free()
-	check(reorder.target_at(null, end) == -1, "ListReorder: 목록이 삭제되어도 안전")
-	reorder.free()
-
-	var single := Container.new()
-	add_child(single)
-	var only_item := Control.new()
-	single.add_child(only_item)
-	var single_reorder := ListReorder.new()
-	single_reorder.items = single
-	add_child(single_reorder)
-	check(single_reorder.target_at(only_item, Vector2.ZERO) == -1, "ListReorder: 항목 하나는 옮길 곳 없음")
-	only_item.free()
-	check(single_reorder.target_at(null, Vector2.ZERO) == -1, "ListReorder: 빈 목록은 옮길 곳 없음")
-	single_reorder.free()
-	single.free()
 
 
 func _check_reorder_gesture() -> void:

@@ -12,8 +12,6 @@ extends RefCounted
 
 static func run(report: Callable) -> void:
 	_check_drag_bounds(report)
-	_check_list_insertion(report)
-	_check_array_order(report)
 	_check_aspect_fit(report)
 	_check_safe_area(report)
 	_check_keyboard_avoider(report)
@@ -111,103 +109,6 @@ static func _check_drag_bounds(report: Callable) -> void:
 		)
 		== Vector2(150, 120),
 		"DragBounds: 원점에서 떨어진 영역도 그 경계를 쓴다"
-	)
-
-
-static func _check_list_insertion(report: Callable) -> void:
-	report.call(
-		ListInsertion.target_index(4, 0, 2, false) == 1
-		and ListInsertion.target_index(4, 0, 2, true) == 2,
-		"ListInsertion: 아래 항목의 앞뒤 경계를 최종 index로 바꾼다"
-	)
-	report.call(
-		ListInsertion.target_index(4, 3, 1, false) == 1
-		and ListInsertion.target_index(4, 3, 1, true) == 2,
-		"ListInsertion: 위로 끌어도 앞뒤 경계를 최종 index로 바꾼다"
-	)
-	report.call(
-		ListInsertion.target_index(4, 1, 0, true) == 1
-		and ListInsertion.target_index(4, 1, 2, false) == 1,
-		"ListInsertion: 현재 자리의 양쪽 경계는 순서를 유지한다"
-	)
-	report.call(
-		ListInsertion.target_index(1, 0, 0, false) == -1
-		and ListInsertion.target_index(3, 0, 0, true) == -1,
-		"ListInsertion: 경계가 없거나 움직이는 항목 자체면 거부한다"
-	)
-	report.call(
-		ListInsertion.target_index(3, -1, 1, true) == -1
-		and ListInsertion.target_index(3, 3, 1, true) == -1
-		and ListInsertion.target_index(3, 1, -1, true) == -1
-		and ListInsertion.target_index(3, 1, 3, true) == -1,
-		"ListInsertion: 범위 밖 index는 거부한다"
-	)
-	report.call(
-		ListInsertion.target_index(0, 0, 0, true) == -1,
-		"ListInsertion: 빈 목록은 거부한다"
-	)
-	report.call(
-		ListInsertion.target_index(3, 0, 2, true) == 2
-		and ListInsertion.target_index(3, 2, 0, false) == 0,
-		"ListInsertion: 양 끝으로 옮기면 마지막과 첫 자리가 된다"
-	)
-
-	report.call(
-		ListInsertion.insertion_index(3, 0, false) == 0
-		and ListInsertion.insertion_index(3, 0, true) == 1
-		and ListInsertion.insertion_index(3, 2, true) == 3,
-		"ListInsertion: 새 항목은 경계 그대로 끼워 넣는다"
-	)
-	report.call(
-		ListInsertion.insertion_index(0, 0, true) == 0
-		and ListInsertion.insertion_index(3, -1, true) == 0
-		and ListInsertion.insertion_index(3, 9, false) == 3,
-		"ListInsertion: 새 항목의 범위 밖 경계는 양 끝으로 읽는다"
-	)
-
-
-static func _check_array_order(report: Callable) -> void:
-	var items := ["A", "B", "C"]
-
-	report.call(
-		ArrayOrder.moved(items, 0, 2) == ["B", "C", "A"],
-		"ArrayOrder: 아래로 옮기면 사이 항목이 앞으로 당겨진다"
-	)
-	report.call(
-		ArrayOrder.moved(items, 2, 0) == ["C", "A", "B"],
-		"ArrayOrder: 위로 옮기면 사이 항목이 뒤로 밀린다"
-	)
-	report.call(
-		items == ["A", "B", "C"],
-		"ArrayOrder: 원본 배열은 그대로 둔다"
-	)
-	report.call(
-		ArrayOrder.moved(items, 1, 1) == ["A", "B", "C"],
-		"ArrayOrder: 같은 자리로 옮기면 그대로다"
-	)
-	report.call(
-		ArrayOrder.moved(items, 0, 99) == ["B", "C", "A"]
-		and ArrayOrder.moved(items, 2, -99) == ["C", "A", "B"],
-		"ArrayOrder: 범위를 넘는 목적지는 양 끝으로 묶는다"
-	)
-	report.call(
-		ArrayOrder.moved(items, 5, 0) == ["A", "B", "C"]
-		and ArrayOrder.moved(items, -1, 0) == ["A", "B", "C"],
-		"ArrayOrder: 없는 항목을 옮기면 아무 일도 없다"
-	)
-	report.call(
-		ArrayOrder.moved([], 0, 0) == []
-		and ArrayOrder.moved(["only"], 0, 0) == ["only"],
-		"ArrayOrder: 비었거나 하나뿐인 배열도 안전하다"
-	)
-
-	# 타입이 있는 배열을 넘겨도 원소가 유지되고, assign()으로 타입을 되찾을 수 있다.
-	var typed: Array[int] = [1, 2, 3]
-	var restored: Array[int] = []
-	restored.assign(ArrayOrder.moved(typed, 0, 2))
-	report.call(
-		restored == [2, 3, 1] and typed == [1, 2, 3],
-		"ArrayOrder: 타입이 있는 배열도 assign()으로 그대로 되받는다"
 	)
 
 

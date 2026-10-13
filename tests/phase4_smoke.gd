@@ -240,24 +240,11 @@ func _test_card_workspace() -> void:
 		and workspace.cards[0].question == "Alpha",
 		"카드 작업공간: 덱 스냅샷 열기"
 	)
-	check(
-		workspace.move_card(0, 1) == CardWorkspace.MoveResult.SAVED
-		and workspace.cards[0].question == "Beta"
-		and DeckParser.parse(
-			DeckStorage.read_deck(WORKSPACE_DECK)
-		)[1].question == "Alpha",
-		"카드 작업공간: 카드 순서 저장"
-	)
-	check(
-		DeckStorage.load_study_resume(WORKSPACE_DECK) == null,
-		"카드 작업공간: 순서 변경 시 이어하기 제거"
-	)
-
 	var edit_resume := StudyResume.new()
 	edit_resume.deck_hash = 2
 	edit_resume.remaining_indices = [1]
 	DeckStorage.save_study_resume(WORKSPACE_DECK, edit_resume)
-	workspace.select(1)
+	workspace.select(0)
 	var edit_result := workspace.save_card(
 		"Alpha 2",
 		"Updated",
@@ -270,7 +257,7 @@ func _test_card_workspace() -> void:
 		edit_result.succeeded
 		and edit_result.progress_saved
 		and edit_result.card.question == "Alpha 2"
-		and edit_result.card_index == 1,
+		and edit_result.card_index == 0,
 		"카드 작업공간: 편집 결과 반환"
 	)
 	check(
@@ -304,7 +291,7 @@ func _test_card_workspace() -> void:
 	study_resume.deck_hash = 3
 	study_resume.remaining_indices = [0]
 	DeckStorage.save_study_resume(WORKSPACE_DECK, study_resume)
-	workspace.select(0)
+	workspace.select(1)
 	var study_edit_result := workspace.save_card(
 		"Beta",
 		"Two updated",
@@ -318,7 +305,7 @@ func _test_card_workspace() -> void:
 		"카드 작업공간: 학습 중 편집은 이어하기 유지"
 	)
 
-	workspace.select(1)
+	workspace.select(0)
 	var delete_result := workspace.delete_selected()
 	check(
 		delete_result.succeeded

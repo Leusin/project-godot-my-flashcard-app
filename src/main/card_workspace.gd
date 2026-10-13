@@ -4,12 +4,6 @@ extends RefCounted
 # 카드 편집용 덱 스냅샷과 저장 작업을 함께 관리한다.
 # 화면 전환은 MainApp, 학습 세션 반영은 CardEditCoordinator가 맡는다.
 
-enum MoveResult {
-	UNCHANGED,
-	SAVED,
-	SAVE_FAILED,
-}
-
 class SaveResult:
 	extends RefCounted
 
@@ -79,24 +73,6 @@ func card_at(index: int) -> FlashCard:
 
 func load_progress() -> Progress:
 	return DeckStorage.load_progress(deck_file)
-
-
-func move_card(from_index: int, to_index: int) -> MoveResult:
-	if (
-		not is_valid_index(from_index)
-		or not is_valid_index(to_index)
-		or from_index == to_index
-	):
-		return MoveResult.UNCHANGED
-
-	var updated := CardOrdering.moved(cards, from_index, to_index)
-	if not DeckStorage.write_deck(deck_file, DeckWriter.to_markdown(updated)):
-		return MoveResult.SAVE_FAILED
-
-	cards = updated
-	# 이어하기 기록은 카드 위치를 사용하므로 순서가 바뀌면 폐기한다.
-	DeckStorage.delete_study_resume(deck_file)
-	return MoveResult.SAVED
 
 
 func save_card(
