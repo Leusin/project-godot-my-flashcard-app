@@ -41,6 +41,7 @@ func run_tests() -> void:
 	DeckStorage.set_decks_dir(TEST_DECKS_DIR)
 
 	_test_paths_and_crud()
+	_test_safe_writes_and_rename_conflicts()
 	_test_progress_storage()
 	_test_study_resume_storage()
 	_test_card_workspace()
@@ -735,3 +736,41 @@ func _cleanup() -> void:
 		DirAccess.remove_absolute(BACKUP_PATH)
 	if FileAccess.file_exists(INVALID_BACKUP_PATH):
 		DirAccess.remove_absolute(INVALID_BACKUP_PATH)
+
+
+func _test_safe_writes_and_rename_conflicts() -> void:
+	var deck := "__safe_write.md"
+	var renamed := "__safe_renamed.md"
+	check(DeckStorage.write_deck(deck, "# 기존\n유지"), "안전 저장: 초기 파일")
+	var pending := DeckStorage.deck_path(deck) + ".pending"
+	DirAccess.make_dir_recursive_absolute(pending)
+	check(not DeckStorage.write_deck(deck, "# 새 내용\n실패"), "안전 저장: 임시 파일 생성 실패 전달")
+	check(DeckStorage.read_deck(deck) == "# 기존\n유지", "안전 저장: 실패 후 기존 내용 보존")
+	DirAccess.remove_absolute(pending)
+	check(DeckStorage.write_deck(deck, "# 변경\n성공"), "안전 저장: 기존 파일 교체")
+	check(not FileAccess.file_exists(pending), "안전 저장: 성공 후 임시 파일 없음")
+	var progress := Progress.new()
+	progress.set_wrong_count("변경", 3)
+	DeckStorage.save_progress(deck, progress)
+	DeckStorage.save_progress(renamed, progress)
+	check(not DeckStorage.rename_deck(deck, renamed), "덱 이름 변경: 목적지 학습 기록 충돌 거부")
+	check(DeckStorage.deck_exists(deck) and DeckStorage.load_progress(deck).get_wrong_count("변경") == 3,
+		"덱 이름 변경: 충돌 후 원본 덱과 기록 보존")
+	DirAccess.remove_absolute(DeckStorage.progress_path(renamed))
+	DirAccess.make_dir_recursive_absolute(DeckStorage.deck_path(renamed))
+	check(not DeckStorage.rename_deck(deck, renamed), "덱 이름 변경: 목적지 디렉터리 충돌 거부")
+	check(FileAccess.file_exists(DeckStorage.progress_path(deck)), "덱 이름 변경: 사전 검사로 부분 이동 방지")
+	DirAccess.remove_absolute(DeckStorage.deck_path(renamed))
+	# 기록의 목적지 부모만 만들면 첫 이동은 성공하고 마지막 Markdown 이동은 실패한다.
+	var partial_target := "__rollback_target__/renamed.md"
+	var progress_parent := DeckStorage.progress_path(partial_target).get_base_dir()
+	DirAccess.make_dir_recursive_absolute(progress_parent)
+	check(not DeckStorage.rename_deck(deck, partial_target), "덱 이름 변경: 마지막 파일 이동 실패 전달")
+	check(DeckStorage.deck_exists(deck) and FileAccess.file_exists(DeckStorage.progress_path(deck))
+		and not FileAccess.file_exists(DeckStorage.progress_path(partial_target)),
+		"덱 이름 변경: 먼저 옮긴 기록을 원래 위치로 복구")
+	DirAccess.remove_absolute(progress_parent)
+	check(DeckStorage.rename_deck(deck, renamed), "덱 이름 변경: 충돌 제거 후 성공")
+	check(not DeckStorage.deck_exists(deck) and DeckStorage.load_progress(renamed).get_wrong_count("변경") == 3,
+		"덱 이름 변경: 덱과 기록 함께 이동")
+	DeckStorage.delete_deck(renamed)

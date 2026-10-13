@@ -12,23 +12,32 @@ signal card_move_requested(index: int, target: int)
 
 const CARD_ROW_SCENE := preload("res://src/main/card_collection_row.tscn")
 
-var _reordering := false
-var _reordering_index := -1
+var _reorder := ListReorder.new()
+var _cards: Array[FlashCard] = []
 
 @onready var back_button: Button = $Header/LeftActions/BackFromCardListButton
 @onready var deck_name_label: Label = $Header/TitleSlot/CardListDeckLabel
+@onready var search_field: LineEdit = $ContentBounds/Content/SearchField
+@onready var search_status: Label = $ContentBounds/Content/SearchStatus
 @onready var rows: VBoxContainer = $ContentBounds/Content/CardListScroll/Rows
 @onready var add_card_button: Button = $ContentBounds/Content/AddCardButton
 
 
 func _ready() -> void:
+	_reorder.items = rows
+	add_child(_reorder)
+	_reorder.reordered.connect(_on_reordered)
+	search_field.text_changed.connect(_apply_search)
+	search_field.text_submitted.connect(func(_text: String) -> void: search_field.release_focus())
 	back_button.pressed.connect(func() -> void: back_pressed.emit())
 	add_card_button.pressed.connect(func() -> void: add_card_pressed.emit())
 
 
 func render(deck_name: String, cards: Array[FlashCard]) -> void:
-	_reordering = false
-	_reordering_index = -1
+	_reorder.cancel()
+	if deck_name_label.text != deck_name:
+		search_field.text = ""
+	_cards = cards.duplicate()
 	deck_name_label.text = deck_name
 	for child in rows.get_children():
 		child.free()
@@ -41,6 +50,8 @@ func render(deck_name: String, cards: Array[FlashCard]) -> void:
 		row.menu_requested.connect(_on_row_menu_requested)
 		row.reorder_started.connect(_on_row_reorder_started)
 		row.reorder_ended.connect(_on_row_reorder_ended)
+		row.reorder_canceled.connect(_reorder.cancel)
+	_apply_search(search_field.text)
 
 
 func _on_row_selected(index: int) -> void:
@@ -52,49 +63,37 @@ func _on_row_menu_requested(index: int, anchor: Control) -> void:
 
 
 func _on_row_reorder_started(index: int) -> void:
-	_reordering = true
-	_reordering_index = index
+	if search_field.text.strip_edges().is_empty() and index >= 0 and index < rows.get_child_count():
+		_reorder.begin(rows.get_child(index) as Control)
 
 
-# 놓기 전에는 원래 차례를 유지하고, 손을 뗀 경계로 한 번만 옮긴다.
 func _on_row_reorder_ended(index: int, pointer_y: float) -> void:
-	if not _reordering or index != _reordering_index:
-		return
-	_reordering = false
-	_reordering_index = -1
-	var target := _drop_target_at(index, pointer_y)
-	if target < 0 or target == index:
-		return
+	if search_field.text.strip_edges().is_empty() and index >= 0 and index < rows.get_child_count():
+		_reorder.finish(rows.get_child(index) as Control, Vector2(0, pointer_y))
 
-	rows.move_child(rows.get_child(index), target)
+
+func _on_reordered(from_index: int, to_index: int) -> void:
+	_cards.assign(ArrayOrder.moved(_cards, from_index, to_index))
 	for row_index in rows.get_child_count():
 		(rows.get_child(row_index) as CardCollectionRow).set_index(row_index)
-	card_move_requested.emit(index, target)
+	card_move_requested.emit(from_index, to_index)
 
 
-func _drop_target_at(moving_index: int, pointer_y: float) -> int:
-	var closest_row: CardCollectionRow
-	var closest_after := false
-	var closest_distance := INF
-	for row_index in rows.get_child_count():
-		if row_index == moving_index:
-			continue
-		var row := rows.get_child(row_index) as CardCollectionRow
-		var rect := row.get_global_rect()
-		for after in [false, true]:
-			var edge_y := rect.end.y if after else rect.position.y
-			var distance := absf(pointer_y - edge_y)
-			if distance < closest_distance:
-				closest_distance = distance
-				closest_row = row
-				closest_after = after
-
-	if closest_row == null:
-		return -1
-	var target := ListInsertion.target_index(
-		rows.get_child_count(),
-		moving_index,
-		closest_row.get_index(),
-		closest_after
-	)
-	return -1 if target == moving_index else target
+func _apply_search(text: String) -> void:
+	_reorder.cancel()
+	var query := text.strip_edges()
+	var count := 0
+	for index in rows.get_child_count():
+		var row := rows.get_child(index) as CardCollectionRow
+		var card := _cards[index]
+		row.visible = query.is_empty() or card.question.findn(query) >= 0 or card.answer.findn(query) >= 0
+		row.set_reorder_enabled(query.is_empty())
+		if row.visible:
+			count += 1
+	search_status.visible = not query.is_empty() or _cards.is_empty()
+	if _cards.is_empty():
+		search_status.text = "아직 카드가 없어요. 첫 카드를 추가해 보세요."
+	elif count == 0:
+		search_status.text = "검색 결과가 없어요. 다른 단어를 입력해 보세요."
+	else:
+		search_status.text = "%d / %d장 · 순서를 바꾸려면 검색을 지우세요." % [count, _cards.size()]

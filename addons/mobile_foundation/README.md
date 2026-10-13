@@ -32,9 +32,14 @@ addons/mobile_foundation/
 ├─ layout/
 │  └─ aspect_fit.gd       AspectFit
 ├─ ui/
+│  ├─ list_reorder.gd    ListReorder (노드)
+│  ├─ reorder_gesture.gd ReorderGesture (노드)
 │  ├─ safe_area.gd        SafeArea
 │  ├─ safe_area_margin.gd SafeAreaMargin (노드)
 │  └─ keyboard_avoider.gd KeyboardInsetAvoider (노드)
+├─ examples/
+│  ├─ reorder_demo.tscn  독립 목록/타일 예제
+│  └─ reorder_demo.gd
 ├─ tests/
 │  └─ mobile_foundation_checks.gd  MobileFoundationChecks
 └─ README.md
@@ -103,6 +108,58 @@ if target >= 0:
 # 다른 칸에서 끌어온 항목 끼워 넣기
 slots.insert(ListInsertion.insertion_index(slots.size(), anchor_index, after_anchor), item)
 ```
+
+## ListReorder (노드)
+
+세로 목록(`VERTICAL`)과 줄바꿈 타일 목록(`FLOW`)에서 놓을 경계를 찾고,
+Container 자식 순서를 바꾼 뒤 `reordered(from_index, to_index)`를 보낸다.
+긴 누르기, 손잡이 드래그 등 어떤 입력으로 시작했는지는 알지 않는다.
+
+```gdscript
+var reorder := ListReorder.new()
+
+func _ready() -> void:
+	reorder.items = $Scroll/Rows
+	# HFlowContainer라면 ListReorder.Layout.FLOW
+	reorder.layout = ListReorder.Layout.VERTICAL
+	add_child(reorder)
+	reorder.reordered.connect(_on_reordered)
+
+func _on_pick(item: Control) -> void:
+	reorder.begin(item)
+
+func _on_drop(item: Control, canvas_pointer: Vector2) -> void:
+	reorder.finish(item, canvas_pointer)
+
+func _on_reordered(from_index: int, to_index: int) -> void:
+	# 화면 순서는 이미 바뀌었다. 앱 데이터 순서와 저장만 처리한다.
+	pass
+```
+
+- `items`의 직접 자식을 순서 항목으로 사용한다. 장식·헤더·버튼은 이 Container 밖에 둔다.
+- 포인터는 `get_global_rect()`와 같은 canvas 좌표를 넘긴다.
+- 들어 올린 항목은 경계 검색에서 제외한다. 숨겨진 항목은 놓기 기준으로 쓰지 않는다.
+- `begin()`은 순서를 바꾸지 않는다. `finish()`에서 한 번 옮긴다.
+- 같은 자리에 놓기, 중복 release, 삭제되거나 목록을 떠난 항목은 변경 알림을 보내지 않는다.
+- 목록을 다시 그리기 전이나 드래그 취소 시 `cancel()`을 호출한다. 입력 잠금과 연출 복원은 입력 컴포넌트가 맡는다.
+- `target_at(item, canvas_pointer)`로 순서를 바꾸지 않고 목적지만 조회할 수 있다. 변화가 없으면 `-1`이다.
+- 현재 FLOW는 왼쪽에서 오른쪽으로 읽는 타일 배치용이다. RTL·자동 스크롤·삽입 미리보기는 포함하지 않는다.
+
+## ReorderGesture (노드)
+
+`surface.gui_input`을 `feed(event)`로 전달하면 탭 후보, 스크롤, 집기, 끌기를 구분한다.
+`hold_seconds = 0.45`는 긴 누르기, `0.0`은 즉시 집는 손잡이용이다.
+터치는 Godot의 마우스 에뮬레이션을 사용한다.
+
+- `surface`에는 입력을 받는 Control을 지정한다.
+- `picked`, `dragged(offset)`, `dropped(canvas_pointer)`, `canceled`, `scrolled(offset)`를 보낸다.
+- `blocks_selection`이 참인 동안 Button의 `pressed`를 선택 동작으로 해석하지 않는다.
+- ScrollContainer의 `scroll_started`를 같은 이름의 메서드에 연결하면 긴 누르기 대기가 취소된다.
+- 앱 포커스를 잃거나 입력 표면이 숨겨지면 취소한다. 화면 전환 시 직접 `cancel()`을 호출해도 된다.
+- `picked`/`dropped`/`canceled`를 `ListReorder.begin`/`finish`/`cancel`에 연결한다.
+- 위치·크기·색 복원은 사용하는 화면이 맡는다. 입력 노드는 애니메이션과 저장을 모른다.
+
+`examples/reorder_demo.tscn`을 F6으로 실행하면 앱 화면 없이 세로 손잡이 목록과 긴 누르기 타일을 확인할 수 있다.
 
 ## ArrayOrder
 
@@ -244,4 +301,3 @@ MobileFoundationChecks.run(
 | `ModalDialog` | `src/main/` | 테마와 버튼 문구가 박혀 있다. 문구와 스타일을 밖에서 넣도록 갈라야 한다 |
 | `TopNotification` | `src/main/` | 위와 같다. 안전 영역 연동은 이미 `SafeArea`로 뺄 수 있다 |
 | `StudyGestureSurface` | `src/main/` | 탭/스와이프 판정은 범용이지만 카드 뒤집기 애니메이션과 한 몸이다. 입력 판정과 연출을 갈라야 한다 |
-| 경계 찾기 (가장 가까운 앞/뒤 edge) | `main.gd`, `library_view.gd` | `ListInsertion`에 넘길 `anchor_index`와 `after_anchor`를 구하는 부분. 지금은 세로 목록과 타일 격자가 서로 다른 거리 셈을 쓴다 |

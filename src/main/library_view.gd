@@ -14,8 +14,7 @@ signal export_canceled
 
 const DECK_TILE_SCENE := preload("res://src/main/deck_tile.tscn")
 
-var _dragging_tile := false
-var _dragging_deck_file := ""
+var _reorder := ListReorder.new()
 
 @onready var deck_list: HFlowContainer = $DeckListScroll/DeckList
 @onready var empty_decks_label: Label = $EmptyDecksLabel
@@ -26,6 +25,10 @@ var _dragging_deck_file := ""
 
 
 func _ready() -> void:
+	_reorder.items = deck_list
+	_reorder.layout = ListReorder.Layout.FLOW
+	add_child(_reorder)
+	_reorder.reordered.connect(_on_reordered)
 	add_button.pressed.connect(_on_add_pressed)
 	settings_button.pressed.connect(_on_settings_pressed)
 	_configure_markdown_dialog(import_dialog, FileDialog.FILE_MODE_OPEN_FILE)
@@ -36,8 +39,7 @@ func _ready() -> void:
 
 
 func render(decks: Array[DeckInfo]) -> void:
-	_dragging_tile = false
-	_dragging_deck_file = ""
+	_reorder.cancel()
 	for child in deck_list.get_children():
 		child.free()
 
@@ -51,6 +53,7 @@ func render(decks: Array[DeckInfo]) -> void:
 		deck_tile.selected.connect(_on_deck_tile_selected)
 		deck_tile.reorder_started.connect(_on_tile_reorder_started)
 		deck_tile.reorder_ended.connect(_on_tile_reorder_ended)
+		deck_tile.reorder_canceled.connect(_reorder.cancel)
 
 
 func popup_import() -> void:
@@ -75,26 +78,14 @@ func _on_deck_tile_selected(deck_file: String) -> void:
 
 
 func _on_tile_reorder_started(deck_file: String) -> void:
-	_dragging_tile = true
-	_dragging_deck_file = deck_file
+	_reorder.begin(_tile_of(deck_file))
 
 
-# 놓기 전에는 원래 차례를 유지하고, 손을 뗀 경계로 한 번만 옮긴다.
 func _on_tile_reorder_ended(deck_file: String, pointer: Vector2) -> void:
-	if not _dragging_tile or deck_file != _dragging_deck_file:
-		return
-	_dragging_tile = false
-	_dragging_deck_file = ""
-	var target := _tile_drop_target_at(deck_file, pointer)
+	_reorder.finish(_tile_of(deck_file), pointer)
 
-	var moving := _tile_of(deck_file)
-	if moving == null:
-		return
 
-	if target < 0 or target == moving.get_index():
-		return
-
-	deck_list.move_child(moving, target)
+func _on_reordered(_from_index: int, _to_index: int) -> void:
 	deck_order_changed.emit(current_order())
 
 
@@ -111,44 +102,6 @@ func _tile_of(deck_file: String) -> DeckTileView:
 		if tile.deck_file() == deck_file:
 			return tile
 	return null
-
-
-# 집은 타일은 손끝을 따라 나와 있으므로 자리 판정에서 뺀다.
-func _tile_drop_target_at(deck_file: String, pointer: Vector2) -> int:
-	var moving := _tile_of(deck_file)
-	if moving == null:
-		return -1
-
-	var closest_tile: DeckTileView
-	var closest_after := false
-	var closest_distance := INF
-	for index in deck_list.get_child_count():
-		var tile := deck_list.get_child(index) as DeckTileView
-		if tile == moving:
-			continue
-		var rect := tile.get_global_rect()
-		for after in [false, true]:
-			var edge_x := rect.end.x if after else rect.position.x
-			var vertical_distance := 0.0
-			if pointer.y < rect.position.y:
-				vertical_distance = rect.position.y - pointer.y
-			elif pointer.y > rect.end.y:
-				vertical_distance = pointer.y - rect.end.y
-			var distance := Vector2(absf(pointer.x - edge_x), vertical_distance).length()
-			if distance < closest_distance:
-				closest_distance = distance
-				closest_tile = tile
-				closest_after = after
-
-	if closest_tile == null:
-		return -1
-	var target := ListInsertion.target_index(
-		deck_list.get_child_count(),
-		moving.get_index(),
-		closest_tile.get_index(),
-		closest_after
-	)
-	return -1 if target == moving.get_index() else target
 
 
 func _on_add_pressed() -> void:

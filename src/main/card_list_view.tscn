@@ -49,6 +49,17 @@ script = ExtResource("5_max_width")
 layout_mode = 2
 theme_override_constants/separation = 32
 
+[node name="SearchField" type="LineEdit" parent="ContentBounds/Content"]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+placeholder_text = "질문 또는 답변 검색"
+clear_button_enabled = true
+
+[node name="SearchStatus" type="Label" parent="ContentBounds/Content"]
+visible = false
+layout_mode = 2
+autowrap_mode = 2
+
 [node name="CardListScroll" parent="ContentBounds/Content" instance=ExtResource("2_collection")]
 layout_mode = 2
 

@@ -95,30 +95,32 @@ static func export_deck_result(deck_file: String, target_path: String) -> Export
 
 
 static func write_deck(deck_file: String, content: String) -> bool:
-	_ensure_dir(_decks_dir)
-	var file := FileAccess.open(deck_path(deck_file), FileAccess.WRITE)
-	if file == null:
-		return false
-	
-	file.store_string(content)
-	return true
+	return _write_text_safely(deck_path(deck_file), content)
 
 
 static func rename_deck(old_file: String, new_file: String) -> bool:
 	if old_file == new_file or not deck_exists(old_file):
 		return false
-	
-	if DirAccess.rename_absolute(deck_path(old_file), deck_path(new_file)) != OK:
-		return false
-	
-	var old_progress := progress_path(old_file)
-	if FileAccess.file_exists(old_progress):
-		DirAccess.rename_absolute(old_progress, progress_path(new_file))
-
-	var old_resume := study_resume_path(old_file)
-	if FileAccess.file_exists(old_resume):
-		DirAccess.rename_absolute(old_resume, study_resume_path(new_file))
-	
+	# 관련 기록부터 옮기고 Markdown을 마지막에 옮긴다. 중간 실패는 역순으로 되돌린다.
+	var pairs: Array[PackedStringArray] = []
+	for pair in [
+		[progress_path(old_file), progress_path(new_file)],
+		[study_resume_path(old_file), study_resume_path(new_file)],
+		[deck_path(old_file), deck_path(new_file)],
+	]:
+		if FileAccess.file_exists(pair[1]) or DirAccess.dir_exists_absolute(pair[1]):
+			return false
+		if FileAccess.file_exists(pair[0]):
+			pairs.append(PackedStringArray(pair))
+	var moved: Array[PackedStringArray] = []
+	for pair in pairs:
+		if DirAccess.rename_absolute(pair[0], pair[1]) != OK:
+			moved.reverse()
+			for previous in moved:
+				if DirAccess.rename_absolute(previous[1], previous[0]) != OK:
+					push_error("Deck rename rollback failed; preserved file: %s" % previous[1])
+			return false
+		moved.append(pair)
 	return true
 
 
@@ -224,13 +226,7 @@ static func load_progress(deck_file: String) -> Progress:
 
 
 static func save_progress(deck_file: String, progress: Progress) -> bool:
-	_ensure_dir(PROGRESS_DIR)
-	var file := FileAccess.open(progress_path(deck_file), FileAccess.WRITE)
-	if file == null:
-		return false
-	
-	file.store_string(progress.to_json())
-	return true
+	return _write_text_safely(progress_path(deck_file), progress.to_json())
 
 
 static func study_resume_path(deck_file: String) -> String:
@@ -248,12 +244,7 @@ static func load_study_resume(deck_file: String) -> StudyResume:
 
 
 static func save_study_resume(deck_file: String, resume: StudyResume) -> bool:
-	_ensure_dir(STUDY_RESUME_DIR)
-	var file := FileAccess.open(study_resume_path(deck_file), FileAccess.WRITE)
-	if file == null:
-		return false
-	file.store_string(resume.to_json())
-	return true
+	return _write_text_safely(study_resume_path(deck_file), resume.to_json())
 
 
 static func delete_study_resume(deck_file: String) -> bool:
@@ -271,12 +262,7 @@ static func load_settings() -> AppSettings:
 
 
 static func save_settings(settings: AppSettings) -> bool:
-	var file := FileAccess.open(SETTINGS_PATH, FileAccess.WRITE)
-	if file == null:
-		return false
-	
-	file.store_string(settings.to_json())
-	return true
+	return _write_text_safely(SETTINGS_PATH, settings.to_json())
 
 
 static func _ensure_dir(dir: String) -> bool:
@@ -284,3 +270,24 @@ static func _ensure_dir(dir: String) -> bool:
 		return true
 	
 	return DirAccess.make_dir_recursive_absolute(dir) == OK
+
+
+# 같은 디렉터리에서 교체해 쓰기 도중 실패하더라도 기존 파일은 보존한다.
+static func _write_text_safely(path: String, content: String) -> bool:
+	if not _ensure_dir(path.get_base_dir()):
+		return false
+	var pending_path := path + ".pending"
+	var file := FileAccess.open(pending_path, FileAccess.WRITE)
+	if file == null:
+		return false
+	file.store_string(content)
+	file.flush()
+	var write_error := file.get_error()
+	file.close()
+	if write_error != OK:
+		DirAccess.remove_absolute(pending_path)
+		return false
+	if DirAccess.rename_absolute(pending_path, path) != OK:
+		DirAccess.remove_absolute(pending_path)
+		return false
+	return true

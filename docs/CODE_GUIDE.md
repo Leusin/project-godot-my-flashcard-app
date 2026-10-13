@@ -21,6 +21,11 @@
 앱과 무관한 바닥 기능은 [`addons/mobile_foundation/`](../addons/mobile_foundation/README.md)에 따로 있다.
 끌기 범위(`DragBounds`), 삽입 위치(`ListInsertion`), 배열 자리 옮기기(`ArrayOrder`),
 종횡비 맞춤(`AspectFit`), 안전 영역(`SafeArea`), 가상 키보드 피하기(`KeyboardInsetAvoider`)가 거기 산다.
+`ListReorder`는 세로 카드 목록과 덱 타일 목록의 놓기 위치 계산·자식 순서 변경을 맡는다.
+화면은 `begin`/`finish`를 전달하고 `reordered`에서 도메인 index 갱신·저장을 연결한다.
+`ReorderGesture`는 긴 누르기/즉시 집기, 스크롤 구분과 입력 취소를 맡는다.
+row/tile은 입력 signal을 연결하고 들어 올리는 연출을 담당한다.
+독립 예제는 `addons/mobile_foundation/examples/reorder_demo.tscn`이다.
 다른 프로젝트로 폴더째 복사할 수 있도록 `res://src/`를 모른다.
 
 ## 의존 방향
@@ -57,6 +62,7 @@ Deck Library
 - Study 카드 전체가 탭·드래그 영역이다. 버튼은 PC 입력을 위해 카드 밖에 유지한다.
 - Card Detail은 카드와 Header의 `⋮`를 분리해 카드 전체 탭이 가려지지 않게 한다.
 - 결과 행에서 카드를 열면 같은 Card Detail을 재사용하고 결과 화면으로 돌아간다.
+- Card List 검색은 질문·답의 대소문자를 구분하지 않는 부분 일치다. 숨긴 행도 원래 카드 index를 유지하며, 검색 중에는 순서 변경 손잡이를 숨긴다.
 
 ## 저장 위치
 
@@ -68,6 +74,8 @@ user://settings.json
 ```
 
 - Markdown 덱이 원본 데이터다.
+- 덱·진행도·이어하기·설정은 같은 폴더의 `.pending`에 쓰고 flush 성공 후 교체한다. 동기 저장용이며 동시 writer는 지원하지 않는다.
+- 덱 이름 변경은 목적지 충돌을 먼저 검사하고 관련 기록을 옮긴 뒤 Markdown을 옮긴다. 중간 실패 시 역순으로 복원한다. 여러 파일의 전원 차단 시점까지 원자성을 보장하는 트랜잭션은 아니다.
 - 클립보드 생성은 파싱으로 형식을 확인한 뒤 복사한 Markdown 원문을 그대로 저장한다.
 - 진행도와 이어서 학습은 덱별 파생 JSON이다.
 - 질문 문자열이 카드 기록의 식별자이므로 질문 편집 시 `Progress.rename`으로 기록을 옮긴다.
@@ -89,3 +97,13 @@ $godot = "C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windo
 ```
 
 `RESULT: N checks, 0 failures`를 확인한다. signal을 직접 발신하는 테스트만으로는 실제 pointer hit-test 버그를 놓칠 수 있으므로, 클릭 영역이 중요한 UI는 실제 `InputEventMouseButton` 경로도 검증한다.
+
+
+`tests/ui_interaction.gd`는 실제 포인터 이벤트를 화면에 보내 선택·덱/카드 재정렬·검색 결과 선택을 검사한다.
+실제 앱 데이터와 분리한 프로젝트 복사본에서 실행한다.
+
+```sh
+godot --headless --path . --script res://tests/ui_interaction.gd
+# 렌더링한 카드 목록과 검색 화면을 build/ 아래에 캡처
+godot --path . --script res://tests/ui_interaction.gd -- --capture
+```

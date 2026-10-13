@@ -5,6 +5,7 @@ signal selected(index: int)
 signal menu_requested(index: int, anchor: Control)
 signal reorder_started(index: int)
 signal reorder_ended(index: int, pointer_y: float)
+signal reorder_canceled
 
 const FALLBACK_DRAG_THRESHOLD := 12.0
 const PICKED_SHADOW_SIZE := 12
@@ -16,7 +17,7 @@ const PICKED_SHADOW_OFFSET := Vector2(0, 6)
 
 var card_index := -1
 var _reordering := false
-var _press_pointer := Vector2.ZERO
+var _reorder_gesture := ReorderGesture.new()
 var _rest_position := Vector2.ZERO
 var _rest_style: StyleBox
 var _pointer_down := false
@@ -38,6 +39,13 @@ var _scroll_container: ScrollContainer
 func _ready() -> void:
 	menu_button.pressed.connect(_on_menu_pressed)
 	reorder_handle.gui_input.connect(_on_reorder_handle_input)
+	_reorder_gesture.surface = reorder_handle
+	_reorder_gesture.hold_seconds = 0.0
+	add_child(_reorder_gesture)
+	_reorder_gesture.picked.connect(_on_reorder_picked)
+	_reorder_gesture.dragged.connect(_on_reorder_dragged)
+	_reorder_gesture.dropped.connect(func(pointer: Vector2) -> void: _finish_reorder(pointer.y))
+	_reorder_gesture.canceled.connect(_on_reorder_canceled)
 	_scroll_container = _find_scroll_container()
 	if _scroll_container != null:
 		_scroll_container.scroll_started.connect(_on_scroll_started)
@@ -53,39 +61,39 @@ func _on_menu_pressed() -> void:
 	menu_requested.emit(card_index, menu_button)
 
 
+func set_reorder_enabled(enabled: bool) -> void:
+	reorder_handle.visible = enabled
+	if not enabled:
+		_reorder_gesture.cancel()
+
+
 func set_index(index: int) -> void:
 	card_index = index
 
 
 func _on_reorder_handle_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton:
-		var button_event := event as InputEventMouseButton
-		if button_event.button_index != MOUSE_BUTTON_LEFT:
-			return
-		if button_event.pressed:
-			_reordering = true
-			_press_pointer = button_event.global_position
-			_pick_visual()
-			reorder_started.emit(card_index)
-		elif _reordering:
-			_reordering = false
-			_release_visual()
-			reorder_ended.emit(card_index, button_event.global_position.y)
+	var was_dragging := _reordering
+	_reorder_gesture.feed(event)
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		accept_event()
-		return
+	elif event is InputEventMouseMotion and (was_dragging or _reordering):
+		accept_event()
 
-	if event is InputEventMouseMotion and _reordering:
-		var motion := event as InputEventMouseMotion
-		# 손을 뗀 사실이 유실되면 카드가 떠 있는 채로 남는다. 버튼 상태로 확인해 마무리한다.
-		if (motion.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
-			_finish_reorder(motion.global_position.y)
-		else:
-			position = DragBounds.clamped(
-				_rest_position + (motion.global_position - _press_pointer),
-				self,
-				_scroll_container
-			)
-		accept_event()
+
+func _on_reorder_picked() -> void:
+	_reordering = true
+	_pick_visual()
+	reorder_started.emit(card_index)
+
+
+func _on_reorder_dragged(offset: Vector2) -> void:
+	position = DragBounds.clamped(_rest_position + offset, self, _scroll_container)
+
+
+func _on_reorder_canceled() -> void:
+	_reordering = false
+	_release_visual()
+	reorder_canceled.emit()
 
 
 func _gui_input(event: InputEvent) -> void:

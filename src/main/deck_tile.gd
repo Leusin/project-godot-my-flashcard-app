@@ -8,6 +8,7 @@ extends Control
 signal selected(deck_file: String)
 signal reorder_started(deck_file: String)
 signal reorder_ended(deck_file: String, pointer: Vector2)
+signal reorder_canceled
 
 const LONG_PRESS_SECONDS := 0.45
 const MOVE_CANCEL_DISTANCE := 16.0
@@ -19,13 +20,9 @@ const PICK_TWEEN_SECONDS := 0.12
 @onready var count_label: Label = %DeckCountLabel
 
 var _deck_file := ""
-var _pressed := false
+var _gesture := ReorderGesture.new()
 var _reordering := false
-var _scrolling := false
-var _dragged := false
-var _suppress_press := false
-var _press_generation := 0
-var _press_pointer := Vector2.ZERO
+var _pick_tween: Tween
 var _scroll_start := 0
 var _rest_position := Vector2.ZERO
 var _clip: Control
@@ -37,6 +34,17 @@ func _ready() -> void:
 	deck_button.gui_input.connect(_on_deck_button_input)
 	_clip = DragBounds.clip_ancestor(self)
 	_scroll_container = _clip as ScrollContainer
+	_gesture.surface = deck_button
+	_gesture.hold_seconds = LONG_PRESS_SECONDS
+	_gesture.move_cancel_distance = MOVE_CANCEL_DISTANCE
+	add_child(_gesture)
+	_gesture.picked.connect(_on_picked)
+	_gesture.dragged.connect(_on_dragged)
+	_gesture.dropped.connect(_finish_reorder)
+	_gesture.canceled.connect(_on_canceled)
+	_gesture.scrolled.connect(_on_scrolled)
+	if _scroll_container != null:
+		_scroll_container.scroll_started.connect(_gesture.scroll_started)
 
 
 func setup(file_name: String, display_name: String, card_count: int) -> void:
@@ -50,108 +58,47 @@ func deck_file() -> String:
 
 
 func _on_deck_pressed() -> void:
-	# 스크롤하다 손을 뗀 것은 덱을 여는 신호가 아니다.
-	if _dragged:
-		return
-	# 집어 옮긴 뒤 손을 뗀 것은 덱을 여는 신호가 아니다.
-	if _suppress_press:
-		_suppress_press = false
-		return
-	selected.emit(_deck_file)
+	if not _gesture.blocks_selection:
+		selected.emit(_deck_file)
 
 
 func _on_deck_button_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton:
-		_handle_button(event as InputEventMouseButton)
-	elif event is InputEventMouseMotion:
-		_handle_motion(event as InputEventMouseMotion)
-
-
-func _handle_button(event: InputEventMouseButton) -> void:
-	if event.button_index != MOUSE_BUTTON_LEFT:
-		return
-
-	if event.pressed:
-		_pressed = true
-		_scrolling = false
-		_dragged = false
-		_press_pointer = event.global_position
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		_scroll_start = _scroll_container.scroll_vertical if _scroll_container != null else 0
-		_press_generation += 1
-		var generation := _press_generation
-		get_tree().create_timer(LONG_PRESS_SECONDS).timeout.connect(
-			func() -> void: _on_long_press(generation)
-		)
-		return
+	if event is InputEventKey and event.pressed:
+		_gesture.cancel()
+		_gesture.blocks_selection = false
+	var was_dragging := _reordering
+	_gesture.feed(event)
+	if was_dragging or _reordering:
+		deck_button.accept_event()
 
-	_pressed = false
-	if _scrolling:
-		_scrolling = false
-		_clear_dragged.call_deferred()
-		return
-	if not _reordering:
-		return
-	_finish_reorder(event.global_position)
+
+func _on_picked() -> void:
+	_reordering = true
+	_pick_visual()
+	reorder_started.emit(_deck_file)
+
+
+func _on_dragged(offset: Vector2) -> void:
+	position = DragBounds.clamped(_rest_position + offset, self, _clip)
+
+
+func _on_scrolled(offset: Vector2) -> void:
+	if _scroll_container != null and not DisplayServer.is_touchscreen_available():
+		_scroll_container.scroll_vertical = _scroll_start - roundi(offset.y)
 
 
 func _finish_reorder(pointer: Vector2) -> void:
-	_pressed = false
 	_reordering = false
-	_suppress_press = true
 	_release_visual()
 	reorder_ended.emit(_deck_file, pointer)
 
 
-func _handle_motion(event: InputEventMouseMotion) -> void:
-	if _reordering:
-		# 손을 뗀 사실이 유실되면 타일이 떠 있는 채로 남는다. 버튼 상태로 확인해 마무리한다.
-		if (event.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
-			_finish_reorder(event.global_position)
-			return
-		position = DragBounds.clamped(
-			_rest_position + (event.global_position - _press_pointer), self, _clip
-		)
-		return
-
-	if _scrolling:
-		if (event.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
-			_scrolling = false
-			_clear_dragged.call_deferred()
-			return
-		_scroll_from_pointer(event.global_position)
-		return
-
-	if not _pressed:
-		return
-
-	# 집기 전에 움직였다면 스크롤이나 취소로 본다.
-	if event.global_position.distance_to(_press_pointer) > MOVE_CANCEL_DISTANCE:
-		_pressed = false
-		_scrolling = true
-		_dragged = true
-		_scroll_from_pointer(event.global_position)
-
-
-func _scroll_from_pointer(pointer: Vector2) -> void:
-	# 모바일 touch drag는 ScrollContainer가 직접 처리한다. 데스크톱 mouse drag만 보완한다.
-	if _scroll_container == null or DisplayServer.is_touchscreen_available():
-		return
-	_scroll_container.scroll_vertical = (
-		_scroll_start - roundi(pointer.y - _press_pointer.y)
-	)
-
-
-func _clear_dragged() -> void:
-	if not _pressed and not _scrolling and not _reordering:
-		_dragged = false
-
-
-func _on_long_press(generation: int) -> void:
-	if generation != _press_generation or not _pressed or _reordering:
-		return
-	_reordering = true
-	_pick_visual()
-	reorder_started.emit(_deck_file)
+func _on_canceled() -> void:
+	_reordering = false
+	_release_visual()
+	reorder_canceled.emit()
 
 
 # 집은 타일은 살짝 커지고 다른 타일 위로 떠서, 지금 무엇을 옮기는지 보이게 한다.
@@ -159,15 +106,17 @@ func _pick_visual() -> void:
 	_rest_position = position
 	pivot_offset = size * 0.5
 	z_index = 1
-	var tween := create_tween().set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "scale", Vector2.ONE * PICKED_SCALE, PICK_TWEEN_SECONDS)
+	_pick_tween = create_tween().set_ease(Tween.EASE_OUT)
+	_pick_tween.tween_property(self, "scale", Vector2.ONE * PICKED_SCALE, PICK_TWEEN_SECONDS)
 	# 커지고 나면 가장자리 타일은 프레임 밖으로 삐져나온다. 다 커진 뒤 안으로 들인다.
-	await tween.finished
+	await _pick_tween.finished
 	if _reordering:
 		position = DragBounds.clamped(position, self, _clip)
 
 
 func _release_visual() -> void:
+	if _pick_tween != null:
+		_pick_tween.kill()
 	z_index = 0
 	scale = Vector2.ONE
 	position = _rest_position

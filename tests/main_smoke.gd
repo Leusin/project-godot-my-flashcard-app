@@ -932,6 +932,23 @@ func run_tests() -> void:
 		"Main Card List: 카드 행 drag를 scroll에 전달"
 	)
 	var row_menu_button := _view(first_card_row, "RowMenuButton") as Button
+	var search_view := app.card_list_view as CardListView
+	search_view.search_field.text = "sTaY"
+	search_view.search_field.text_changed.emit("sTaY")
+	check(not first_card_row.visible and search_view.rows.get_child(1).visible,
+		"Main Search: 답변 영문 대소문자 무시 검색")
+	check((search_view.rows.get_child(1) as CardCollectionRow).card_index == 1,
+		"Main Search: 검색 결과의 원본 카드 index 유지")
+	check(not (search_view.rows.get_child(1) as CardCollectionRow).reorder_handle.visible,
+		"Main Search: 필터 중 재정렬 비활성화")
+	search_view.search_field.text = "없는 검색어"
+	search_view.search_field.text_changed.emit("없는 검색어")
+	check(search_view.search_status.visible and search_view.search_status.text.contains("없어요"),
+		"Main Search: 한글 검색 결과 없음 안내")
+	search_view.search_field.text = ""
+	search_view.search_field.text_changed.emit("")
+	check(first_card_row.visible and first_card_row.reorder_handle.visible,
+		"Main Search: 검색 지우면 전체 목록과 재정렬 복원")
 	var row_reorder_handle := _view(first_card_row, "RowReorderHandle") as Button
 	check(
 		row_menu_button != null
