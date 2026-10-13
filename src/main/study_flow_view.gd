@@ -43,7 +43,6 @@ signal return_requested
 @onready var actions: HBoxContainer = (
 	$ContentBounds/Content/StudyContainer/Actions
 )
-@onready var reveal_button: Button = $ContentBounds/Content/StudyContainer/Actions/RevealAnswerButton
 @onready var again_button: Button = (
 	$ContentBounds/Content/StudyContainer/Actions/AgainButton
 )
@@ -61,7 +60,6 @@ func _ready() -> void:
 		func(direction: int) -> void: action_committed.emit(direction)
 	)
 	gesture_surface.tapped.connect(_on_card_tapped)
-	reveal_button.pressed.connect(_on_card_tapped)
 	again_button.pressed.connect(_on_again_pressed)
 	good_button.pressed.connect(_on_good_pressed)
 	result_view.card_selected.connect(
@@ -122,9 +120,6 @@ func set_answer_visible(show_answer: bool) -> void:
 	answer_scroll.visible = show_answer
 	card_properties.visible = show_answer
 	status_badge.hide()
-	reveal_button.visible = not show_answer
-	again_button.visible = show_answer
-	good_button.visible = show_answer
 	if show_answer:
 		question_scroll.scroll_vertical = 0
 		question_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -154,7 +149,6 @@ func set_answer_visible(show_answer: bool) -> void:
 
 
 func set_input_enabled(enabled: bool) -> void:
-	reveal_button.disabled = not enabled
 	again_button.disabled = not enabled
 	good_button.disabled = not enabled
 	gesture_surface.input_enabled = enabled

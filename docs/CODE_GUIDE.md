@@ -135,3 +135,5 @@ godot --path . --script res://tests/ui_interaction.gd -- --capture
 - `ModalDialog.emphasize_secondary`는 보조 동작을 검게 강조하는 선택 옵션이다. 편집 취소 확인창은 계속 편집을 강조하며, 기존 primary/secondary signal 연결은 그대로 유지한다.
 
 - `settings_action_row.tscn`은 설정 작업용 공통 Button 씬이다. 제목·설명·화살표의 mouse_filter를 IGNORE로 지정해 행 전체가 클릭되며 백업과 복원에서 재사용한다.
+
+- 학습 화면은 앞면과 뒷면 모두 다시 볼게요 / 기억나요 버튼으로 판정한다. 답 공개는 카드 탭으로 전환하며 별도 답 보기 버튼은 없다.

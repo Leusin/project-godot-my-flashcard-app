@@ -563,10 +563,9 @@ func run_tests() -> void:
 	check(_view(app, "QuestionLabel").text == "A", "MVP: 첫 질문 표시")
 	check(not _view(app, "AnswerScroll").visible, "Main Study: 첫 화면에서 답 영역 숨김")
 	check(
-		_view(app, "RevealAnswerButton").visible
-		and not _view(app, "AgainButton").visible
-		and not _view(app, "GoodButton").visible,
-		"Main Study: 답 공개 전에는 답 보기 버튼만 표시"
+		_view(app, "AgainButton").visible
+		and _view(app, "GoodButton").visible,
+		"Main Study: 앞면에서도 자기평가 버튼 표시"
 	)
 	check(_view(app, "RemainingLabel").text == "2장 남음", "MVP: 남은 카드 수 표시")
 	check(
@@ -676,9 +675,8 @@ func run_tests() -> void:
 	)
 	check(_view(app, "AnswerLabel").text == "1", "MVP: 현재 카드의 답 표시")
 	check(
-		_view(app, "AnswerLabel").horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER
-		and not _view(app, "RevealAnswerButton").visible,
-		"Main Study: 짧은 답은 중앙 정렬하고 답 보기 숨김"
+		_view(app, "AnswerLabel").horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER,
+		"Main Study: 짧은 답은 중앙 정렬"
 	)
 	check(
 		_view(app, "Actions").visible
@@ -693,8 +691,7 @@ func run_tests() -> void:
 		"Main Study: 카드를 다시 tap하면 질문만 보는 앞면으로 복귀"
 	)
 
-	_view(app, "RevealAnswerButton").pressed.emit()
-	check(_view(app, "AnswerScroll").visible, "Main Study: 답 보기 버튼으로 답 공개")
+	check(_view(app, "AgainButton").visible and _view(app, "GoodButton").visible, "Main Study: 앞면 복귀 후에도 판정 버튼 유지")
 	_view(app, "AgainButton").pressed.emit()
 	check(_view(app, "QuestionLabel").text == "B", "MVP: Again 후 다음 질문")
 	check(_view(app, "RemainingLabel").text == "1장 남음", "MVP: Again 후 남은 수 감소")

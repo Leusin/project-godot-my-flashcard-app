@@ -273,13 +273,6 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="RevealAnswerButton" type="Button" parent="ContentBounds/Content/StudyContainer/Actions"]
-custom_minimum_size = Vector2(0, 88)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 28
-text = "답 보기"
-
 [node name="AgainButton" type="Button" parent="ContentBounds/Content/StudyContainer/Actions" unique_id=613358101]
 custom_minimum_size = Vector2(0, 88)
 layout_mode = 2
