@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
 [ext_resource type="PackedScene" path="res://src/main/card_collection_view.tscn" id="2_collection"]
@@ -23,12 +23,6 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxStudyPrimaryHover"]
-bg_color = Color(0.18, 0.18, 0.18, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxStudyPrimaryPressed"]
 bg_color = Color(0.28, 0.28, 0.28, 1)
@@ -143,7 +137,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
 theme_override_styles/normal = SubResource("StyleBoxStudyPrimaryNormal")
-theme_override_styles/hover = SubResource("StyleBoxStudyPrimaryHover")
+theme_override_styles/hover = SubResource("StyleBoxStudyPrimaryNormal")
 theme_override_styles/pressed = SubResource("StyleBoxStudyPrimaryPressed")
 text = "다시 복습"
 

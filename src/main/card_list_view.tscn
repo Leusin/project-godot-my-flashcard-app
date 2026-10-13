@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Theme" path="res://src/main/main_theme.tres" id="1_theme"]
 [ext_resource type="PackedScene" path="res://src/main/card_collection_view.tscn" id="2_collection"]
@@ -46,6 +46,8 @@ corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_left = 8
 corner_radius_bottom_right = 8
+
+[sub_resource type="StyleBoxEmpty" id="NoHoverFlat"]
 
 [node name="CardListView" type="VBoxContainer"]
 layout_mode = 2
@@ -98,6 +100,7 @@ icon = ExtResource("8_more")
 icon_alignment = 1
 tooltip_text = "카드 정렬"
 flat = true
+theme_override_styles/hover = SubResource("NoHoverFlat")
 
 [node name="ContentBounds" type="MarginContainer" parent="."]
 layout_mode = 2

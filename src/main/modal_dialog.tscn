@@ -61,12 +61,6 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxPrimaryHover"]
-bg_color = Color(0.24, 0.24, 0.24, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
 
 [node name="ModalDialog" type="ColorRect" unique_id=1209415429]
 anchors_preset = 15
@@ -180,7 +174,7 @@ theme_override_colors/font_hover_pressed_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 28
 theme_override_styles/normal = SubResource("StyleBoxPrimary")
 theme_override_styles/pressed = SubResource("StyleBoxPrimaryPressed")
-theme_override_styles/hover = SubResource("StyleBoxPrimaryHover")
+theme_override_styles/hover = SubResource("StyleBoxPrimary")
 theme_override_styles/focus = SubResource("StyleBoxPrimary")
 text = "확인"
 

@@ -61,12 +61,6 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxStudyPrimaryHover"]
-bg_color = Color(0.18, 0.18, 0.18, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxStudyPrimaryPressed"]
 bg_color = Color(0.28, 0.28, 0.28, 1)
@@ -291,7 +285,7 @@ theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
 theme_override_styles/normal = SubResource("StyleBoxStudyPrimaryNormal")
-theme_override_styles/hover = SubResource("StyleBoxStudyPrimaryHover")
+theme_override_styles/hover = SubResource("StyleBoxStudyPrimaryNormal")
 theme_override_styles/pressed = SubResource("StyleBoxStudyPrimaryPressed")
 text = "기억나요"
 tooltip_text = "오른쪽 방향키"

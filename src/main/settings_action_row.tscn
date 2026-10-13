@@ -20,7 +20,7 @@ corner_radius_bottom_right = 8
 custom_minimum_size = Vector2(0, 140)
 mouse_default_cursor_shape = 2
 theme_override_styles/normal = SubResource("Normal")
-theme_override_styles/hover = SubResource("Hover")
+theme_override_styles/hover = SubResource("Normal")
 theme_override_styles/pressed = SubResource("Pressed")
 theme_override_styles/focus = SubResource("Hover")
 

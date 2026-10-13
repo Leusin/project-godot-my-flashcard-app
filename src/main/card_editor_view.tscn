@@ -82,21 +82,6 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxOptionSlimHover"]
-content_margin_left = 18.0
-content_margin_top = 6.0
-content_margin_right = 52.0
-content_margin_bottom = 6.0
-bg_color = Color(0.94, 0.94, 0.92, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.58, 0.58, 0.56, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFieldNormal"]
 content_margin_left = 19.0
@@ -145,6 +130,8 @@ corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxEmpty" id="NoHoverFlat"]
 
 [node name="CardEditorView" type="VBoxContainer" unique_id=1646288942]
 size_flags_vertical = 3
@@ -229,8 +216,9 @@ tooltip_text = "오답 횟수 줄이기"
 theme_override_constants/icon_max_width = 28
 icon = ExtResource("8_minus")
 theme_override_colors/icon_normal_color = Color(0.48, 0.48, 0.46, 1)
-theme_override_colors/icon_hover_color = Color(0.35, 0.35, 0.33, 1)
+theme_override_colors/icon_hover_color = Color(0.48, 0.48, 0.46, 1)
 flat = true
+theme_override_styles/hover = SubResource("NoHoverFlat")
 icon_alignment = 1
 
 [node name="EditorWrongCountLabel" type="Label" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties/WrongCountFrame/WrongCountControls" unique_id=1198271294]
@@ -252,8 +240,9 @@ tooltip_text = "오답 횟수 늘리기"
 theme_override_constants/icon_max_width = 28
 icon = ExtResource("9_plus")
 theme_override_colors/icon_normal_color = Color(0.48, 0.48, 0.46, 1)
-theme_override_colors/icon_hover_color = Color(0.35, 0.35, 0.33, 1)
+theme_override_colors/icon_hover_color = Color(0.48, 0.48, 0.46, 1)
 flat = true
+theme_override_styles/hover = SubResource("NoHoverFlat")
 icon_alignment = 1
 
 [node name="PropertiesSpacer" type="Control" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties" unique_id=1808135731]
@@ -268,8 +257,9 @@ tooltip_text = "상태와 오답 횟수를 초기화"
 theme_override_constants/icon_max_width = 28
 icon = ExtResource("7_reset")
 theme_override_colors/icon_normal_color = Color(0.48, 0.48, 0.46, 1)
-theme_override_colors/icon_hover_color = Color(0.35, 0.35, 0.33, 1)
+theme_override_colors/icon_hover_color = Color(0.48, 0.48, 0.46, 1)
 flat = true
+theme_override_styles/hover = SubResource("NoHoverFlat")
 icon_alignment = 1
 
 [node name="CardStatusOption" type="OptionButton" parent="CardEditorStage/CardEditorFrame/CardMargin/CardContent/CardEditorProperties" unique_id=1797753190]
@@ -278,16 +268,16 @@ layout_mode = 2
 tooltip_text = "카드 학습 상태"
 theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.28, 0.28, 0.26, 1)
-theme_override_colors/font_hover_color = Color(0.2, 0.2, 0.18, 1)
+theme_override_colors/font_hover_color = Color(0.28, 0.28, 0.26, 1)
 theme_override_colors/font_pressed_color = Color(0.2, 0.2, 0.18, 1)
 theme_override_colors/font_focus_color = Color(0.28, 0.28, 0.26, 1)
 theme_override_constants/modulate_arrow = 1
 theme_override_colors/icon_normal_color = Color(0.48, 0.48, 0.46, 1)
-theme_override_colors/icon_hover_color = Color(0.35, 0.35, 0.33, 1)
+theme_override_colors/icon_hover_color = Color(0.48, 0.48, 0.46, 1)
 theme_override_colors/icon_pressed_color = Color(0.35, 0.35, 0.33, 1)
 theme_override_styles/normal = SubResource("StyleBoxOptionSlim")
 theme_override_styles/pressed = SubResource("StyleBoxOptionSlimPressed")
-theme_override_styles/hover = SubResource("StyleBoxOptionSlimHover")
+theme_override_styles/hover = SubResource("StyleBoxOptionSlim")
 theme_override_styles/disabled = SubResource("StyleBoxOptionSlim")
 theme_override_styles/focus = SubResource("StyleBoxOptionSlim")
 

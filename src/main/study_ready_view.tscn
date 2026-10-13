@@ -101,12 +101,6 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxContinueHover"]
-bg_color = Color(0.18, 0.18, 0.18, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxContinuePressed"]
 bg_color = Color(0.28, 0.28, 0.28, 1)
@@ -354,16 +348,16 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.28, 0.28, 0.26, 1)
-theme_override_colors/font_hover_color = Color(0.2, 0.2, 0.18, 1)
+theme_override_colors/font_hover_color = Color(0.28, 0.28, 0.26, 1)
 theme_override_colors/font_pressed_color = Color(0.2, 0.2, 0.18, 1)
 theme_override_colors/font_focus_color = Color(0.28, 0.28, 0.26, 1)
 theme_override_constants/modulate_arrow = 1
 theme_override_colors/icon_normal_color = Color(0.48, 0.48, 0.46, 1)
-theme_override_colors/icon_hover_color = Color(0.35, 0.35, 0.33, 1)
+theme_override_colors/icon_hover_color = Color(0.48, 0.48, 0.46, 1)
 theme_override_colors/icon_pressed_color = Color(0.35, 0.35, 0.33, 1)
 theme_override_styles/normal = SubResource("StyleBoxOptionNormal")
 theme_override_styles/pressed = SubResource("StyleBoxOptionPressed")
-theme_override_styles/hover = SubResource("StyleBoxOptionHover")
+theme_override_styles/hover = SubResource("StyleBoxOptionNormal")
 theme_override_styles/disabled = SubResource("StyleBoxOptionNormal")
 theme_override_styles/focus = SubResource("StyleBoxOptionHover")
 
@@ -386,16 +380,16 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.28, 0.28, 0.26, 1)
-theme_override_colors/font_hover_color = Color(0.2, 0.2, 0.18, 1)
+theme_override_colors/font_hover_color = Color(0.28, 0.28, 0.26, 1)
 theme_override_colors/font_pressed_color = Color(0.2, 0.2, 0.18, 1)
 theme_override_colors/font_focus_color = Color(0.28, 0.28, 0.26, 1)
 theme_override_constants/modulate_arrow = 1
 theme_override_colors/icon_normal_color = Color(0.48, 0.48, 0.46, 1)
-theme_override_colors/icon_hover_color = Color(0.35, 0.35, 0.33, 1)
+theme_override_colors/icon_hover_color = Color(0.48, 0.48, 0.46, 1)
 theme_override_colors/icon_pressed_color = Color(0.35, 0.35, 0.33, 1)
 theme_override_styles/normal = SubResource("StyleBoxOptionNormal")
 theme_override_styles/pressed = SubResource("StyleBoxOptionPressed")
-theme_override_styles/hover = SubResource("StyleBoxOptionHover")
+theme_override_styles/hover = SubResource("StyleBoxOptionNormal")
 theme_override_styles/disabled = SubResource("StyleBoxOptionNormal")
 theme_override_styles/focus = SubResource("StyleBoxOptionHover")
 
@@ -414,7 +408,7 @@ theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
 theme_override_colors/font_focus_color = Color(1, 1, 1, 1)
 theme_override_styles/normal = SubResource("StyleBoxContinueNormal")
-theme_override_styles/hover = SubResource("StyleBoxContinueHover")
+theme_override_styles/hover = SubResource("StyleBoxContinueNormal")
 theme_override_styles/pressed = SubResource("StyleBoxContinuePressed")
 text = "이어서 학습"
 

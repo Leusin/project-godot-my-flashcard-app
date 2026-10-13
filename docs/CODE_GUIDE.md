@@ -137,3 +137,5 @@ godot --path . --script res://tests/ui_interaction.gd -- --capture
 - `settings_action_row.tscn`은 설정 작업용 공통 Button 씬이다. 제목·설명·화살표의 mouse_filter를 IGNORE로 지정해 행 전체가 클릭되며 백업과 복원에서 재사용한다.
 
 - 학습 화면은 앞면과 뒷면 모두 다시 볼게요 / 기억나요 버튼으로 판정한다. 답 공개는 카드 탭으로 전환하며 별도 답 보기 버튼은 없다.
+
+- 버튼은 마우스 호버 시 평상시 외형을 유지한다. 공통 테마와 개별 씬의 hover는 normal을 공유하며, 눌림과 키보드 focus는 별도로 유지한다.
