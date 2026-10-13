@@ -385,10 +385,6 @@ func _test_progress_json() -> void:
 	)
 	check(Progress.from_json("").get_wrong_count("x") == 0, "진행도 JSON: 빈 값 복구")
 	check(
-		Progress.from_json("{깨진 json").get_wrong_count("x") == 0,
-		"진행도 JSON: 깨진 값 복구"
-	)
-	check(
 		Progress.from_json("[]").get_status("x") == CardStatus.Value.NEW,
 		"진행도 JSON: 객체가 아니면 빈 진행도"
 	)

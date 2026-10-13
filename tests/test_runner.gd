@@ -5,6 +5,8 @@ extends Node
 
 
 func _ready() -> void:
+	print("res:// = ", ProjectSettings.globalize_path("res://"))
+	print("user:// = ", ProjectSettings.globalize_path("user://"))
 	var checks := 0
 	var failures := 0
 
