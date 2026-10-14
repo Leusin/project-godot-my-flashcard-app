@@ -14,6 +14,7 @@ const STUDY_RESUME_DIR := "user://study_resume"
 const SETTINGS_PATH := "user://settings.json"
 const SAMPLE_DECK_PATH := "res://sample_deck.md"
 const SAMPLE_SEEDED_MARKER := "user://.sample_deck_seeded"
+const PREVIOUS_SCROLL_TUTORIAL_SHA256 := "bab188e87c4d9fc0bd96b365e884174defb79c9fce71d79ef52b417f1779f40a"
 const SAMPLE_SEED_VERSION := "seeded-v2"
 const LEGACY_SAMPLE_DECK_SHA256 := "0c6a1f24394c6caaf52a2962c38f3ccdfa80337a80b95640b01c87a1969d23da"
 const PREVIOUS_TUTORIAL_SAMPLE_SHA256 := "a0411d4ab0fe029e9b4a30a8b163ca9db0d96a54ad1cec691c2ac5ab31d6467f"
@@ -196,6 +197,7 @@ static func is_legacy_sample_text(content: String) -> bool:
 		LEGACY_SAMPLE_DECK_SHA256,
 		PREVIOUS_TUTORIAL_SAMPLE_SHA256,
 		PREVIOUS_GESTURE_SAMPLE_SHA256,
+		PREVIOUS_SCROLL_TUTORIAL_SHA256,
 	]
 
 
