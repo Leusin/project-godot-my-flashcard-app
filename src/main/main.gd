@@ -532,7 +532,8 @@ func _show_card_detail(
 			"학습 결과로 돌아가기"
 			if origin == CardDetailOrigin.STUDY_RESULT
 			else "카드 목록으로 돌아가기"
-		)
+		),
+		origin == CardDetailOrigin.CARD_LIST
 	)
 	_show_page(card_detail_view)
 
@@ -762,7 +763,8 @@ func _close_card_editor_without_save() -> void:
 			card_detail_view.render_card(
 				card,
 				progress.get_wrong_count(card.question),
-				card_status_text(progress.get_status(card.question))
+				card_status_text(progress.get_status(card.question)),
+				_card_detail_origin == CardDetailOrigin.CARD_LIST
 			)
 		_show_page(card_detail_view)
 	else:

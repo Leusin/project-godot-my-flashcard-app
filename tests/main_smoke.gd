@@ -1059,10 +1059,16 @@ func run_tests() -> void:
 		_view(app, "CardDetailView").visible
 		and not _view(app, "CardEditorView").visible
 		and _view(app, "DetailQuestionLabel").text == "Old"
-		and not _view(app, "DetailAnswerScroll").visible
-		and not _view(app, "DetailCardProperties").visible
+		and _view(app, "DetailAnswerScroll").visible
+		and _view(app, "DetailCardProperties").visible
 		and _view(app, "CardDetailMenuButton").visible,
-		"Main Card Detail: 선택한 카드 상세 화면 열기"
+		"Main Card Detail: 목록에서 선택한 카드는 뒷면부터 열기"
+	)
+	app.card_detail_view.card_surface.tapped.emit()
+	check(
+		not _view(app, "DetailAnswerScroll").visible
+		and not _view(app, "DetailCardProperties").visible,
+		"Main Card Detail: 뒷면에서 tap하면 앞면 표시"
 	)
 	app.card_detail_view.card_surface.tapped.emit()
 	check(
@@ -1156,7 +1162,8 @@ func run_tests() -> void:
 	)
 	check(
 		_view(app, "CardDetailView").visible
-		and _view(app, "DetailQuestionLabel").text == "New",
+		and _view(app, "DetailQuestionLabel").text == "New"
+		and _view(app, "DetailAnswerScroll").visible,
 		"Main Card Detail: 편집 저장 후 갱신된 카드 보기로 복귀"
 	)
 	_view(app, "BackFromCardDetailButton").pressed.emit()

@@ -46,22 +46,28 @@ func present(
 	wrong_count: int,
 	status_text: String,
 	menu_visible: bool,
-	back_tooltip: String
+	back_tooltip: String,
+	show_answer: bool = false
 ) -> void:
 	deck_name_label.text = deck_name
 	menu_button.visible = menu_visible
 	back_button.tooltip_text = back_tooltip
-	render_card(card, wrong_count, status_text)
+	render_card(card, wrong_count, status_text, show_answer)
 
 
-func render_card(card: FlashCard, wrong_count: int, status_text: String) -> void:
+func render_card(
+	card: FlashCard,
+	wrong_count: int,
+	status_text: String,
+	show_answer: bool = false
+) -> void:
 	question_label.text = card.question
 	answer_label.text = card.answer
 	wrong_tally.set_count(wrong_count)
 	status_badge.text = status_text
 	question_scroll.scroll_vertical = 0
 	answer_scroll.scroll_vertical = 0
-	_set_answer_visible(false)
+	_set_answer_visible(show_answer)
 
 
 func _on_card_tapped() -> void:
